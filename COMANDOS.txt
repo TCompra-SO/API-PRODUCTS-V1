@@ -1,0 +1,19 @@
+hKLFyWFy1jtuBcGi
+
+npm i ts-node -g
+npm i nodemon -g
+
+tsc --init
+npm init -y
+
+npm i express cors dotenv multer mongoose
+
+// ahora instalamos los tipados
+
+
+npm i @types/express @types/cors @types/dotenv @types/multer @types/mongoose -D
+
+npm i bcryptjs jsonwebtoken
+
+//intalamos sus typados
+npm i @types/bcryptjs @types/jsonwebtoken
