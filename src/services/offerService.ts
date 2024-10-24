@@ -73,7 +73,7 @@ export class OfferService {
       if ((await resultOffer).code === 200) {
         return {
           success: false,
-          code: 404,
+          code: 409,
           error: {
             msg: "Ya haz realizado una oferta a este requerimiento",
           },
@@ -96,7 +96,7 @@ export class OfferService {
           } else {
             return {
               success: false,
-              code: 404,
+              code: 401,
               error: {
                 msg: "No se ha podido encontrar el Requerimiento",
               },
@@ -105,7 +105,7 @@ export class OfferService {
         } else {
           return {
             success: false,
-            code: 403,
+            code: 400,
             error: {
               msg: "Se ha producido un error al crear la Oferta",
             },
@@ -116,7 +116,7 @@ export class OfferService {
           success: true,
           code: 200,
           res: {
-            msg: "Se ha creado correctamente el requerimiento",
+            msg: "Se ha creado correctamente la Oferta",
           },
         };
       }
