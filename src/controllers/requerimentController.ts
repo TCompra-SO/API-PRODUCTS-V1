@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { RequerimentServices } from "../services/requerimentServices";
+import { RequerimentService } from "../services/requerimentService";
 import { io } from "../server"; // Importamos el objeto `io` de Socket.IO
 import { transformData } from "../middlewares/requeriment.front.Interface";
 
@@ -8,7 +8,7 @@ const createRequerimentController = async (
   res: Response
 ) => {
   try {
-    const responseUser = await RequerimentServices.CreateRequeriment(body);
+    const responseUser = await RequerimentService.CreateRequeriment(body);
     if (responseUser.success) {
       // Emitimos un evento 'requerimentCreated' a todos los usuarios conectados
       //io.emit("requerimentCreated", responseUser);  // Emitir el nuevo requerimiento
@@ -29,7 +29,7 @@ const createRequerimentController = async (
 
 const getRequerimentsController = async (req: Request, res: Response) => {
   try {
-    const responseUser = await RequerimentServices.getRequeriments();
+    const responseUser = await RequerimentService.getRequeriments();
 
     // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
@@ -57,4 +57,26 @@ const getRequerimentsController = async (req: Request, res: Response) => {
   }
 };
 
-export { createRequerimentController, getRequerimentsController };
+const getRequerimentIDController = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    const responseUser = await RequerimentService.getRequerimentById(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getRequerimentIDController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+export {
+  createRequerimentController,
+  getRequerimentsController,
+  getRequerimentIDController,
+};

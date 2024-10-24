@@ -20,6 +20,7 @@ export interface RequerimentFrontI {
   warranty?: number; // Mapea a warranty
   warrantyTime?: string; // Campo nuevo, relacionado con la duración de la garantía
   usage?: string; // Campo nuevo, sólo para liquidaciones
+  duration: number;
 }
 
 // Interfaz para la respuesta
@@ -43,14 +44,14 @@ function transformData(response: {
     price: item.budget, // 'budget' renombrado a 'price'
     coin: item.currencyID, // 'currencyID' renombrado a 'coin'
     payment_methodID: item.payment_methodID,
-    publishDate: new Date(item.completion_date), // 'completion_date' convertido a 'publishDate'
-    completion_date: new Date(item.completion_date),
-    submission_date: new Date(item.submission_dateID),
-    numberOffers: item.number_offerts, // 'allowed_bidersID' renombrado a 'numberOffers'
+    publishDate: item.publish_date, // 'completion_date' convertido a 'publishDate'
+    completion_date: item.completion_date,
+    submission_date: item.submission_dateID,
+    numberOffers: item.number_offers, // 'allowed_bidersID' renombrado a 'numberOffers'
     allowed_bidersID: item.allowed_bidersID,
     user: item.userID, // Sin cambios
     warranty: item.warranty, // Mantener el campo 'warranty'
-    duration: item.duration, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
+    duration: item.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
     state: item.stateID, // Añadir un valor por defecto o según lógica
   }));
 

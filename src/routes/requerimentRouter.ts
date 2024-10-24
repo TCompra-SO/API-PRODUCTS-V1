@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createRequerimentController,
+  getRequerimentIDController,
   getRequerimentsController,
 } from "../controllers/requerimentController";
 export class RequerimentRouter {
@@ -12,6 +13,7 @@ export class RequerimentRouter {
     this.router.post("/create", createRequerimentController);
 
     this.router.get("/getRequeriments", getRequerimentsController);
+    this.router.get("/getRequeriment/:uid", getRequerimentIDController);
   }
 
   static getRouter(): Router {

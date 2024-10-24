@@ -13,7 +13,7 @@ const startApp = async () => {
   const server = createServer(app);
   io = new SocketIOServer(server, {
     cors: {
-      origin: "*",  // Permitir conexiones desde cualquier origen
+      origin: "*", // Permitir conexiones desde cualquier origen
     },
   });
 
@@ -24,7 +24,7 @@ const startApp = async () => {
   // Manejar conexiones de Socket.IO
   io.on("connection", (socket) => {
     console.log(`Cliente conectado: ${socket.id}`);
-    
+
     socket.on("disconnect", () => {
       console.log(`Cliente desconectado: ${socket.id}`);
     });

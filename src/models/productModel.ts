@@ -54,12 +54,16 @@ const ProductSchema = new Schema<RequerimentI>(
       type: Number,
       required: true,
     },
-    duration: {
-      type: String,
+    durationID: {
+      type: Number,
       required: true,
     },
     allowed_bidersID: {
       type: Number,
+      required: true,
+    },
+    entityID: {
+      type: String,
       required: true,
     },
     userID: {
@@ -75,7 +79,7 @@ const ProductSchema = new Schema<RequerimentI>(
       type: Number,
       required: true,
     },
-    number_offerts: {
+    number_offers: {
       type: Number,
       required: true,
     },
