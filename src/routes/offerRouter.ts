@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { CreateOfferController } from "../controllers/offerController";
+import {
+  CreateOfferController,
+  GetDetailOfferController,
+  GetOffersController,
+} from "../controllers/offerController";
 export class OfferRouter {
   private static instance: OfferRouter;
   private router: Router;
@@ -7,6 +11,9 @@ export class OfferRouter {
   private constructor() {
     this.router = Router();
     this.router.post("/create", CreateOfferController);
+
+    this.router.get("/getDetailOffer/:uid", GetDetailOfferController);
+    this.router.get("/getOffers", GetOffersController);
   }
 
   static getRouter(): Router {

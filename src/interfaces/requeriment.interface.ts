@@ -17,4 +17,5 @@ export interface RequerimentI {
   publish_date: Date;
   stateID: number;
   number_offers: number;
+  images: string[];
 }

@@ -17,4 +17,6 @@ export interface OfferI {
   publishDate: Date;
   deliveryDate: Date;
   userID: string;
+  entityID: string;
+  canceledByCreator: boolean;
 }

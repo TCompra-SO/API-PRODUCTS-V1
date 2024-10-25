@@ -23,24 +23,6 @@ export class OfferService {
     } = data;
 
     try {
-      const newOffer = new OfferModel({
-        name,
-        email,
-        description,
-        cityID,
-        deliveryTimeID,
-        currencyID,
-        warranty,
-        timeMeasurementID,
-        support,
-        budget,
-        includesIGV,
-        includesDelivery,
-        requerimentID,
-        userID,
-        stateID: 1,
-        publishDate: new Date(),
-      });
       const result = RequerimentService.getRequerimentById(requerimentID);
       const API_USER = process.env.API_USER;
       let entityID;
@@ -69,6 +51,26 @@ export class OfferService {
         };
       }
 
+      const newOffer = new OfferModel({
+        name,
+        email,
+        description,
+        cityID,
+        deliveryTimeID,
+        currencyID,
+        warranty,
+        timeMeasurementID,
+        support,
+        budget,
+        includesIGV,
+        includesDelivery,
+        requerimentID,
+        userID: userID,
+        entityID: entityID,
+        stateID: 1,
+        publishDate: new Date(),
+      });
+
       const resultOffer = this.GetOfferByUser(requerimentID, userID);
       if ((await resultOffer).code === 200) {
         return {
@@ -81,14 +83,13 @@ export class OfferService {
       } else {
         const savedOffer = await newOffer.save();
         if (savedOffer) {
-          ////// AQUI CORREGIR // SOLO DEBE HABER UNA ORDER POR USUARIO EN EL REQUERIMIENTO
           const dataRequeriment =
             RequerimentService.getRequerimentById(requerimentID);
-          console.log((await dataRequeriment).success);
+
           if ((await dataRequeriment).success === true) {
             const currentOffers =
               (await dataRequeriment).data?.number_offers ?? 0; // Si 'number_offers' es undefined, usa 0
-            console.log(currentOffers);
+
             const updateData = {
               number_offers: currentOffers + 1,
             };
@@ -182,6 +183,36 @@ export class OfferService {
         code: 500,
         error: {
           msg: "Ocurrió un error al intentar obtener la oferta.",
+        },
+      };
+    }
+  };
+
+  static GetOffers = async () => {
+    try {
+      const result = await OfferModel.find();
+      if (result) {
+        return {
+          success: true,
+          code: 200,
+          data: result,
+        };
+      } else {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se encontraron ofertas",
+          },
+        };
+      }
+    } catch (error) {
+      console.error("Error al obtener productos:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Hubo un error al obtener los productos.",
         },
       };
     }

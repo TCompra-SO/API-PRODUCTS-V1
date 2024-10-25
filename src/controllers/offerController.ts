@@ -21,7 +21,9 @@ const CreateOfferController = async ({ body }: Request, res: Response) => {
 const GetDetailOfferController = async (req: Request, res: Response) => {
   try {
     const { uid } = req.params;
+
     const responseUser = await OfferService.GetDetailOffer(uid);
+
     if (responseUser.success) {
       res.status(responseUser.code).send(responseUser);
     } else {
@@ -36,4 +38,21 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
   }
 };
 
-export { CreateOfferController };
+const GetOffersController = async (req: Request, res: Response) => {
+  try {
+    const responseUser = await OfferService.GetOffers();
+    if (responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en GetOffersController");
+    res.status(500).send({
+      success: false,
+      msg: "Error interno en el servidor",
+    });
+  }
+};
+
+export { CreateOfferController, GetDetailOfferController, GetOffersController };

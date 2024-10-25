@@ -82,6 +82,10 @@ const OfferSchema = new Schema<OfferI>({
     type: String,
     required: true,
   },
+  entityID: {
+    type: String,
+    required: true,
+  },
 });
 
 // Exportamos el modelo

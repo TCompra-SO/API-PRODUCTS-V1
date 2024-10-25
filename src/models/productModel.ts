@@ -70,7 +70,6 @@ const ProductSchema = new Schema<RequerimentI>(
       type: String,
       required: true,
     },
-
     publish_date: {
       type: Date,
       required: true,
@@ -82,6 +81,10 @@ const ProductSchema = new Schema<RequerimentI>(
     number_offers: {
       type: Number,
       required: true,
+    },
+    images: {
+      type: [String],
+      required: false,
     },
   },
   {
