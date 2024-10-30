@@ -53,6 +53,8 @@ function transformData(response: {
     warranty: item.warranty, // Mantener el campo 'warranty'
     duration: item.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
     state: item.stateID, // Añadir un valor por defecto o según lógica
+    images: item.images,
+    files: item.files,
   }));
 
   return {

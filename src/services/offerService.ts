@@ -2,6 +2,7 @@ import axios from "axios";
 import { OfferI } from "../interfaces/offer.interface";
 import { OfferModel } from "../models/offerModel";
 import { RequerimentService } from "./requerimentService";
+import ProductModel from "../models/productModel";
 
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -162,7 +163,48 @@ export class OfferService {
 
   static GetDetailOffer = async (uid: string) => {
     try {
-      const detailOffer = await OfferModel.findOne({ uid });
+      const detailOffer = await OfferModel.aggregate([
+        // Fase de coincidencia para encontrar la oferta por UID
+        { $match: { uid: uid } },
+        // Fase de lookup para unir la colección Requeriment
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de requerimientos, asegúrate de que sea correcto
+            localField: "requerimentID", // Campo de la oferta
+            foreignField: "uid", // Campo del requerimiento
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del requerimiento
+          },
+        },
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de la oferta
+            uid: 1,
+            name: 1,
+            email: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            canceledByCreator: 1,
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            }, // Extrae el campo 'name' del primer requerimiento encontrado
+          },
+        },
+      ]);
+
       if (detailOffer) {
         return {
           success: true,
@@ -190,7 +232,48 @@ export class OfferService {
 
   static GetOffers = async () => {
     try {
-      const result = await OfferModel.find();
+      const result = await OfferModel.aggregate([
+        // Fase de lookup para unir la colección de productos
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de productos (ProductModel)
+            localField: "requerimentID", // Campo en OfferModel
+            foreignField: "uid", // Campo en ProductModel que coincide
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+          },
+        },
+
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de OfferModel
+            uid: 1,
+            name: 1,
+            email: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            canceledByCreator: 1,
+
+            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            },
+          },
+        },
+      ]);
       if (result) {
         return {
           success: true,
@@ -207,12 +290,32 @@ export class OfferService {
         };
       }
     } catch (error) {
-      console.error("Error al obtener productos:", error);
+      console.error("Error al obtener las ofertas:", error);
       return {
         success: false,
         code: 500,
         error: {
-          msg: "Hubo un error al obtener los productos.",
+          msg: "Hubo un error al obtener las ofertas.",
+        },
+      };
+    }
+  };
+
+  static getOffersByRequeriment = async (requerimentID: string) => {
+    try {
+      const result = await OfferModel.find({ requerimentID });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Hubo un error al obtener las ofertas.",
         },
       };
     }

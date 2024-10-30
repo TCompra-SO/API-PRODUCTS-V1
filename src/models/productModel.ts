@@ -86,6 +86,14 @@ const ProductSchema = new Schema<RequerimentI>(
       type: [String],
       required: false,
     },
+    files: {
+      type: [String],
+      required: false,
+    },
+    winOffer: {
+      type: Object,
+      required: false,
+    },
   },
   {
     versionKey: false,

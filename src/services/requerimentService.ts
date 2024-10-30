@@ -2,6 +2,8 @@ import { RequerimentI } from "../interfaces/requeriment.interface";
 import ProductModel from "../models/productModel";
 import Joi from "joi";
 import axios from "axios";
+import { OfferService } from "./offerService";
+import { OfferModel } from "../models/offerModel";
 export class RequerimentService {
   static CreateRequeriment = async (data: RequerimentI) => {
     const {
@@ -187,6 +189,142 @@ export class RequerimentService {
         code: 500,
         error: {
           msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static selectOffer = async (
+    requerimentID: string,
+    offerID: string,
+    observation: string
+  ) => {
+    try {
+      const requerimentData =
+        RequerimentService.getRequerimentById(requerimentID);
+      const stateID = (await requerimentData).data?.stateID;
+      if (!(await requerimentData).success) {
+        return {
+          success: false,
+          code: 408,
+          error: {
+            msg: "El requerimiento seleccionado no existe",
+          },
+        };
+      }
+      switch (stateID) {
+        case 1:
+          const offerData = OfferService.GetDetailOffer(offerID);
+          if ((await offerData).success) {
+            const updatedProduct = await ProductModel.findOneAndUpdate(
+              { uid: requerimentID },
+              {
+                $set: {
+                  winOffer: { uid: offerID, observation },
+                  stateID: 2,
+                },
+              },
+              { new: true } // Devolver el documento actualizado
+            );
+
+            if (!updatedProduct) {
+              return {
+                success: false,
+                code: 400,
+                error: {
+                  msg: "No se encontró el Requerimiento",
+                },
+              };
+            }
+
+            const updatedOffer = await OfferModel.findOneAndUpdate(
+              { uid: offerID },
+              {
+                $set: {
+                  stateID: 2,
+                },
+              },
+              { new: true }
+            );
+            if (!updatedOffer) {
+              return {
+                success: false,
+                code: 401,
+                error: {
+                  msg: "No se encontró la oferta",
+                },
+              };
+            }
+
+            return {
+              success: true,
+              code: 200,
+              data: updatedProduct,
+              res: {
+                msg: "La oferta ganadora ha sido seleccionada y guardada exitosamente",
+              },
+            };
+          } else {
+            return {
+              success: false,
+              code: 403,
+              error: {
+                msg: "No se ha encontrado la Oferta",
+              },
+            };
+          }
+
+        case 2:
+          return {
+            success: false,
+            code: 404,
+            error: {
+              msg: "El requerimiento se encuentra Atendido",
+            },
+          };
+
+        default:
+          return {
+            success: false,
+            code: 405,
+            error: {
+              msg: "El estado del Requerimiento no permite seleccionar mas Ofertas",
+            },
+          };
+      }
+    } catch (error) {
+      console.error("Error al seleccionar la oferta:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static expired = async () => {
+    console.log(new Date());
+    try {
+      const result = await ProductModel.updateMany(
+        { completion_date: { $lt: new Date() } }, // Filtra solo los documentos que cumplen la condición
+        { $set: { stateID: 5 } } // Actualiza el campo `stateID`
+      );
+      console.log(result);
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "Se han actualizado los productos expirados",
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor",
         },
       };
     }

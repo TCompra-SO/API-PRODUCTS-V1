@@ -75,8 +75,48 @@ const getRequerimentIDController = async (req: Request, res: Response) => {
   }
 };
 
+const selectOfferController = async (req: Request, res: Response) => {
+  try {
+    const { requerimentID, offerID, observation } = req.body;
+    const responseUser = await RequerimentService.selectOffer(
+      requerimentID,
+      offerID,
+      observation
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en selectOfferController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+const expiredController = async (req: Request, res: Response) => {
+  try {
+    const responseUser = await RequerimentService.expired();
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en expiredController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
 export {
   createRequerimentController,
   getRequerimentsController,
   getRequerimentIDController,
+  selectOfferController,
+  expiredController,
 };

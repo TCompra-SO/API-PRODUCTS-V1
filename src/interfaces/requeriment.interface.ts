@@ -18,4 +18,11 @@ export interface RequerimentI {
   stateID: number;
   number_offers: number;
   images: string[];
+  files: string[];
+  winOffer: WinOfferI;
+}
+
+export interface WinOfferI {
+  uid: string;
+  observation: string;
 }
