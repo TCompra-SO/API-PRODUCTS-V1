@@ -71,6 +71,7 @@ export class RequerimentService {
       return {
         success: true,
         code: 200,
+        data: newRequeriment,
         res: {
           msg: "Se ha creado correctamente el requerimiento",
         },
