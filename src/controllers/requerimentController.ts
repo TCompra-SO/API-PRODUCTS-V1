@@ -97,6 +97,25 @@ const selectOfferController = async (req: Request, res: Response) => {
   }
 };
 
+const getbasicRateDataController = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    console.log(uid);
+    const responseUser = await RequerimentService.BasicRateData(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en BasicRateDataController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 const expiredController = async (req: Request, res: Response) => {
   try {
     const responseUser = await RequerimentService.expired();
@@ -119,4 +138,5 @@ export {
   getRequerimentIDController,
   selectOfferController,
   expiredController,
+  getbasicRateDataController,
 };

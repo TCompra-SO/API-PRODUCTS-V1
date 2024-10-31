@@ -4,6 +4,8 @@ import Joi from "joi";
 import axios from "axios";
 import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
+
+let API_USER = process.env.API_USER;
 export class RequerimentService {
   static CreateRequeriment = async (data: RequerimentI) => {
     const {
@@ -207,7 +209,7 @@ export class RequerimentService {
       if (!(await requerimentData).success) {
         return {
           success: false,
-          code: 408,
+          code: 400,
           error: {
             msg: "El requerimiento seleccionado no existe",
           },
@@ -231,7 +233,7 @@ export class RequerimentService {
             if (!updatedProduct) {
               return {
                 success: false,
-                code: 400,
+                code: 403,
                 error: {
                   msg: "No se encontró el Requerimiento",
                 },
@@ -250,7 +252,7 @@ export class RequerimentService {
             if (!updatedOffer) {
               return {
                 success: false,
-                code: 401,
+                code: 403,
                 error: {
                   msg: "No se encontró la oferta",
                 },
@@ -300,6 +302,69 @@ export class RequerimentService {
         code: 500,
         error: {
           msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static BasicRateData = async (requerimentID: string) => {
+    try {
+      const result = await ProductModel.aggregate([
+        {
+          // Match para encontrar el producto con el requerimentID
+          $match: { uid: requerimentID },
+        },
+
+        {
+          // Proyección de los campos requeridos
+          $project: {
+            _id: 0,
+            uid: 1,
+            title: "$name", // Título del producto
+            userId: "$entityID", // ID del usuario en la oferta
+            userName: "", // Nombre del usuario en la oferta
+            userImage: "", // URL de imagen (asigna el campo correspondiente si existe)
+            subUserId: "$userID", // ID de la entidad
+            subUserName: "", // Nombre de la subentidad (agrega el campo si existe)
+          },
+        },
+      ]);
+
+      // Verificamos si se encontró un resultado y lo devolvemos
+      if (!result || result.length === 0) {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se ha encontrado la oferta",
+          },
+        };
+      }
+      const userBase = await axios.get(
+        `${API_USER}/getBaseDataUser/${result[0].subUserId}`
+      );
+
+      result[0].userImage = userBase.data.data?.[0].image;
+      if (result[0].userId === result[0].subUserId) {
+        result[0].userName = userBase.data.data?.[0].name;
+        result[0].subUserName = userBase.data.data?.[0].name;
+      } else {
+        result[0].userName = userBase.data.data?.[0].name;
+        result[0].subUserName = userBase.data.data?.[0].auth_users.name;
+      }
+
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno con el servidor",
         },
       };
     }

@@ -3,7 +3,7 @@ import { OfferI } from "../interfaces/offer.interface";
 import { OfferModel } from "../models/offerModel";
 import { RequerimentService } from "./requerimentService";
 import ProductModel from "../models/productModel";
-
+let API_USER = process.env.API_USER;
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
     const {
@@ -30,7 +30,10 @@ export class OfferService {
       const resultData = await axios.get(
         `${API_USER}/getBaseDataUser/${userID}`
       );
-      if (resultData.data.success === false) {
+      console.log(resultData.status);
+      console.log(resultData.data);
+
+      if (!resultData.data.success) {
         return {
           success: false,
           code: 403,
@@ -123,11 +126,12 @@ export class OfferService {
         };
       }
     } catch (error) {
+      console.log(error);
       return {
         success: false,
         code: 500,
         error: {
-          msg: "Error interno en el Servidor",
+          msg: "Error interno en el Servidor p",
         },
       };
     }
@@ -136,6 +140,7 @@ export class OfferService {
   static GetOfferByUser = async (requerimentID: string, userID: string) => {
     try {
       const offer = await OfferModel.findOne({ requerimentID, userID });
+
       if (offer) {
         return {
           success: true,
@@ -304,11 +309,22 @@ export class OfferService {
   static getOffersByRequeriment = async (requerimentID: string) => {
     try {
       const result = await OfferModel.find({ requerimentID });
-      return {
-        success: true,
-        code: 200,
-        data: result,
-      };
+
+      if (result.length > 0) {
+        return {
+          success: true,
+          code: 200,
+          data: result,
+        };
+      } else {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "Sin Resultados",
+          },
+        };
+      }
     } catch (error) {
       console.error("Error al obtener las ofertas:", error);
       return {
@@ -316,6 +332,69 @@ export class OfferService {
         code: 500,
         error: {
           msg: "Hubo un error al obtener las ofertas.",
+        },
+      };
+    }
+  };
+
+  static BasicRateData = async (offerID: string) => {
+    try {
+      const result = await OfferModel.aggregate([
+        {
+          // Match para encontrar el producto con el requerimentID
+          $match: { uid: offerID },
+        },
+
+        {
+          // Proyección de los campos requeridos
+          $project: {
+            _id: 0,
+            uid: 1,
+            title: "$name", // Título del producto
+            userId: "$entityID", // ID del usuario en la oferta
+            userName: "", // Nombre del usuario en la oferta
+            userImage: "", // URL de imagen (asigna el campo correspondiente si existe)
+            subUserId: "$userID", // ID de la entidad
+            subUserName: "", // Nombre de la subentidad (agrega el campo si existe)
+          },
+        },
+      ]);
+
+      // Verificamos si se encontró un resultado y lo devolvemos
+      if (!result || result.length === 0) {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se ha encontrado la oferta",
+          },
+        };
+      }
+      const userBase = await axios.get(
+        `${API_USER}/getBaseDataUser/${result[0].subUserId}`
+      );
+      console.log(userBase.data.data?.[0]);
+      result[0].userImage = userBase.data.data?.[0].image;
+      if (result[0].userId === result[0].subUserId) {
+        result[0].userName = userBase.data.data?.[0].name;
+        result[0].subUserName = userBase.data.data?.[0].name;
+      } else {
+        result[0].userName = userBase.data.data?.[0].name;
+        result[0].subUserName = userBase.data.data?.[0].auth_users.name;
+      }
+
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno con el servidor",
         },
       };
     }

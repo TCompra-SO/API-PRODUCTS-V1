@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createRequerimentController,
   expiredController,
+  getbasicRateDataController,
   getRequerimentIDController,
   getRequerimentsController,
   selectOfferController,
@@ -17,6 +18,7 @@ export class RequerimentRouter {
 
     this.router.get("/getRequeriments", getRequerimentsController);
     this.router.get("/getRequeriment/:uid", getRequerimentIDController);
+    this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get("/expired", expiredController);
   }
 

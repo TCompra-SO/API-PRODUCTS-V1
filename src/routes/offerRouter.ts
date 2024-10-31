@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   CreateOfferController,
+  getbasicRateDataController,
   GetDetailOfferController,
   GetOffersByRequerimentController,
   GetOffersController,
@@ -19,6 +20,7 @@ export class OfferRouter {
       "/getOffersByRequeriment/:requerimentID",
       GetOffersByRequerimentController
     );
+    this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
   }
 
   static getRouter(): Router {

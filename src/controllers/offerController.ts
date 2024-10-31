@@ -78,9 +78,29 @@ const GetOffersByRequerimentController = async (
   }
 };
 
+const getbasicRateDataController = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    console.log(uid);
+    const responseUser = await OfferService.BasicRateData(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en BasicRateDataController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
   GetOffersController,
   GetOffersByRequerimentController,
+  getbasicRateDataController,
 };
