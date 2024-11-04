@@ -120,6 +120,7 @@ export class OfferService {
         return {
           success: true,
           code: 200,
+          data: newOffer,
           res: {
             msg: "Se ha creado correctamente la Oferta",
           },
@@ -310,21 +311,11 @@ export class OfferService {
     try {
       const result = await OfferModel.find({ requerimentID });
 
-      if (result.length > 0) {
-        return {
-          success: true,
-          code: 200,
-          data: result,
-        };
-      } else {
-        return {
-          success: false,
-          code: 403,
-          error: {
-            msg: "Sin Resultados",
-          },
-        };
-      }
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
     } catch (error) {
       console.error("Error al obtener las ofertas:", error);
       return {

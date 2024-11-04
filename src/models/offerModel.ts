@@ -23,7 +23,7 @@ const OfferSchema = new Schema<OfferI>({
   },
   description: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   cityID: {

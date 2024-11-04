@@ -55,6 +55,7 @@ function transformData(response: {
     state: item.stateID, // Añadir un valor por defecto o según lógica
     images: item.images,
     files: item.files,
+    winOffer: item.winOffer,
   }));
 
   return {
