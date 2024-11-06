@@ -7,6 +7,8 @@ import {
   getRequerimentsController,
   selectOfferController,
 } from "../controllers/requerimentController";
+
+import { CreatePurchaseOrderController } from "../controllers/purchaseOrderController";
 export class RequerimentRouter {
   private static instance: RequerimentRouter;
   private router: Router;
@@ -15,6 +17,9 @@ export class RequerimentRouter {
     this.router = Router();
     this.router.post("/create", createRequerimentController);
     this.router.post("/selectOffer", selectOfferController);
+
+    // ORDEN DE COMPRA
+    this.router.post("/createPurchaseOrder", CreatePurchaseOrderController);
 
     this.router.get("/getRequeriments", getRequerimentsController);
     this.router.get("/getRequeriment/:uid", getRequerimentIDController);

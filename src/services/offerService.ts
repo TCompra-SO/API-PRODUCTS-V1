@@ -30,8 +30,6 @@ export class OfferService {
       const resultData = await axios.get(
         `${API_USER}/getBaseDataUser/${userID}`
       );
-      console.log(resultData.status);
-      console.log(resultData.data);
 
       if (!resultData.data.success) {
         return {
@@ -45,7 +43,7 @@ export class OfferService {
         entityID = resultData.data.data[0]?.uid;
       }
 
-      if (entityID === (await result).data?.entityID) {
+      if (entityID === (await result).data?.[0].entityID) {
         return {
           success: false,
           code: 404,
@@ -92,7 +90,7 @@ export class OfferService {
 
           if ((await dataRequeriment).success === true) {
             const currentOffers =
-              (await dataRequeriment).data?.number_offers ?? 0; // Si 'number_offers' es undefined, usa 0
+              (await dataRequeriment).data?.[0].number_offers ?? 0; // Si 'number_offers' es undefined, usa 0
 
             const updateData = {
               number_offers: currentOffers + 1,
@@ -132,7 +130,7 @@ export class OfferService {
         success: false,
         code: 500,
         error: {
-          msg: "Error interno en el Servidor p",
+          msg: "Error interno en el Servidor",
         },
       };
     }

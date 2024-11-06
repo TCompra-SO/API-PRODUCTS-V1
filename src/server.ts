@@ -2,7 +2,7 @@ import { App } from "./app";
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import db from "./database/mongo";
-
+import "./initConfig";
 // Declarar `io` en un alcance más amplio
 let io: SocketIOServer;
 

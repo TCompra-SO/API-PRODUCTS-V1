@@ -3,7 +3,7 @@ import "dotenv/config";
 import cors from "cors";
 import bodyParser from "body-parser";
 import { RootRouter } from "./routes/RootRouter";
-
+import "./initConfig";
 export class App {
   private static instance: Express;
 

@@ -121,7 +121,62 @@ export class RequerimentService {
 
   static getRequerimentById = async (uid: string) => {
     try {
-      const requeriment = await ProductModel.findOne({ uid });
+      const requeriment = await ProductModel.aggregate([
+        // Buscar el requerimiento por su uid
+        {
+          $match: {
+            uid: uid,
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "offersproducts", // Nombre de la colección de ofertas
+            localField: "winOffer.uid", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "winOffer", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$winOffer", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Proyección de los campos que deseas devolver (todos los campos del requerimiento)
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            duration: 1,
+            allowed_bidersID: 1,
+            userID: 1,
+            publish_date: 1,
+            stateID: 1,
+            uid: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            }, // Aquí incluimos todos los campos de la oferta ganadora
+          },
+        },
+      ]);
       if (!requeriment) {
         return {
           success: false,
@@ -205,7 +260,7 @@ export class RequerimentService {
     try {
       const requerimentData =
         RequerimentService.getRequerimentById(requerimentID);
-      const stateID = (await requerimentData).data?.stateID;
+      const stateID = (await requerimentData).data?.[0].stateID;
       if (!(await requerimentData).success) {
         return {
           success: false,

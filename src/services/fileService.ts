@@ -19,7 +19,7 @@ export class FileService {
     try {
       // Obtener información del requerimiento
       const resultData = await RequerimentService.getRequerimentById(uid);
-      const uidData = resultData.data?.uid;
+      const uidData = resultData.data?.[0].uid;
 
       if (!uidData) {
         return {

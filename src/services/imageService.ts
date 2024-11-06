@@ -19,7 +19,7 @@ export class ImageService {
     try {
       // Obtener información de requerimiento
       const resultData = await RequerimentService.getRequerimentById(uid);
-      const uidData = resultData.data?.uid;
+      const uidData = resultData.data?.[0].uid;
 
       if (!uidData) {
         return {
