@@ -92,7 +92,53 @@ export class RequerimentService {
 
   static getRequeriments = async () => {
     try {
-      const requeriments = await ProductModel.find();
+      const requeriments = await ProductModel.aggregate([
+        {
+          $lookup: {
+            from: "offersproducts", // Nombre de la colección de las ofertas, ajusta según tu modelo
+            localField: "winOffer.uid", // Campo de la colección de requerimientos
+            foreignField: "uid", // Campo de la colección de ofertas
+            as: "winOffer", // Alias para los resultados relacionados
+          },
+        },
+        {
+          $unwind: {
+            // Si hay más de un resultado, los aplanamos
+            path: "$winOffer",
+            preserveNullAndEmptyArrays: true, // Para mantener los requerimientos sin una oferta ganadora
+          },
+        },
+        {
+          $project: {
+            // Proyectamos los campos que queremos mostrar
+            uid: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            durationID: 1,
+            allowed_bidersID: 1,
+            entityID: 1,
+            userID: 1,
+            publish_date: 1,
+            stateID: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            },
+          },
+        },
+      ]);
       if (!requeriments) {
         return {
           success: false,
