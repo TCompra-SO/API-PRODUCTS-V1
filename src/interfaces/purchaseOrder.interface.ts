@@ -41,7 +41,10 @@ export interface PurchaseOrderI {
   state: PurchaseOrderState;
   offerID: string;
   offerTitle: string;
-  filters: CommonFilter;
+  price_Filter: CommonFilter;
+  deliveryTime_Filter: number;
+  location_Filter: number;
+  warranty_Filter: number;
 }
 export enum PurchaseOrderState {
   PENDING = 1,

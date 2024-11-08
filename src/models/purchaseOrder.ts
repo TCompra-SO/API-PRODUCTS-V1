@@ -107,7 +107,19 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: String,
     required: true,
   },
-  filters: {
+  price_Filter: {
+    type: Number,
+    required: false,
+  },
+  deliveryTime_Filter: {
+    type: Number,
+    required: false,
+  },
+  location_Filter: {
+    type: Number,
+    required: false,
+  },
+  warranty_Filter: {
     type: Number,
     required: false,
   },

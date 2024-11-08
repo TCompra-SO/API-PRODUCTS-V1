@@ -450,8 +450,8 @@ export class RequerimentService {
         result[0].userName = userBase.data.data?.[0].name;
         result[0].subUserName = userBase.data.data?.[0].name;
       } else {
-        result[0].userName = userBase.data.data?.[0].name;
-        result[0].subUserName = userBase.data.data?.[0].auth_users.name;
+        result[0].userName = userBase.data.data?.[0].name;      
+        result[0].subUserName = userBase.data.data?.[0].auth_users?.name;
       }
 
       return {
@@ -472,13 +472,13 @@ export class RequerimentService {
   };
 
   static expired = async () => {
-    console.log(new Date());
+    
     try {
       const result = await ProductModel.updateMany(
         { completion_date: { $lt: new Date() } }, // Filtra solo los documentos que cumplen la condición
         { $set: { stateID: 5 } } // Actualiza el campo `stateID`
       );
-      console.log(result);
+    
       return {
         success: true,
         code: 200,
