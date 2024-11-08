@@ -47,6 +47,10 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: Date,
     required: true,
   },
+  requerimentID: {
+    type: String,
+    required: true,
+  },
   requerimentTitle: {
     type: String,
     required: true,
@@ -59,11 +63,15 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: Number,
     required: true,
   },
-  igv: {
+  totaligv: {
     type: Number,
     required: true,
   },
   total: {
+    type: Number,
+    required: true,
+  },
+  igv: {
     type: Number,
     required: true,
   },

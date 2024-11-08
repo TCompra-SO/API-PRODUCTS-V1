@@ -26,11 +26,13 @@ export interface PurchaseOrderI {
   nameSubUserClient: string;
   createDate: Date;
   deliveryDate: Date;
+  requerimentID: string;
   requerimentTitle: string;
   price: number;
   subtotal: number;
-  igv: number;
+  totaligv: number;
   total: number;
+  igv: number;
   userProviderID: string;
   nameUserProvider: string;
   subUserProviderID: string;

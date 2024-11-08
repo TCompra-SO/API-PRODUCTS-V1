@@ -4,6 +4,8 @@ import Joi from "joi";
 import axios from "axios";
 import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
+import { PurchaseOrderService } from "./purchaseOrderService";
+import { error } from "console";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -301,13 +303,20 @@ export class RequerimentService {
   static selectOffer = async (
     requerimentID: string,
     offerID: string,
-    observation: string
+    observation: string,
+    price_Filter: number,
+    deliveryTime_Filter: number,
+    location_Filter: number,
+    warranty_Filter: number
   ) => {
     try {
       const requerimentData =
         RequerimentService.getRequerimentById(requerimentID);
-      const stateID = (await requerimentData).data?.[0].stateID;
-      if (!(await requerimentData).success) {
+
+      if (
+        !(await requerimentData).success ||
+        (await requerimentData).data?.length == 0
+      ) {
         return {
           success: false,
           code: 400,
@@ -316,9 +325,21 @@ export class RequerimentService {
           },
         };
       }
+      const stateID = (await requerimentData).data?.[0].stateID;
       switch (stateID) {
         case 1:
           const offerData = OfferService.GetDetailOffer(offerID);
+          const stateOffer = (await offerData).data?.[0].stateID;
+
+          if (stateOffer !== 1) {
+            return {
+              success: false,
+              code: 401,
+              error: {
+                msg: "El estado de la Oferta no permite ser seleccionada",
+              },
+            };
+          }
           if ((await offerData).success) {
             const updatedProduct = await ProductModel.findOneAndUpdate(
               { uid: requerimentID },
@@ -337,6 +358,36 @@ export class RequerimentService {
                 code: 403,
                 error: {
                   msg: "No se encontró el Requerimiento",
+                },
+              };
+            }
+
+            const purchaseOrder =
+              await PurchaseOrderService.CreatePurchaseOrder(
+                requerimentID,
+                offerID,
+                price_Filter,
+                deliveryTime_Filter,
+                location_Filter,
+                warranty_Filter
+              );
+
+            if (!purchaseOrder.success) {
+              await ProductModel.findOneAndUpdate(
+                { uid: requerimentID },
+                {
+                  $set: {
+                    winOffer: "",
+                    stateID: 1,
+                  },
+                },
+                { new: true } // Devolver el documento actualizado
+              );
+              return {
+                success: false,
+                code: 409,
+                error: {
+                  msg: purchaseOrder.error,
                 },
               };
             }
@@ -378,21 +429,35 @@ export class RequerimentService {
             };
           }
 
-        case 2:
-          return {
-            success: false,
-            code: 404,
-            error: {
-              msg: "El requerimiento se encuentra Atendido",
-            },
-          };
-
         default:
+          let stateLabel;
+
+          switch (stateID) {
+            case 2:
+              stateLabel = "Atendido";
+              break;
+            case 3:
+              stateLabel = "Culminado";
+              break;
+            case 5:
+              stateLabel = "Expirado";
+              break;
+            case 6:
+              stateLabel = "Cancelado";
+              break;
+            case 7:
+              stateLabel = "Eliminado";
+              break;
+            case 8:
+              stateLabel = "En Disputa";
+              break;
+          }
+
           return {
             success: false,
             code: 405,
             error: {
-              msg: "El estado del Requerimiento no permite seleccionar mas Ofertas",
+              msg: "El Requerimiento se encuentra " + stateLabel,
             },
           };
       }
@@ -450,7 +515,7 @@ export class RequerimentService {
         result[0].userName = userBase.data.data?.[0].name;
         result[0].subUserName = userBase.data.data?.[0].name;
       } else {
-        result[0].userName = userBase.data.data?.[0].name;      
+        result[0].userName = userBase.data.data?.[0].name;
         result[0].subUserName = userBase.data.data?.[0].auth_users?.name;
       }
 
@@ -472,13 +537,12 @@ export class RequerimentService {
   };
 
   static expired = async () => {
-    
     try {
       const result = await ProductModel.updateMany(
-        { completion_date: { $lt: new Date() } }, // Filtra solo los documentos que cumplen la condición
+        { completion_date: { $lt: new Date() }, stateID: 1 }, // Filtra solo los documentos que cumplen la condición
         { $set: { stateID: 5 } } // Actualiza el campo `stateID`
       );
-    
+
       return {
         success: true,
         code: 200,

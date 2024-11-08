@@ -77,11 +77,23 @@ const getRequerimentIDController = async (req: Request, res: Response) => {
 
 const selectOfferController = async (req: Request, res: Response) => {
   try {
-    const { requerimentID, offerID, observation } = req.body;
+    const {
+      requerimentID,
+      offerID,
+      observation,
+      price_Filter,
+      deliveryTime_Filter,
+      location_Filter,
+      warranty_Filter,
+    } = req.body;
     const responseUser = await RequerimentService.selectOffer(
       requerimentID,
       offerID,
-      observation
+      observation,
+      price_Filter,
+      deliveryTime_Filter,
+      location_Filter,
+      warranty_Filter
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
