@@ -1,5 +1,12 @@
+/*
 PORT=3002
 DB_URI=mongodb+srv://tcompraperu:2YFaNqTymGcKH5ZF@clustertest.oiyhs.mongodb.net/BDTestTCompra?retryWrites=true&w=majority&appName=ClusterTest
 JWT_SECRET=X8d7!qLz1#P@k&2^R9nV4tG$W6oB+uM7J%Yv3xKz8F
  // API USER 
- API_USER = http://18.224.8.214:3001/v1/auth/
+ API_USER=http://18.188.75.124:3001/v1/
+
+ // CLOUDINARY
+ CLOUDINARY_CLOUD_NAME=dlxlveta2
+CLOUDINARY_API_KEY=498896384715854
+CLOUDINARY_API_SECRET=D5YQeZzI0s2PrxsY-XcayJ233ck
+*/
