@@ -27,9 +27,11 @@ export class OfferService {
       const result = RequerimentService.getRequerimentById(requerimentID);
       const API_USER = process.env.API_USER;
       let entityID;
+      let subUserEmail='';
       const resultData = await axios.get(
-        `${API_USER}/getBaseDataUser/${userID}`
-      );
+        `${API_USER}auth/getBaseDataUser/${userID}`
+      )
+      
 
       if (!resultData.data.success) {
         return {
@@ -41,6 +43,7 @@ export class OfferService {
         };
       } else {
         entityID = resultData.data.data[0]?.uid;
+        subUserEmail = resultData.data.data[0]?.auth_users?.email;
       }
 
       if (entityID === (await result).data?.[0].entityID) {
@@ -56,6 +59,7 @@ export class OfferService {
       const newOffer = new OfferModel({
         name,
         email,
+        subUserEmail,
         description,
         cityID,
         deliveryTimeID,
@@ -186,6 +190,7 @@ export class OfferService {
             uid: 1,
             name: 1,
             email: 1,
+            subUserEmail: 1,
             description: 1,
             cityID: 1,
             deliveryTimeID: 1,
@@ -254,6 +259,7 @@ export class OfferService {
             uid: 1,
             name: 1,
             email: 1,
+            subUserEmail:1,
             description: 1,
             cityID: 1,
             deliveryTimeID: 1,
@@ -360,7 +366,7 @@ export class OfferService {
         };
       }
       const userBase = await axios.get(
-        `${API_USER}/getBaseDataUser/${result[0].subUserId}`
+        `${API_USER}auth/getBaseDataUser/${result[0].subUserId}`
       );
       console.log(userBase.data.data?.[0]);
       result[0].userImage = userBase.data.data?.[0].image;

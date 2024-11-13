@@ -18,5 +18,6 @@ export interface OfferI {
   deliveryDate: Date;
   userID: string;
   entityID: string;
+  subUserEmail: string;
   canceledByCreator: boolean;
 }

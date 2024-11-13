@@ -13,7 +13,9 @@ export interface RequerimentI {
   durationID: number;
   allowed_bidersID: number;
   userID: string;
+  subUserEmail: string;
   entityID: string;
+  email: string;
   publish_date: Date;
   stateID: number;
   number_offers: number;

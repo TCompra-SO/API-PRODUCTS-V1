@@ -5,7 +5,7 @@ import axios from "axios";
 import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
 import { PurchaseOrderService } from "./purchaseOrderService";
-import { error } from "console";
+import { Console, error } from "console";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -27,10 +27,14 @@ export class RequerimentService {
     } = data;
     try {
       let entityID = "";
+      let email = "";
       const API_USER = process.env.API_USER;
       const resultData = await axios.get(
-        `${API_USER}/getBaseDataUser/${userID}`
+        `${API_USER}auth/getBaseDataUser/${userID}`
       );
+
+      let subUserEmail ='';
+      let subUserName ='';
       if (resultData.data.success === false) {
         return {
           success: false,
@@ -41,8 +45,10 @@ export class RequerimentService {
         };
       } else {
         entityID = resultData.data.data[0]?.uid;
+        email = resultData.data.data[0]?.email;
+        subUserEmail = resultData.data.data[0]?.auth_users?.email;
       }
-
+      
       const newRequeriment = new ProductModel({
         name,
         description,
@@ -57,7 +63,9 @@ export class RequerimentService {
         durationID,
         allowed_bidersID,
         userID,
+        subUserEmail,
         entityID,
+        email,
         publish_date: new Date(),
         number_offers: 0,
         stateID: 1,
@@ -128,6 +136,8 @@ export class RequerimentService {
             allowed_bidersID: 1,
             entityID: 1,
             userID: 1,
+            email: 1,
+            subUserEmail: 1,
             publish_date: 1,
             stateID: 1,
             number_offers: 1,
@@ -208,7 +218,10 @@ export class RequerimentService {
             warranty: 1,
             duration: 1,
             allowed_bidersID: 1,
+            entityID: 1,
+            subUserEmail:1,
             userID: 1,
+            email: 1,
             publish_date: 1,
             stateID: 1,
             uid: 1,
@@ -507,7 +520,7 @@ export class RequerimentService {
         };
       }
       const userBase = await axios.get(
-        `${API_USER}/getBaseDataUser/${result[0].subUserId}`
+        `${API_USER}auth/getBaseDataUser/${result[0].subUserId}`
       );
 
       result[0].userImage = userBase.data.data?.[0].image;

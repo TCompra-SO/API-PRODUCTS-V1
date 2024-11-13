@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 import { RequerimentI } from "../interfaces/requeriment.interface";
 
 import ShortUniqueId from "short-unique-id";
+import { string } from "joi";
 
 const uid = new ShortUniqueId({ length: 20 });
 
@@ -66,9 +67,17 @@ const ProductSchema = new Schema<RequerimentI>(
       type: String,
       required: true,
     },
+    email: {
+      type: String,
+      required: true,
+    },
     userID: {
       type: String,
       required: true,
+    },
+    subUserEmail: {
+      type: String,
+      required: false,
     },
     publish_date: {
       type: Date,

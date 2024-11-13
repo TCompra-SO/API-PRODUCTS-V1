@@ -22,10 +22,12 @@ export interface PurchaseOrderI {
   userNameClient: string;
   addressClient: string;
   documentClient: string;
+  emailClient: string;
   subUserClientID: string;
   nameSubUserClient: string;
+  subUserClientEmail: string;
   createDate: Date;
-  deliveryDate: Date;
+  deliveryDate: Date | null;
   requerimentID: string;
   requerimentTitle: string;
   price: number;
@@ -33,6 +35,7 @@ export interface PurchaseOrderI {
   totaligv: number;
   total: number;
   igv: number;
+  currency: string;
   userProviderID: string;
   nameUserProvider: string;
   subUserProviderID: string;
@@ -40,6 +43,7 @@ export interface PurchaseOrderI {
   addressProvider: string;
   documentProvider: string;
   emailProvider: string;
+  subUserEmailProvider: string;
   state: PurchaseOrderState;
   offerID: string;
   offerTitle: string;

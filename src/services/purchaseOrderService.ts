@@ -8,6 +8,12 @@ import PurchaseOrderModel from "../models/purchaseOrder";
 import { OfferService } from "./offerService";
 import { igv } from "../initConfig";
 import { RequerimentService } from "./requerimentService";
+import { sendEmailPurchaseOrder } from "../utils/NodeMailer";
+import { number } from "joi";
+import puppeteer from "puppeteer";
+import { Buffer } from "node:buffer";
+import { OrderPurchaseTemplate } from "../utils/OrderPurchaseTemplate";
+
 let API_USER = process.env.API_USER;
 export class PurchaseOrderService {
   static CreatePurchaseOrder = async (
@@ -51,16 +57,46 @@ export class PurchaseOrderService {
         };
       }
       const userProviderData = await axios.get(
-        `${API_USER}/getBaseDataUser/${subUserProviderID}`
+        `${API_USER}auth/getBaseDataUser/${subUserProviderID}`
       );
 
       const basicProviderData = await axios.get(
-        `${API_USER}/getUser/${userProviderID}`
+        `${API_USER}auth/getUser/${userProviderID}`
       );
 
       const baseClientData = await axios.get(
-        `${API_USER}/getUser/${subUserClientID}`
+        `${API_USER}auth/getUser/${userClientID}`
       );
+
+      const currencyData = await axios.get(`${API_USER}util/utilData/currency`);
+
+      const currencyId = (await requerimentData).data?.[0].currencyID; // Cambia este valor al ID que deseas buscar
+      const currencyValue = currencyData.data.currencies.find(
+        (currency: { id: number; value: string; alias: string }) =>
+          currency.id === currencyId
+      )?.alias;
+
+      const daysDeliveryData = await axios.get(
+        `${API_USER}util/utilData/delivery_time`
+      );
+      console.log(daysDeliveryData.data?.times);
+      const deliveryTimeID = (await offerData).data?.[0].deliveryTimeID;
+      let days = 0;
+      let deliveryDate;
+      if (deliveryTimeID !== 6) {
+        deliveryDate = new Date();
+        days = daysDeliveryData.data.times.find(
+          (days: { id: number; value: string; days: number }) =>
+            days.id === deliveryTimeID
+        )?.days;
+
+        deliveryDate.setDate(deliveryDate.getDate() + days);
+      } else {
+        deliveryDate = null;
+      }
+
+      console.log(deliveryDate);
+      console.log(currencyValue);
 
       if (!(await offerBasicData).success) {
         return {
@@ -82,21 +118,24 @@ export class PurchaseOrderService {
       } else {
         subTotal = price / (1 + igv / 100);
         subTotal = parseFloat(subTotal.toFixed(2));
-        totalIgv = price - subTotal;
+        totalIgv = parseFloat((price - subTotal).toFixed(2));
         total = price;
       }
-      const newPurchaseOrder = {
+      const newPurchaseOrder: Omit<PurchaseOrderI, "uid"> = {
         type: TypeRequeriment.PRODUCTS,
         userClientID: userClientID,
         userNameClient: (await requerimentBasicData).data?.[0].userName,
         addressClient: (await baseClientData).data.data?.[0].address,
         documentClient: (await baseClientData).data.data?.[0].document,
+        emailClient: (await requerimentData).data?.[0].email,
         subUserClientID: subUserClientID,
+        subUserClientEmail: (await requerimentData).data?.[0].subUserEmail,
         nameSubUserClient: (await requerimentBasicData).data?.[0].subUserName,
         createDate: new Date(),
-        deliveryDate: new Date(),
+        deliveryDate: deliveryDate,
         requerimentID: requerimentID,
         requerimentTitle: (await offerData).data?.[0].requerimentTitle,
+        currency: currencyValue,
         price: price,
         subtotal: subTotal,
         totaligv: totalIgv,
@@ -106,6 +145,7 @@ export class PurchaseOrderService {
         nameUserProvider: (await offerBasicData).data?.[0].userName,
         subUserProviderID: subUserProviderID,
         nameSubUserProvider: (await offerBasicData).data?.[0].subUserName,
+        subUserEmailProvider: (await offerBasicData).data?.[0].subUserEmail,
         addressProvider: (await basicProviderData).data.data?.[0].address,
         documentProvider: (await userProviderData).data.data?.[0].document,
         emailProvider: (await offerData).data?.[0].email,
@@ -117,15 +157,22 @@ export class PurchaseOrderService {
         location_Filter,
         warranty_Filter,
       };
-      console.log(newPurchaseOrder);
+
       const CreateOrder = new PurchaseOrderModel(newPurchaseOrder);
       await CreateOrder.save();
-
+      const sendMail = sendEmailPurchaseOrder(newPurchaseOrder);
+      let responseEmail = "";
+      if ((await sendMail).success) {
+        responseEmail = "Orden de Compra enviada al Email correctamente";
+      } else {
+        responseEmail = "No se ha podido enviar la Orden al Correo";
+      }
       return {
         success: true,
         code: 200,
         res: {
           msg: "Se ha creaqdo correctamente la orden de Compra",
+          responseEmail: responseEmail,
         },
       };
     } catch (error) {
@@ -208,6 +255,43 @@ export class PurchaseOrderService {
           msg: "Error interno en el Servidor",
         },
       };
+    }
+  };
+
+  static createPDF = async (htmlContent: string): Promise<Buffer> => {
+    // Iniciar el navegador de Puppeteer
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    // Establecer el contenido HTML
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+    // Generar el PDF como Buffer (con formato A4)
+    const pdfBuffer = (await page.pdf({
+      format: "A4",
+      printBackground: true,
+    })) as Buffer;
+
+    // Cerrar el navegador
+    await browser.close();
+
+    // Retornar el buffer del PDF
+    return pdfBuffer;
+  };
+
+  static getPurchaseOrderPDF = async (uid: string) => {
+    try {
+      const data = await this.getPurchaseOrderID(uid);
+      if (data && data.success && data.data) {
+        const html = await OrderPurchaseTemplate(data.data);
+
+        return await this.createPDF(html);
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.log(error);
+      return null;
     }
   };
 }

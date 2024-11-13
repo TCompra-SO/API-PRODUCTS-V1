@@ -21,6 +21,10 @@ const OfferSchema = new Schema<OfferI>({
     required: true,
     trim: true,
   },
+  subUserEmail: {
+    type: String,
+    required: false,
+  },
   description: {
     type: String,
     required: false,

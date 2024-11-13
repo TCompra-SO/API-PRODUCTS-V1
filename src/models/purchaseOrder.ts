@@ -31,11 +31,19 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: String,
     required: true,
   },
+  emailClient: {
+    type: String,
+    required: true,
+  },
   subUserClientID: {
     type: String,
     required: false,
   },
   nameSubUserClient: {
+    type: String,
+    required: false,
+  },
+  subUserClientEmail: {
     type: String,
     required: false,
   },
@@ -45,13 +53,17 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
   },
   deliveryDate: {
     type: Date,
-    required: true,
+    required: false,
   },
   requerimentID: {
     type: String,
     required: true,
   },
   requerimentTitle: {
+    type: String,
+    required: true,
+  },
+  currency: {
     type: String,
     required: true,
   },
@@ -102,6 +114,10 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
   emailProvider: {
     type: String,
     required: true,
+  },
+  subUserEmailProvider: {
+    type: String,
+    required: false,
   },
   state: {
     type: Number,
