@@ -13,6 +13,7 @@ import { number } from "joi";
 import puppeteer from "puppeteer";
 import { Buffer } from "node:buffer";
 import { OrderPurchaseTemplate } from "../utils/OrderPurchaseTemplate";
+import { launch } from "./../../node_modules/@puppeteer/browsers/lib/esm/launch";
 
 let API_USER = process.env.API_USER;
 export class PurchaseOrderService {
@@ -260,7 +261,11 @@ export class PurchaseOrderService {
 
   static createPDF = async (htmlContent: string): Promise<Buffer> => {
     // Iniciar el navegador de Puppeteer
-    const browser = await puppeteer.launch();
+    //const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ["--no-sandbox"], // Deshabilitar sandbox
+    });
+
     const page = await browser.newPage();
 
     // Establecer el contenido HTML
