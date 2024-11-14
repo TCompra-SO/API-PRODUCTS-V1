@@ -273,10 +273,12 @@ export class PurchaseOrderService {
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
     // Generar el PDF como Buffer (con formato A4)
-    const pdfBuffer = (await page.pdf({
-      format: "A4",
-      printBackground: true,
-    })) as Buffer;
+    const pdfBuffer = Buffer.from(
+      await page.pdf({
+        format: "A4",
+        printBackground: true,
+      })
+    );
 
     // Cerrar el navegador
     await browser.close();
