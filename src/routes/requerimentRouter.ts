@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
   createRequerimentController,
+  deleteController,
   expiredController,
   getbasicRateDataController,
   getRequerimentIDController,
   getRequerimentsController,
   selectOfferController,
 } from "../controllers/requerimentController";
-
 
 export class RequerimentRouter {
   private static instance: RequerimentRouter;
@@ -22,6 +22,8 @@ export class RequerimentRouter {
     this.router.get("/getRequeriment/:uid", getRequerimentIDController);
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get("/expired", expiredController);
+
+    this.router.get("/delete/:uid", deleteController);
   }
 
   static getRouter(): Router {
