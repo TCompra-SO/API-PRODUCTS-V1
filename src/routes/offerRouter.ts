@@ -3,7 +3,9 @@ import {
   CreateOfferController,
   getbasicRateDataController,
   GetDetailOfferController,
+  GetOffersByEntityController,
   GetOffersByRequerimentController,
+  GetOffersBySubUserController,
   GetOffersController,
 } from "../controllers/offerController";
 import { deleteController } from "../controllers/requerimentController";
@@ -22,6 +24,8 @@ export class OfferRouter {
       GetOffersByRequerimentController
     );
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
+    this.router.get("/getOffersByEntity/:uid", GetOffersByEntityController);
+    this.router.get("/getOffersBySubUser/:uid", GetOffersBySubUserController);
 
     this.router.get("/delete/:uid", deleteController);
   }

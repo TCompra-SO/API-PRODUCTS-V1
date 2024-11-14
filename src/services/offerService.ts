@@ -332,6 +332,46 @@ export class OfferService {
     }
   };
 
+  static getOffersByEntity = async (uid: string) => {
+    try {
+      const result = await OfferModel.find({ entityID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor.",
+        },
+      };
+    }
+  };
+
+  static getOffersBySubUser = async (uid: string) => {
+    try {
+      const result = await OfferModel.find({ userID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor.",
+        },
+      };
+    }
+  };
+
   static BasicRateData = async (offerID: string) => {
     try {
       const result = await OfferModel.aggregate([

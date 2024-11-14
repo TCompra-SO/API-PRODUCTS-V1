@@ -266,6 +266,42 @@ export class RequerimentService {
     }
   };
 
+  static getRequerimentsByEntity = async (uid: string) => {
+    try {
+      const result = await ProductModel.find({ entityID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: { msg: "Error interno en el Servidor" },
+      };
+    }
+  };
+
+  static getRequerimentsbySubUser = async (uid: string) => {
+    try {
+      const result = await ProductModel.find({ userID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: { msg: "Error interno en el Servidor" },
+      };
+    }
+  };
+
   static updateRequeriment = async (
     uid: string,
     data: Partial<RequerimentI>
