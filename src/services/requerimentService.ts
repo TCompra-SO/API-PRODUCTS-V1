@@ -6,7 +6,7 @@ import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
 import { PurchaseOrderService } from "./purchaseOrderService";
 import { Console, error } from "console";
-import { RequirementState } from "../utils/Types";
+import { OfferState, RequirementState } from "../utils/Types";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -629,6 +629,81 @@ export class RequerimentService {
             code: 400,
             error: {
               msg: "Estado de requerimiento no permite eliminar",
+            },
+          };
+        }
+      } else
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "Requerimiento no encontrado",
+          },
+        };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static republish = async (requirementID: string, completionDate: string) => {
+    try {
+      const requirementData = await ProductModel.findOne({
+        uid: requirementID,
+      });
+
+      if (requirementData) {
+        if (
+          requirementData.stateID == RequirementState.CANCELED ||
+          requirementData.stateID == RequirementState.EXPIRED
+        ) {
+          const offers = await OfferService.getOffersByRequeriment(
+            requirementID
+          );
+          if (offers.success && offers.data && offers.data.length > 0) {
+            // eliminar todas las ofertas del requerimiento
+            await Promise.all(
+              offers.data.map(async (offer) => {
+                await OfferService.updateStateOffer(
+                  offer.uid,
+                  OfferState.ACTIVE
+                );
+              })
+            );
+          }
+
+          const updatedRequirement = await ProductModel.findOneAndUpdate(
+            { uid: requirementID },
+            {
+              $set: {
+                stateID: RequirementState.PUBLISHED,
+                publish_date: new Date(),
+                completion_date: completionDate,
+              },
+            },
+            { new: true }
+          );
+
+          return {
+            success: true,
+            code: 200,
+            data: updatedRequirement,
+            res: {
+              msg: "Se ha republicado el requerimiento",
+            },
+          };
+        } else {
+          return {
+            success: false,
+            code: 400,
+            error: {
+              msg: "Estado de requerimiento no permite republicar",
             },
           };
         }

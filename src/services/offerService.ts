@@ -395,16 +395,28 @@ export class OfferService {
     }
   };
 
-  static deleteOffer = async (offerId: string) => {
+  static updateStateOffer = async (offerId: string, state: OfferState) => {
     try {
       const updatedOffer = await OfferModel.findOneAndUpdate(
         { uid: offerId },
         {
           $set: {
-            stateID: OfferState.ELIMINATED,
+            stateID: state,
           },
         },
         { new: true }
+      );
+      return updatedOffer;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static deleteOffer = async (offerId: string) => {
+    try {
+      const updatedOffer = await OfferService.updateStateOffer(
+        offerId,
+        OfferState.ELIMINATED
       );
       if (!updatedOffer)
         return {

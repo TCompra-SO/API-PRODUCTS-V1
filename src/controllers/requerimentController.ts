@@ -163,6 +163,27 @@ const deleteController = async (req: Request, res: Response) => {
   }
 };
 
+const republishController = async (req: Request, res: Response) => {
+  try {
+    const { completion_date, uid } = req.body;
+    const responseUser = await RequerimentService.republish(
+      uid,
+      completion_date
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en republishController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -171,4 +192,5 @@ export {
   expiredController,
   getbasicRateDataController,
   deleteController,
+  republishController,
 };

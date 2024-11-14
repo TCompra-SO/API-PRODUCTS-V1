@@ -6,6 +6,7 @@ import {
   getbasicRateDataController,
   getRequerimentIDController,
   getRequerimentsController,
+  republishController,
   selectOfferController,
 } from "../controllers/requerimentController";
 
@@ -24,6 +25,7 @@ export class RequerimentRouter {
     this.router.get("/expired", expiredController);
 
     this.router.get("/delete/:uid", deleteController);
+    this.router.post("/republish", republishController);
   }
 
   static getRouter(): Router {
