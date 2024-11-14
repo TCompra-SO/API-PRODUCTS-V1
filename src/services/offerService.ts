@@ -27,11 +27,10 @@ export class OfferService {
       const result = RequerimentService.getRequerimentById(requerimentID);
       const API_USER = process.env.API_USER;
       let entityID;
-      let subUserEmail='';
+      let subUserEmail = "";
       const resultData = await axios.get(
         `${API_USER}auth/getBaseDataUser/${userID}`
-      )
-      
+      );
 
       if (!resultData.data.success) {
         return {
@@ -259,7 +258,7 @@ export class OfferService {
             uid: 1,
             name: 1,
             email: 1,
-            subUserEmail:1,
+            subUserEmail: 1,
             description: 1,
             cityID: 1,
             deliveryTimeID: 1,
@@ -327,6 +326,46 @@ export class OfferService {
         code: 500,
         error: {
           msg: "Hubo un error al obtener las ofertas.",
+        },
+      };
+    }
+  };
+
+  static getOffersByEntity = async (uid: string) => {
+    try {
+      const result = await OfferModel.find({ entityID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor.",
+        },
+      };
+    }
+  };
+
+  static getOffersBySubUser = async (uid: string) => {
+    try {
+      const result = await OfferModel.find({ userID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor.",
         },
       };
     }

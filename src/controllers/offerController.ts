@@ -55,6 +55,42 @@ const GetOffersController = async (req: Request, res: Response) => {
   }
 };
 
+const GetOffersByEntityController = async (req: Request, res: Response) => {
+  const { uid } = req.params;
+  try {
+    const responseUser = await OfferService.getOffersByEntity(uid);
+    if (responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en GetOffersByEntityController");
+    res.status(500).send({
+      success: false,
+      msg: "Error interno en el servidor",
+    });
+  }
+};
+
+const GetOffersBySubUserController = async (req: Request, res: Response) => {
+  const { uid } = req.params;
+  try {
+    const responseUser = await OfferService.getOffersBySubUser(uid);
+    if (responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en GetOffersBySubUserController");
+    res.status(500).send({
+      success: false,
+      msg: "Error interno en el servidor",
+    });
+  }
+};
+
 const GetOffersByRequerimentController = async (
   req: Request,
   res: Response
@@ -103,4 +139,6 @@ export {
   GetOffersController,
   GetOffersByRequerimentController,
   getbasicRateDataController,
+  GetOffersByEntityController,
+  GetOffersBySubUserController,
 };

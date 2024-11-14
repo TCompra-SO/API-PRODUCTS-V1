@@ -33,8 +33,8 @@ export class RequerimentService {
         `${API_USER}auth/getBaseDataUser/${userID}`
       );
 
-      let subUserEmail ='';
-      let subUserName ='';
+      let subUserEmail = "";
+      let subUserName = "";
       if (resultData.data.success === false) {
         return {
           success: false,
@@ -48,7 +48,7 @@ export class RequerimentService {
         email = resultData.data.data[0]?.email;
         subUserEmail = resultData.data.data[0]?.auth_users?.email;
       }
-      
+
       const newRequeriment = new ProductModel({
         name,
         description,
@@ -219,7 +219,7 @@ export class RequerimentService {
             duration: 1,
             allowed_bidersID: 1,
             entityID: 1,
-            subUserEmail:1,
+            subUserEmail: 1,
             userID: 1,
             email: 1,
             publish_date: 1,
@@ -261,6 +261,42 @@ export class RequerimentService {
         error: {
           msg: "Error interno en el Servidor",
         },
+      };
+    }
+  };
+
+  static getRequerimentsByEntity = async (uid: string) => {
+    try {
+      const result = await ProductModel.find({ entityID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: { msg: "Error interno en el Servidor" },
+      };
+    }
+  };
+
+  static getRequerimentsbySubUser = async (uid: string) => {
+    try {
+      const result = await ProductModel.find({ userID: uid });
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: { msg: "Error interno en el Servidor" },
       };
     }
   };

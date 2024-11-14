@@ -14,6 +14,7 @@ import puppeteer from "puppeteer";
 import { Buffer } from "node:buffer";
 import { OrderPurchaseTemplate } from "../utils/OrderPurchaseTemplate";
 import { launch } from "./../../node_modules/@puppeteer/browsers/lib/esm/launch";
+import { error } from "node:console";
 
 let API_USER = process.env.API_USER;
 export class PurchaseOrderService {
@@ -290,13 +291,35 @@ export class PurchaseOrderService {
       if (data && data.success && data.data) {
         const html = await OrderPurchaseTemplate(data.data);
 
-        return await this.createPDF(html);
+        // Genera el PDF a partir de la plantilla HTML
+        const pdfBuffer: Buffer = await this.createPDF(html);
+
+        // Convierte el PDF a base64
+        const pdfBase64 = pdfBuffer.toString("base64");
+
+        return {
+          success: true,
+          code: 200,
+          data: pdfBase64,
+        };
       } else {
-        return null;
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se ha encontrado la Orden de Compra",
+          },
+        };
       }
     } catch (error) {
       console.log(error);
-      return null;
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error al generar el PDF",
+        },
+      };
     }
   };
 }

@@ -75,6 +75,48 @@ const getRequerimentIDController = async (req: Request, res: Response) => {
   }
 };
 
+const getRequerimentsByEntityController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { uid } = req.params;
+    const responseUser = await RequerimentService.getRequerimentsByEntity(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getRequerimentByEntityController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+const getRequerimentsBySubUserController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { uid } = req.params;
+    const responseUser = await RequerimentService.getRequerimentsbySubUser(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getRequerimentBySubUserController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 const selectOfferController = async (req: Request, res: Response) => {
   try {
     const {
@@ -151,4 +193,6 @@ export {
   selectOfferController,
   expiredController,
   getbasicRateDataController,
+  getRequerimentsByEntityController,
+  getRequerimentsBySubUserController,
 };
