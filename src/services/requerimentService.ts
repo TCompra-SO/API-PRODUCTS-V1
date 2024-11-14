@@ -579,65 +579,58 @@ export class RequerimentService {
     try {
       const requirementData = await ProductModel.findOne({
         uid: requirementID,
+        state: {
+          $in: [
+            RequirementState.CANCELED,
+            RequirementState.EXPIRED,
+            RequirementState.PUBLISHED,
+          ],
+        }, // oferta seleccionada ya debe estar cancelada o no hay oferta seleccionada
       });
 
       if (requirementData) {
         if (
-          requirementData.stateID == RequirementState.CANCELED || // oferta seleccionada ya debe estar cancelada
-          requirementData.stateID == RequirementState.EXPIRED || // no hay oferta seleccionada
-          RequirementState.PUBLISHED // no hay oferta seleccionada
+          requirementData.stateID != RequirementState.CANCELED ||
+          (requirementData.stateID != RequirementState.CANCELED &&
+            !requirementData.winOffer) // no hay oferta seleccionada cancelada
         ) {
-          if (
-            requirementData.stateID != RequirementState.CANCELED ||
-            (requirementData.stateID != RequirementState.CANCELED &&
-              !requirementData.winOffer) // no hay oferta seleccionada cancelada
-          ) {
-            const offers = await OfferService.getOffersByRequeriment(
-              requirementID
-            );
-            if (offers.success && offers.data && offers.data.length > 0) {
-              // eliminar todas las ofertas del requerimiento
-              await Promise.all(
-                offers.data.map(async (offer) => {
-                  await OfferService.deleteOffer(offer.uid);
-                })
-              );
-            }
-          }
-
-          await ProductModel.findOneAndUpdate(
-            { uid: requirementID },
-            {
-              $set: {
-                stateID: RequirementState.ELIMINATED,
-              },
-            },
-            { new: true }
+          const offers = await OfferService.getOffersByRequeriment(
+            requirementID
           );
-
-          return {
-            success: true,
-            code: 200,
-            data: requirementID,
-            res: {
-              msg: "Se ha eliminado el requerimiento",
-            },
-          };
-        } else {
-          return {
-            success: false,
-            code: 400,
-            error: {
-              msg: "Estado de requerimiento no permite eliminar",
-            },
-          };
+          if (offers.success && offers.data && offers.data.length > 0) {
+            // eliminar todas las ofertas del requerimiento
+            await Promise.all(
+              offers.data.map(async (offer) => {
+                await OfferService.deleteOffer(offer.uid);
+              })
+            );
+          }
         }
+
+        await ProductModel.findOneAndUpdate(
+          { uid: requirementID },
+          {
+            $set: {
+              stateID: RequirementState.ELIMINATED,
+            },
+          },
+          { new: true }
+        );
+
+        return {
+          success: true,
+          code: 200,
+          data: requirementID,
+          res: {
+            msg: "Se ha eliminado el requerimiento",
+          },
+        };
       } else
         return {
           success: false,
           code: 404,
           error: {
-            msg: "Requerimiento no encontrado",
+            msg: "Requerimiento no encontrado o estado no permite eliminar",
           },
         };
     } catch (error) {

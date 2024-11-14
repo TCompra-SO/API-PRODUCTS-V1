@@ -6,6 +6,7 @@ import {
   GetOffersByRequerimentController,
   GetOffersController,
 } from "../controllers/offerController";
+import { deleteController } from "../controllers/requerimentController";
 export class OfferRouter {
   private static instance: OfferRouter;
   private router: Router;
@@ -21,6 +22,8 @@ export class OfferRouter {
       GetOffersByRequerimentController
     );
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
+
+    this.router.get("/delete/:uid", deleteController);
   }
 
   static getRouter(): Router {
