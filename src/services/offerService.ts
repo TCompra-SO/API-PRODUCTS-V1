@@ -3,6 +3,7 @@ import { OfferI } from "../interfaces/offer.interface";
 import { OfferModel } from "../models/offerModel";
 import { RequerimentService } from "./requerimentService";
 import ProductModel from "../models/productModel";
+import { OfferState } from "../utils/Types";
 let API_USER = process.env.API_USER;
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -27,11 +28,10 @@ export class OfferService {
       const result = RequerimentService.getRequerimentById(requerimentID);
       const API_USER = process.env.API_USER;
       let entityID;
-      let subUserEmail='';
+      let subUserEmail = "";
       const resultData = await axios.get(
         `${API_USER}auth/getBaseDataUser/${userID}`
-      )
-      
+      );
 
       if (!resultData.data.success) {
         return {
@@ -259,7 +259,7 @@ export class OfferService {
             uid: 1,
             name: 1,
             email: 1,
-            subUserEmail:1,
+            subUserEmail: 1,
             description: 1,
             cityID: 1,
             deliveryTimeID: 1,
@@ -390,6 +390,55 @@ export class OfferService {
         code: 500,
         error: {
           msg: "Error interno con el servidor",
+        },
+      };
+    }
+  };
+
+  static updateStateOffer = async (offerId: string, state: OfferState) => {
+    try {
+      const updatedOffer = await OfferModel.findOneAndUpdate(
+        { uid: offerId },
+        {
+          $set: {
+            stateID: state,
+          },
+        },
+        { new: true }
+      );
+      return updatedOffer;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  static deleteOffer = async (offerId: string) => {
+    try {
+      const updatedOffer = await OfferService.updateStateOffer(
+        offerId,
+        OfferState.ELIMINATED
+      );
+      if (!updatedOffer)
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "No se encontró la oferta",
+          },
+        };
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "Se eliminó la oferta exitosamente",
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Ocurrió un error al intentar eliminar la oferta.",
         },
       };
     }
