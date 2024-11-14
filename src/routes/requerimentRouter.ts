@@ -1,12 +1,14 @@
 import { Router } from "express";
 import {
   createRequerimentController,
+  deleteController,
   expiredController,
   getbasicRateDataController,
   getRequerimentIDController,
   getRequerimentsByEntityController,
   getRequerimentsBySubUserController,
   getRequerimentsController,
+  republishController,
   selectOfferController,
 } from "../controllers/requerimentController";
 
@@ -23,6 +25,7 @@ export class RequerimentRouter {
     this.router.get("/getRequeriment/:uid", getRequerimentIDController);
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get("/expired", expiredController);
+
     this.router.get(
       "/getRequerimentsByEntity/:uid",
       getRequerimentsByEntityController
@@ -31,6 +34,9 @@ export class RequerimentRouter {
       "/getRequerimentsBySubUser/:uid",
       getRequerimentsBySubUserController
     );
+
+    this.router.get("/delete/:uid", deleteController);
+    this.router.post("/republish", republishController);
   }
 
   static getRouter(): Router {
