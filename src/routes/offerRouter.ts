@@ -8,7 +8,7 @@ import {
   GetOffersBySubUserController,
   GetOffersController,
 } from "../controllers/offerController";
-import { deleteController } from "../controllers/requerimentController";
+import { deleteController } from "../controllers/offerController";
 export class OfferRouter {
   private static instance: OfferRouter;
   private router: Router;
