@@ -133,6 +133,24 @@ const getbasicRateDataController = async (req: Request, res: Response) => {
   }
 };
 
+const deleteController = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.params;
+    const responseUser = await OfferService.deleteOffer(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en deleteController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
@@ -141,4 +159,5 @@ export {
   getbasicRateDataController,
   GetOffersByEntityController,
   GetOffersBySubUserController,
+  deleteController,
 };
