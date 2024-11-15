@@ -89,6 +89,44 @@ const getPurchaseOrderIDController = async (req: Request, res: Response) => {
   }
 };
 
+const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
+  const { uid } = req.params;
+  try {
+    const responseUser =
+      await PurchaseOrderService.getPurchaseOrdersByEntityProvider(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getPurchaseOrdersByProviderController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+const getPurchaseOrdersByClient = async (req: Request, res: Response) => {
+  const { uid } = req.params;
+  try {
+    const responseUser =
+      await PurchaseOrderService.getPurchaseOrdersByEntityClient(uid);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getPurchaseOrdersByClientController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
   const { uid } = req.params;
 
@@ -114,4 +152,6 @@ export {
   getPurchaseOrderByUser,
   getPurchaseOrderIDController,
   getPurchaseOrderPDFController,
+  getPurchaseOrdersByProvider,
+  getPurchaseOrdersByClient,
 };

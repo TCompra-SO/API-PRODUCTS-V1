@@ -260,6 +260,50 @@ export class PurchaseOrderService {
     }
   };
 
+  static getPurchaseOrdersByEntityProvider = async (uid: string) => {
+    try {
+      const result = await PurchaseOrderModel.find({ userProviderID: uid });
+
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static getPurchaseOrdersByEntityClient = async (uid: string) => {
+    try {
+      const result = await PurchaseOrderModel.find({
+        userClientID: uid,
+      });
+
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
   static createPDF = async (htmlContent: string): Promise<Buffer> => {
     // Iniciar el navegador de Puppeteer
     //const browser = await puppeteer.launch();
@@ -268,18 +312,22 @@ export class PurchaseOrderService {
     });
 
     const page = await browser.newPage();
-
+    let pdfBuffer;
     // Establecer el contenido HTML
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
     // Generar el PDF como Buffer (con formato A4)
-    const pdfBuffer = Buffer.from(
+    /*  pdfBuffer = (await page.pdf({
+      format: "A4",
+      printBackground: true,
+    })) as Buffer;
+*/
+    pdfBuffer = Buffer.from(
       await page.pdf({
         format: "A4",
         printBackground: true,
       })
     );
-
     // Cerrar el navegador
     await browser.close();
 
