@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { OfferService } from "../services/offerService";
+import { transformOffersData } from "../middlewares/offer.front.interface";
 
 const CreateOfferController = async ({ body }: Request, res: Response) => {
   try {
@@ -41,10 +42,16 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
 const GetOffersController = async (req: Request, res: Response) => {
   try {
     const responseUser = await OfferService.GetOffers();
-    if (responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
-    } else {
-      res.status(responseUser.code).send(responseUser.error);
+    if (responseUser && responseUser.success) {
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformOffersData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     }
   } catch (error) {
     console.error("Error en GetOffersController");
@@ -59,10 +66,16 @@ const GetOffersByEntityController = async (req: Request, res: Response) => {
   const { uid } = req.params;
   try {
     const responseUser = await OfferService.getOffersByEntity(uid);
-    if (responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
-    } else {
-      res.status(responseUser.code).send(responseUser.error);
+    if (responseUser && responseUser.success) {
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformOffersData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     }
   } catch (error) {
     console.error("Error en GetOffersByEntityController");
@@ -77,10 +90,16 @@ const GetOffersBySubUserController = async (req: Request, res: Response) => {
   const { uid } = req.params;
   try {
     const responseUser = await OfferService.getOffersBySubUser(uid);
-    if (responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
-    } else {
-      res.status(responseUser.code).send(responseUser.error);
+    if (responseUser && responseUser.success) {
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformOffersData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     }
   } catch (error) {
     console.error("Error en GetOffersBySubUserController");

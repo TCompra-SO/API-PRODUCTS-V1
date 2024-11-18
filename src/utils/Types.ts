@@ -25,3 +25,7 @@ export enum PurchaseOrderState {
   DISPUTE = 4,
   ELIMINATED = 7,
 }
+
+export enum TypeUser {
+  ADMIN = 1,
+}

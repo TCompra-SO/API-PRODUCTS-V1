@@ -75,6 +75,7 @@ export class OfferService {
         entityID: entityID,
         stateID: 1,
         publishDate: new Date(),
+        delivered: false,
       });
 
       const resultOffer = this.GetOfferByUser(requerimentID, userID);
@@ -275,6 +276,8 @@ export class OfferService {
             publishDate: 1,
             userID: 1,
             entityID: 1,
+            files: 1,
+            images: 1,
             canceledByCreator: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
@@ -334,7 +337,55 @@ export class OfferService {
 
   static getOffersByEntity = async (uid: string) => {
     try {
-      const result = await OfferModel.find({ entityID: uid });
+      const result = await OfferModel.aggregate([
+        {
+          $match: {
+            entityID: uid,
+          },
+        },
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de productos (ProductModel)
+            localField: "requerimentID", // Campo en OfferModel
+            foreignField: "uid", // Campo en ProductModel que coincide
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+          },
+        },
+
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de OfferModel
+            uid: 1,
+            name: 1,
+            email: 1,
+            subUserEmail: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            files: 1,
+            images: 1,
+            canceledByCreator: 1,
+
+            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            },
+          },
+        },
+      ]);
       return {
         success: true,
         code: 200,
@@ -354,7 +405,55 @@ export class OfferService {
 
   static getOffersBySubUser = async (uid: string) => {
     try {
-      const result = await OfferModel.find({ userID: uid });
+      const result = await OfferModel.aggregate([
+        {
+          $match: {
+            userID: uid,
+          },
+        },
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de productos (ProductModel)
+            localField: "requerimentID", // Campo en OfferModel
+            foreignField: "uid", // Campo en ProductModel que coincide
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+          },
+        },
+
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de OfferModel
+            uid: 1,
+            name: 1,
+            email: 1,
+            subUserEmail: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            files: 1,
+            images: 1,
+            canceledByCreator: 1,
+
+            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            },
+          },
+        },
+      ]);
       return {
         success: true,
         code: 200,

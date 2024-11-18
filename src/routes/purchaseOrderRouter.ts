@@ -27,11 +27,11 @@ export class PurchaseOrderRouter {
     this.router.get("/getpurchaseOrderID/:uid", getPurchaseOrderIDController);
     this.router.get("/getpurchaseOrderPDF/:uid", getPurchaseOrderPDFController);
     this.router.get(
-      "/getpurchaseOrdersByProvider/:uid",
+      "/getpurchaseOrdersByProvider/:uid/:typeUser",
       getPurchaseOrdersByProvider
     );
     this.router.get(
-      "/getpurchaseOrdersByClient/:uid",
+      "/getpurchaseOrdersByClient/:uid/:typeUser",
       getPurchaseOrdersByClient
     );
   }

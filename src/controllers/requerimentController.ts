@@ -82,10 +82,22 @@ const getRequerimentsByEntityController = async (
   try {
     const { uid } = req.params;
     const responseUser = await RequerimentService.getRequerimentsByEntity(uid);
+    // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     } else {
-      res.status(responseUser.code).send(responseUser.error);
+      // Manejar el error según la respuesta
+      res
+        .status(responseUser.code)
+        .send(responseUser.error || { msg: "Error desconocido" });
     }
   } catch (error) {
     console.error("Error en getRequerimentByEntityController", error);
@@ -103,10 +115,22 @@ const getRequerimentsBySubUserController = async (
   try {
     const { uid } = req.params;
     const responseUser = await RequerimentService.getRequerimentsbySubUser(uid);
+    // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     } else {
-      res.status(responseUser.code).send(responseUser.error);
+      // Manejar el error según la respuesta
+      res
+        .status(responseUser.code)
+        .send(responseUser.error || { msg: "Error desconocido" });
     }
   } catch (error) {
     console.error("Error en getRequerimentBySubUserController", error);

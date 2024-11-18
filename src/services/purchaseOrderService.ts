@@ -15,6 +15,7 @@ import { Buffer } from "node:buffer";
 import { OrderPurchaseTemplate } from "../utils/OrderPurchaseTemplate";
 import { launch } from "./../../node_modules/@puppeteer/browsers/lib/esm/launch";
 import { error } from "node:console";
+import { TypeUser } from "../utils/Types";
 
 let API_USER = process.env.API_USER;
 export class PurchaseOrderService {
@@ -260,10 +261,19 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrdersByEntityProvider = async (uid: string) => {
+  static getPurchaseOrdersByEntityProvider = async (
+    uid: string,
+    typeUser: number
+  ) => {
     try {
-      const result = await PurchaseOrderModel.find({ userProviderID: uid });
-
+      let result;
+      if (TypeUser.ADMIN === typeUser) {
+        result = await PurchaseOrderModel.find({ userProviderID: uid });
+      } else {
+        result = await PurchaseOrderModel.find({
+          subUserProviderID: uid,
+        });
+      }
       return {
         success: true,
         code: 200,
@@ -281,11 +291,21 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrdersByEntityClient = async (uid: string) => {
+  static getPurchaseOrdersByEntityClient = async (
+    uid: string,
+    typeUser: number
+  ) => {
     try {
-      const result = await PurchaseOrderModel.find({
-        userClientID: uid,
-      });
+      let result;
+      if (TypeUser.ADMIN === typeUser) {
+        result = await PurchaseOrderModel.find({
+          userClientID: uid,
+        });
+      } else {
+        result = await PurchaseOrderModel.find({
+          subUserClientID: uid,
+        });
+      }
 
       return {
         success: true,

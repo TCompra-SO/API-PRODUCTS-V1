@@ -90,6 +90,26 @@ const OfferSchema = new Schema<OfferI>({
     type: String,
     required: true,
   },
+  images: {
+    type: [String],
+    required: false,
+  },
+  files: {
+    type: [String],
+    required: false,
+  },
+  canceledByCreator: {
+    type: Boolean,
+    required: false,
+  },
+  delivered: {
+    type: Boolean,
+    required: false,
+  },
+  selectionDate: {
+    type: Date,
+    required: false,
+  },
 });
 
 // Exportamos el modelo

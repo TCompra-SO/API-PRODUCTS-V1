@@ -90,10 +90,13 @@ const getPurchaseOrderIDController = async (req: Request, res: Response) => {
 };
 
 const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
-  const { uid } = req.params;
+  const { uid, typeUser } = req.params;
   try {
     const responseUser =
-      await PurchaseOrderService.getPurchaseOrdersByEntityProvider(uid);
+      await PurchaseOrderService.getPurchaseOrdersByEntityProvider(
+        uid,
+        Number(typeUser)
+      );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
     } else {
@@ -109,10 +112,13 @@ const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
 };
 
 const getPurchaseOrdersByClient = async (req: Request, res: Response) => {
-  const { uid } = req.params;
+  const { uid, typeUser } = req.params;
   try {
     const responseUser =
-      await PurchaseOrderService.getPurchaseOrdersByEntityClient(uid);
+      await PurchaseOrderService.getPurchaseOrdersByEntityClient(
+        uid,
+        Number(typeUser)
+      );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
     } else {

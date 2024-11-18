@@ -19,5 +19,9 @@ export interface OfferI {
   userID: string;
   entityID: string;
   subUserEmail: string;
+  images: string[];
+  files: string[];
   canceledByCreator: boolean;
+  delivered: true;
+  selectionDate: Date;
 }

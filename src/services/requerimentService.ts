@@ -268,7 +268,65 @@ export class RequerimentService {
 
   static getRequerimentsByEntity = async (uid: string) => {
     try {
-      const result = await ProductModel.find({ entityID: uid });
+      const result = await ProductModel.aggregate([
+        // Buscar el requerimiento por su uid
+        {
+          $match: {
+            entityID: uid,
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "offersproducts", // Nombre de la colección de ofertas
+            localField: "winOffer.uid", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "winOffer", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$winOffer", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Proyección de los campos que deseas devolver (todos los campos del requerimiento)
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            duration: 1,
+            allowed_bidersID: 1,
+            entityID: 1,
+            subUserEmail: 1,
+            userID: 1,
+            email: 1,
+            publish_date: 1,
+            stateID: 1,
+            uid: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            }, // Aquí incluimos todos los campos de la oferta ganadora
+          },
+        },
+      ]);
       return {
         success: true,
         code: 200,
@@ -286,7 +344,65 @@ export class RequerimentService {
 
   static getRequerimentsbySubUser = async (uid: string) => {
     try {
-      const result = await ProductModel.find({ userID: uid });
+      const result = await ProductModel.aggregate([
+        // Buscar el requerimiento por su userid
+        {
+          $match: {
+            userID: uid,
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "offersproducts", // Nombre de la colección de ofertas
+            localField: "winOffer.uid", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "winOffer", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$winOffer", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Proyección de los campos que deseas devolver (todos los campos del requerimiento)
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            duration: 1,
+            allowed_bidersID: 1,
+            entityID: 1,
+            subUserEmail: 1,
+            userID: 1,
+            email: 1,
+            publish_date: 1,
+            stateID: 1,
+            uid: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            }, // Aquí incluimos todos los campos de la oferta ganadora
+          },
+        },
+      ]);
       return {
         success: true,
         code: 200,
@@ -447,6 +563,7 @@ export class RequerimentService {
               {
                 $set: {
                   stateID: 2,
+                  selectionDate: new Date(),
                 },
               },
               { new: true }
