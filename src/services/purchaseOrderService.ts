@@ -98,9 +98,6 @@ export class PurchaseOrderService {
         deliveryDate = null;
       }
 
-      console.log(deliveryDate);
-      console.log(currencyValue);
-
       if (!(await offerBasicData).success) {
         return {
           success: false,
@@ -210,9 +207,30 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrderByUser = async (userClientID: string) => {
+  static getPurchaseOrdersClient = async (userClientID: string) => {
     try {
       const result = await PurchaseOrderModel.find({ userClientID });
+
+      return {
+        success: true,
+        code: 200,
+        data: result,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          res: "Se ha producido un error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static getPurchaseOrdersProvider = async (userProviderID: string) => {
+    try {
+      const result = await PurchaseOrderModel.find({ userProviderID });
 
       return {
         success: true,

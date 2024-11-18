@@ -38,8 +38,8 @@ function transformOffersData(response: {
   const transformedData: OfferFrontI[] = response.data.map((offer) => ({
     key: offer.uid, // 'uid' renombrado a 'key'
     title: offer.name, // 'name' renombrado a 'title'
-    user: offer.userID, // 'userID' renombrado a 'user'
-    subUser: offer.entityID, // 'entityID' usado como 'subUser'
+    user: offer.entityID, // 'userID' renombrado a 'user'
+    subUser: offer.userID, // 'entityID' usado como 'subUser'
     requirementTitle: offer.requerimentTitle, // No está presente en OfferI; deberás buscarlo si es necesario
     requirementId: offer.requerimentID, // 'requerimentID' renombrado a 'requirementId'
     publishDate: offer.publishDate.toISOString(), // 'publishDate' convertido a string

@@ -51,7 +51,7 @@ export class OfferService {
           success: false,
           code: 404,
           error: {
-            msg: "No puedes ofertar a tu propio requerimiento",
+            msg: "No puedes ofertar aun requerimiento de tu Empresa",
           },
         };
       }

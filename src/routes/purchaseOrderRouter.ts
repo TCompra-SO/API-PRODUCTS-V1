@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {
   CreatePurchaseOrderController,
-  getPurchaseOrderByUser,
+  getPurchaseOrdersClientController,
+  getPurchaseOrdersProviderController,
   getPurchaseOrderIDController,
   getPurchaseOrdersController,
   getPurchaseOrderPDFController,
@@ -21,9 +22,14 @@ export class PurchaseOrderRouter {
 
     this.router.get("/getPurchaseOrders", getPurchaseOrdersController);
     this.router.get(
-      "/getPurchaseOrderByUser/:userClientID",
-      getPurchaseOrderByUser
+      "/getPurchaseOrdersClient/:userClientID",
+      getPurchaseOrdersClientController
     );
+    this.router.get(
+      "/getPurchaseOrdersProvider/:userProviderID",
+      getPurchaseOrdersProviderController
+    );
+
     this.router.get("/getpurchaseOrderID/:uid", getPurchaseOrderIDController);
     this.router.get("/getpurchaseOrderPDF/:uid", getPurchaseOrderPDFController);
     this.router.get(
