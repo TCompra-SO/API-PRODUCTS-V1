@@ -737,7 +737,7 @@ export class RequerimentService {
     try {
       const requirementData = await ProductModel.findOne({
         uid: requirementID,
-        state: {
+        stateID: {
           $in: [
             RequirementState.CANCELED,
             RequirementState.EXPIRED,
