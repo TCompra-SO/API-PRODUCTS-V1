@@ -119,7 +119,7 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: String,
     required: false,
   },
-  state: {
+  stateID: {
     type: Number,
     required: true,
   },
@@ -145,6 +145,10 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
   },
   warranty_Filter: {
     type: Number,
+    required: false,
+  },
+  scoreState: {
+    type: Object,
     required: false,
   },
 });

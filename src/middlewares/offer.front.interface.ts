@@ -58,7 +58,6 @@ function transformOffersData(response: {
       : undefined, //
     igv: offer.includesIGV, // 'includesIGV' renombrado a 'igv'
     deliveryDate: offer.deliveryDate?.toISOString(), // 'deliveryDate' convertido a string
-    delivered: offer.delivered, //
     canceledByCreator: offer.canceledByCreator, // Sin cambios
     includesDelivery: offer.includesDelivery, // Sin cambios
   }));

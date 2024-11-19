@@ -102,10 +102,6 @@ const OfferSchema = new Schema<OfferI>({
     type: Boolean,
     required: false,
   },
-  delivered: {
-    type: Boolean,
-    required: false,
-  },
   selectionDate: {
     type: Date,
     required: false,

@@ -250,6 +250,29 @@ const republishController = async (req: Request, res: Response) => {
   }
 };
 
+const culminateController = async (req: Request, res: Response) => {
+  try {
+    const { requerimentID, delivered, score, comments } = req.body;
+    const responseUser = await RequerimentService.culminate(
+      requerimentID,
+      delivered,
+      score,
+      comments
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en culminateController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -261,4 +284,5 @@ export {
   getRequerimentsBySubUserController,
   deleteController,
   republishController,
+  culminateController,
 };

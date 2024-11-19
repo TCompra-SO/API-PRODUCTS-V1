@@ -6,7 +6,12 @@ import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
 import { PurchaseOrderService } from "./purchaseOrderService";
 import { Console, error } from "console";
-import { OfferState, RequirementState } from "../utils/Types";
+import {
+  OfferState,
+  PurchaseOrderState,
+  RequirementState,
+} from "../utils/Types";
+import PurchaseOrderModel from "../models/purchaseOrder";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -868,6 +873,159 @@ export class RequerimentService {
         code: 500,
         error: {
           msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static culminate = async (
+    requerimentID: string,
+    delivered: boolean,
+    score: number,
+    comments?: string
+  ) => {
+    try {
+      const requerimentData = await ProductModel.findOne({
+        uid: requerimentID,
+      });
+      if (!requerimentData) {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "Requerimiento no encontrado",
+          },
+        };
+      }
+
+      if (requerimentData.stateID !== RequirementState.SELECTED) {
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "El estado del requerimiento no permite realizar esta acción",
+          },
+        };
+      }
+
+      const offerID = requerimentData.winOffer.uid;
+
+      const purchaseOrderData = await PurchaseOrderModel.aggregate([
+        {
+          $match: {
+            requerimentID: requerimentID, // Sustituye por el valor real
+            offerID: offerID, // Sustituye por el valor real
+          },
+        },
+      ]);
+
+      const requestBody = {
+        typeScore: "Provider", // Tipo de puntaje
+        uidEntity: purchaseOrderData?.[0].userProviderID, // ID de la empresa a ser evaluada
+        uidUser: purchaseOrderData?.[0].userClientID, // ID del usuario que evalua
+        score: score, // Puntaje
+        comments: comments, // Comentarios
+      };
+
+      const resultData = await axios.post(
+        `${API_USER}score/registerScore/`,
+        requestBody
+      );
+
+      console.log(resultData);
+      if (!resultData.data.success) {
+        return {
+          success: false,
+          code: 401,
+          error: {
+            msg: "No se ha podido calificar al usuario",
+          },
+        };
+      }
+
+      if (
+        !purchaseOrderData?.[0].scoreState.scoreProvider &&
+        !purchaseOrderData?.[0].scoreState.delivered
+      ) {
+        await PurchaseOrderModel.updateOne(
+          {
+            requerimentID: requerimentID,
+            offerID: offerID,
+          },
+          {
+            $set: {
+              "scoreState.scoreClient": true,
+              "scoreState.deliveredClient": delivered,
+              stateID: PurchaseOrderState.FINISHED,
+            },
+          }
+        );
+
+        await ProductModel.updateOne(
+          {
+            uid: requerimentID,
+          },
+          {
+            $set: {
+              stateID: RequirementState.FINISHED,
+            },
+          }
+        );
+      } else {
+        // AQUI USAR LA FUNCION EN DISPUTA //
+      }
+
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "Se ha culminado correctamente",
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static inDispute = async (uid: string, stateID: number, Model: any) => {
+    try {
+      const updateResult = await Model.updateOne(
+        { uid },
+        { $set: { stateID: stateID } }
+      );
+
+      // Verificar si se actualizó algún documento
+      if (updateResult.matchedCount === 0) {
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "No se encontró ninguna coincidencia para el UID proporcionado.",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "El estado se actualizó correctamente.",
+        },
+      };
+    } catch (error) {
+      console.error("Error en inDispute:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
         },
       };
     }

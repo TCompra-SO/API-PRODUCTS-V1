@@ -149,13 +149,19 @@ export class PurchaseOrderService {
         addressProvider: (await basicProviderData).data.data?.[0].address,
         documentProvider: (await userProviderData).data.data?.[0].document,
         emailProvider: (await offerData).data?.[0].email,
-        state: PurchaseOrderState.PENDING,
+        stateID: PurchaseOrderState.PENDING,
         offerID: (await offerData).data?.[0].uid,
         offerTitle: (await offerData).data?.[0].name,
         price_Filter,
         deliveryTime_Filter,
         location_Filter,
         warranty_Filter,
+        scoreState: {
+          scoreClient: false,
+          scoreProvider: false,
+          deliveredClient: false,
+          deliveredProvider: false,
+        },
       };
 
       const CreateOrder = new PurchaseOrderModel(newPurchaseOrder);

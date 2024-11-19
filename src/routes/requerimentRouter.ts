@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createRequerimentController,
+  culminateController,
   deleteController,
   expiredController,
   getbasicRateDataController,
@@ -37,6 +38,7 @@ export class RequerimentRouter {
 
     this.router.get("/delete/:uid", deleteController);
     this.router.post("/republish", republishController);
+    this.router.post("/culminate", culminateController);
   }
 
   static getRouter(): Router {

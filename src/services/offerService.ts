@@ -51,7 +51,7 @@ export class OfferService {
           success: false,
           code: 404,
           error: {
-            msg: "No puedes ofertar aun requerimiento de tu Empresa",
+            msg: "No puedes ofertar a un requerimiento de tu Empresa",
           },
         };
       }
@@ -75,7 +75,6 @@ export class OfferService {
         entityID: entityID,
         stateID: 1,
         publishDate: new Date(),
-        delivered: false,
       });
 
       const resultOffer = this.GetOfferByUser(requerimentID, userID);

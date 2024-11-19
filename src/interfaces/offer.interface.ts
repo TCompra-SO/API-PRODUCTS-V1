@@ -22,6 +22,5 @@ export interface OfferI {
   images: string[];
   files: string[];
   canceledByCreator: boolean;
-  delivered: true;
   selectionDate: Date;
 }

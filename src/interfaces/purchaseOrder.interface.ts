@@ -1,20 +1,3 @@
-/*export interface PurchaseOrderI {
-import { PurchaseOrderI } from './purchaseOrder.interface';
-  uid: string;
-  type: number; // esto es requerimiento,
-  userClient: string;
-  subUserClient?: string;
-  userProvider: string;
-  subUserProvider?: string;
-  requirementTitle?: string;
-  requirementId: string;
-  selectionDate: string;
-  state: PurchaseOrderState;
-  offerTitle: string;
-  offerId: string;
-  filters: OfferFilters;
-}*/
-
 export interface PurchaseOrderI {
   uid: string;
   type: TypeRequeriment;
@@ -44,13 +27,21 @@ export interface PurchaseOrderI {
   documentProvider: string;
   emailProvider: string;
   subUserEmailProvider: string;
-  state: PurchaseOrderState;
+  stateID: PurchaseOrderState;
   offerID: string;
   offerTitle: string;
   price_Filter: CommonFilter;
   deliveryTime_Filter: number;
   location_Filter: number;
   warranty_Filter: number;
+  scoreState?: ScoreStateI;
+}
+
+export interface ScoreStateI {
+  scoreClient: boolean;
+  scoreProvider: boolean;
+  deliveredClient: boolean;
+  deliveredProvider: boolean;
 }
 export enum PurchaseOrderState {
   PENDING = 1,
