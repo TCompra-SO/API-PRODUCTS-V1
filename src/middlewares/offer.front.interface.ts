@@ -53,9 +53,7 @@ function transformOffersData(response: {
     location: offer.cityID, // 'cityID' renombrado a 'location'
     image: offer.images, //
     document: offer.files, //
-    selectionDate: offer.selectionDate
-      ? offer.selectionDate.toISOString()
-      : undefined, //
+    selectionDate: offer.selectionDate?.toISOString(), //
     igv: offer.includesIGV, // 'includesIGV' renombrado a 'igv'
     deliveryDate: offer.deliveryDate?.toISOString(), // 'deliveryDate' convertido a string
     canceledByCreator: offer.canceledByCreator, // Sin cambios

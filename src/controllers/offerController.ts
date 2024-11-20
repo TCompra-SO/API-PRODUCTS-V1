@@ -54,7 +54,7 @@ const GetOffersController = async (req: Request, res: Response) => {
       }
     }
   } catch (error) {
-    console.error("Error en GetOffersController");
+    console.error("Error en GetOffersController", error);
     res.status(500).send({
       success: false,
       msg: "Error interno en el servidor",
@@ -170,6 +170,29 @@ const deleteController = async (req: Request, res: Response) => {
   }
 };
 
+const culminateController = async (req: Request, res: Response) => {
+  try {
+    const { offerID, delivered, score, comments } = req.body;
+    const responseUser = await OfferService.culminate(
+      offerID,
+      delivered,
+      score,
+      comments
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en culminateController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
@@ -179,4 +202,5 @@ export {
   GetOffersByEntityController,
   GetOffersBySubUserController,
   deleteController,
+  culminateController,
 };

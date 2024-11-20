@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   CreateOfferController,
+  culminateController,
   getbasicRateDataController,
   GetDetailOfferController,
   GetOffersByEntityController,
@@ -28,6 +29,7 @@ export class OfferRouter {
     this.router.get("/getOffersBySubUser/:uid", GetOffersBySubUserController);
 
     this.router.get("/delete/:uid", deleteController);
+    this.router.post("/culminate", culminateController);
   }
 
   static getRouter(): Router {

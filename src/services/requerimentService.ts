@@ -897,7 +897,7 @@ export class RequerimentService {
           },
         };
       }
-
+      console.log(requerimentData.stateID);
       if (requerimentData.stateID !== RequirementState.SELECTED) {
         return {
           success: false,
@@ -943,10 +943,23 @@ export class RequerimentService {
         };
       }
 
+      // AQUI USAR LA FUNCION EN DISPUTA //
       if (
-        !purchaseOrderData?.[0].scoreState.scoreProvider &&
-        !purchaseOrderData?.[0].scoreState.delivered
+        purchaseOrderData?.[0].scoreState.scoreProvider &&
+        purchaseOrderData?.[0].scoreState.deliveredProvider !== delivered
       ) {
+        this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
+        this.inDispute(requerimentID, ProductModel);
+        this.inDispute(offerID, OfferModel);
+
+        return {
+          success: true,
+          code: 200,
+          res: {
+            msg: "El proveedor ha reportado una discrepancia, por lo que el estado del proceso se ha marcado como EN DISPUTA.",
+          },
+        };
+      } else {
         await PurchaseOrderModel.updateOne(
           {
             requerimentID: requerimentID,
@@ -971,17 +984,15 @@ export class RequerimentService {
             },
           }
         );
-      } else {
-        // AQUI USAR LA FUNCION EN DISPUTA //
-      }
 
-      return {
-        success: true,
-        code: 200,
-        res: {
-          msg: "Se ha culminado correctamente",
-        },
-      };
+        return {
+          success: true,
+          code: 200,
+          res: {
+            msg: "Se ha culminado correctamente el Requerimiento",
+          },
+        };
+      }
     } catch (error) {
       console.log(error);
       return {
@@ -994,11 +1005,11 @@ export class RequerimentService {
     }
   };
 
-  static inDispute = async (uid: string, stateID: number, Model: any) => {
+  static inDispute = async (uid: string, Model: any) => {
     try {
       const updateResult = await Model.updateOne(
         { uid },
-        { $set: { stateID: stateID } }
+        { $set: { stateID: PurchaseOrderState.DISPUTE } }
       );
 
       // Verificar si se actualizó algún documento

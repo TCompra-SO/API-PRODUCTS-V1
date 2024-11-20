@@ -82,7 +82,7 @@ export class PurchaseOrderService {
       const daysDeliveryData = await axios.get(
         `${API_USER}util/utilData/delivery_time`
       );
-      console.log(daysDeliveryData.data?.times);
+
       const deliveryTimeID = (await offerData).data?.[0].deliveryTimeID;
       let days = 0;
       let deliveryDate;

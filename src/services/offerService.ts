@@ -3,7 +3,12 @@ import { OfferI } from "../interfaces/offer.interface";
 import { OfferModel } from "../models/offerModel";
 import { RequerimentService } from "./requerimentService";
 import ProductModel from "../models/productModel";
-import { OfferState } from "../utils/Types";
+import {
+  OfferState,
+  PurchaseOrderState,
+  RequirementState,
+} from "../utils/Types";
+import PurchaseOrderModel from "../models/purchaseOrder";
 let API_USER = process.env.API_USER;
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -207,6 +212,7 @@ export class OfferService {
             userID: 1,
             entityID: 1,
             canceledByCreator: 1,
+            selectionDate: 1,
             requerimentTitle: {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             }, // Extrae el campo 'name' del primer requerimiento encontrado
@@ -278,6 +284,7 @@ export class OfferService {
             files: 1,
             images: 1,
             canceledByCreator: 1,
+            selectionDate: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -377,6 +384,7 @@ export class OfferService {
             files: 1,
             images: 1,
             canceledByCreator: 1,
+            selectionDate: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -445,6 +453,7 @@ export class OfferService {
             files: 1,
             images: 1,
             canceledByCreator: 1,
+            selectionDate: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -591,6 +600,167 @@ export class OfferService {
         code: 500,
         error: {
           msg: "Ocurrió un error al intentar eliminar la oferta.",
+        },
+      };
+    }
+  };
+
+  static culminate = async (
+    offerID: string,
+    delivered: boolean,
+    score: number,
+    comments?: string
+  ) => {
+    try {
+      const offerData = await OfferModel.findOne({
+        uid: offerID,
+      });
+      if (!offerData) {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "Oferta no encontrado",
+          },
+        };
+      }
+      console.log(offerData.stateID);
+      if (offerData.stateID !== OfferState.WINNER) {
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "El estado de la Oferta no permite realizar esta acción",
+          },
+        };
+      }
+
+      const purchaseOrderData = await PurchaseOrderModel.aggregate([
+        {
+          $match: {
+            offerID: offerID, // Sustituye por el valor real
+          },
+        },
+      ]);
+      // Corregir bien esto solo cambie CLIENT
+      const requestBody = {
+        typeScore: "Client", // Tipo de puntaje
+        uidEntity: purchaseOrderData?.[0].userClientID, // ID de la empresa a ser evaluada
+        uidUser: purchaseOrderData?.[0].userProviderID, // ID del usuario que evalua
+        score: score, // Puntaje
+        comments: comments, // Comentarios
+      };
+
+      const resultData = await axios.post(
+        `${API_USER}score/registerScore/`,
+        requestBody
+      );
+
+      console.log(resultData);
+      if (!resultData.data.success) {
+        return {
+          success: false,
+          code: 401,
+          error: {
+            msg: "No se ha podido calificar al usuario",
+          },
+        };
+      }
+      const requerimentID = purchaseOrderData?.[0].requerimentID;
+      // AQUI USAR LA FUNCION EN DISPUTA //
+      if (
+        purchaseOrderData?.[0].scoreState.scoreClient &&
+        purchaseOrderData?.[0].scoreState.deliveredClient !== delivered
+      ) {
+        this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
+        this.inDispute(requerimentID, ProductModel);
+        this.inDispute(offerID, OfferModel);
+
+        return {
+          success: true,
+          code: 200,
+          res: {
+            msg: "El cliente ha reportado una discrepancia, por lo que el estado del proceso se ha marcado como EN DISPUTA.",
+          },
+        };
+      } else {
+        await PurchaseOrderModel.updateOne(
+          {
+            requerimentID: requerimentID,
+            offerID: offerID,
+          },
+          {
+            $set: {
+              "scoreState.scoreProvider": true,
+              "scoreState.deliveredProvider": delivered,
+              stateID: PurchaseOrderState.FINISHED,
+            },
+          }
+        );
+
+        await OfferModel.updateOne(
+          {
+            uid: offerID,
+          },
+          {
+            $set: {
+              stateID: OfferState.FINISHED,
+            },
+          }
+        );
+
+        return {
+          success: true,
+          code: 200,
+          res: {
+            msg: "Se ha culminado correctamente la Oferta",
+          },
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor",
+        },
+      };
+    }
+  };
+
+  static inDispute = async (uid: string, Model: any) => {
+    try {
+      const updateResult = await Model.updateOne(
+        { uid },
+        { $set: { stateID: PurchaseOrderState.DISPUTE } }
+      );
+
+      // Verificar si se actualizó algún documento
+      if (updateResult.matchedCount === 0) {
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "No se encontró ninguna coincidencia para el UID proporcionado.",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "El estado se actualizó correctamente.",
+        },
+      };
+    } catch (error) {
+      console.error("Error en inDispute:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
         },
       };
     }
