@@ -57,7 +57,8 @@ function transformOffersData(response: {
     igv: offer.includesIGV, // 'includesIGV' renombrado a 'igv'
     deliveryDate: offer.deliveryDate?.toISOString(), // 'deliveryDate' convertido a string
     canceledByCreator: offer.canceledByCreator, // Sin cambios
-    includesDelivery: offer.includesDelivery, // Sin cambios
+    includesDelivery: offer.includesDelivery,
+    delivered: offer.delivered, // Sin cambios
   }));
 
   return {

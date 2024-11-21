@@ -213,6 +213,7 @@ export class OfferService {
             entityID: 1,
             canceledByCreator: 1,
             selectionDate: 1,
+            delivered: 1,
             requerimentTitle: {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             }, // Extrae el campo 'name' del primer requerimiento encontrado
@@ -285,6 +286,7 @@ export class OfferService {
             images: 1,
             canceledByCreator: 1,
             selectionDate: 1,
+            delivered: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -385,6 +387,7 @@ export class OfferService {
             images: 1,
             canceledByCreator: 1,
             selectionDate: 1,
+            delivered: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -454,6 +457,7 @@ export class OfferService {
             images: 1,
             canceledByCreator: 1,
             selectionDate: 1,
+            delivered: 1,
 
             // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
             requerimentTitle: {
@@ -676,11 +680,22 @@ export class OfferService {
         this.inDispute(requerimentID, ProductModel);
         this.inDispute(offerID, OfferModel);
 
+        await OfferModel.updateOne(
+          {
+            uid: offerID,
+          },
+          {
+            $set: {
+              delivered: delivered,
+            },
+          }
+        );
+
         return {
           success: true,
           code: 200,
           res: {
-            msg: "El cliente ha reportado una discrepancia, por lo que el estado del proceso se ha marcado como EN DISPUTA.",
+            msg: "El cliente ha reportado una discrepancia, por lo tanto el estado del proceso se ha marcado como EN DISPUTA.",
           },
         };
       } else {
@@ -705,6 +720,7 @@ export class OfferService {
           {
             $set: {
               stateID: OfferState.FINISHED,
+              delivered: delivered,
             },
           }
         );

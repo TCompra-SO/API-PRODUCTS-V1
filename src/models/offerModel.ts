@@ -106,6 +106,10 @@ const OfferSchema = new Schema<OfferI>({
     type: Date,
     required: false,
   },
+  delivered: {
+    type: Boolean,
+    required: false,
+  },
 });
 
 // Exportamos el modelo
