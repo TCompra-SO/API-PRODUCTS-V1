@@ -6,8 +6,8 @@ export interface OfferI {
   cityID: number;
   deliveryTimeID: number;
   currencyID: number;
-  warranty: number;
-  timeMeasurementID: number;
+  warranty?: number;
+  timeMeasurementID?: number;
   support: number;
   budget: number;
   includesIGV: boolean;

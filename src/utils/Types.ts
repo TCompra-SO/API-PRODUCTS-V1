@@ -29,3 +29,9 @@ export enum PurchaseOrderState {
 export enum TypeUser {
   ADMIN = 1,
 }
+
+export enum TypeEntity {
+  COMPANY = "Company",
+  USER = "User",
+  SUBUSER = "SubUser",
+}

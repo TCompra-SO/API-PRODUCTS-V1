@@ -193,6 +193,27 @@ const culminateController = async (req: Request, res: Response) => {
   }
 };
 
+const getValidationController = async (req: Request, res: Response) => {
+  try {
+    const { userID, requerimentID } = req.params;
+    const responseUser = await OfferService.getValidation(
+      userID,
+      requerimentID
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getValidationController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
@@ -203,4 +224,5 @@ export {
   GetOffersBySubUserController,
   deleteController,
   culminateController,
+  getValidationController,
 };

@@ -7,8 +7,11 @@ import {
   OfferState,
   PurchaseOrderState,
   RequirementState,
+  TypeEntity,
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
+import { Console } from "node:console";
+import { TypeUser } from "../utils/Types";
 let API_USER = process.env.API_USER;
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -673,8 +676,8 @@ export class OfferService {
       const requerimentID = purchaseOrderData?.[0].requerimentID;
       // AQUI USAR LA FUNCION EN DISPUTA //
       if (
-        purchaseOrderData?.[0].scoreState.scoreClient &&
-        purchaseOrderData?.[0].scoreState.deliveredClient !== delivered
+        purchaseOrderData?.[0].scoreState?.scoreClient &&
+        purchaseOrderData?.[0].scoreState?.deliveredClient !== delivered
       ) {
         this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
         this.inDispute(requerimentID, ProductModel);
@@ -772,6 +775,110 @@ export class OfferService {
       };
     } catch (error) {
       console.error("Error en inDispute:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
+        },
+      };
+    }
+  };
+
+  static getValidation = async (userID: string, requerimentID: string) => {
+    try {
+      let typeUser;
+      let entityID;
+      let codeResponse;
+      const userData = await axios.get(
+        `${API_USER}auth/getBaseDataUser/${userID}`
+      );
+
+      if (userData.data.data[0].auth_users) {
+        typeUser = userData.data.data[0].auth_users.typeEntity;
+        entityID = userData.data.data[0].uid;
+      } else {
+        typeUser = userData.data.data[0].typeEntity;
+        entityID = userData.data.data[0].uid;
+      }
+      const requerimentData = await ProductModel.aggregate([
+        {
+          $match: {
+            entityID: entityID,
+            uid: requerimentID, // Reemplaza con el valor que deseas buscar
+          },
+        },
+      ]);
+
+      const resultData = await OfferModel.aggregate([
+        {
+          $match: {
+            entityID: entityID,
+            requerimentID: requerimentID, // Reemplaza con el valor que deseas buscar
+          },
+        },
+      ]);
+
+      const offerUserID = resultData[0]?.userID;
+      const offerUserType = resultData[0]?.typeUser;
+      const requerimentUserID = requerimentData[0]?.userID;
+
+      if (resultData.length > 0) {
+        if (typeUser === TypeEntity.SUBUSER) {
+          //VERIFICAMOS SI EL USUARIO YA HIZO UNA OFERTA AL REQUERIMIENTO
+          if (offerUserID === userID) {
+            codeResponse = 1; // EL USUARIO HACE UNA OFERTA QUE YA HIZO
+          } else if (
+            offerUserID !== userID &&
+            offerUserType !== TypeEntity.SUBUSER
+          ) {
+            codeResponse = 2; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR EL USUARIO PRINCIPAL DE LA EMPRESA
+          } else {
+            codeResponse = 3; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR OTRO SUBUSUARIO DE LA EMPRESA
+          }
+        } else if (offerUserID === userID) {
+          codeResponse = 1; // HACE UNA OFERTA QUE YA HA REALIZADO
+        } else if (offerUserID !== userID) {
+          codeResponse = 3; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR OTRO SUBUSUARIO DE LA EMPRESA
+        }
+      } else {
+        codeResponse = 4; /// esta entrando al 4 porque no hay offerID esta vacio
+      }
+
+      if (requerimentData.length > 0 && codeResponse === 4) {
+        if (typeUser === TypeEntity.SUBUSER) {
+          //VERIFICAMOS SI EL USUARIO INTENTA HACER UNA OFERTA A SU PROPIO REQUERIMIENTO
+          if (requerimentUserID === userID) {
+            codeResponse = 5; // El usuario intenta hacer una oferta a su propio requerimiento
+          } else if (
+            requerimentUserID !== userID &&
+            typeUser !== TypeEntity.SUBUSER
+          ) {
+            codeResponse = 6; //El usuario intenta hacer oferta al requerimiento del Usuario Principal de su empresa
+          } else {
+            codeResponse = 7; // El usuario intenta hacer una oferta al requerimiento de un subUsuario de la empresa
+          }
+        } else if (requerimentUserID === userID) {
+          codeResponse = 5; // El usuario Principal intenta hacer una oferta a su propio requerimiento
+        } else if (requerimentUserID !== userID) {
+          codeResponse = 7; //El usuario  intenta hacer oferta a su propio requerimiento de otro subUsuario de la empresa
+        }
+      }
+      /*
+      console.log(offerUserID, " " + userID + " Codigo: " + codeResponse);
+      console.log(requerimentUserID, " " + userID + " Codigo: " + codeResponse);*/
+
+      return {
+        success: true,
+        code: 200,
+        data: {
+          codeResponse: codeResponse,
+          offerID: resultData[0]?.uid,
+          requerimentID: requerimentData[0]?.uid,
+        },
+      };
+    } catch (error) {
+      console.log(error);
       return {
         success: false,
         code: 500,

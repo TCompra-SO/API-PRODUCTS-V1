@@ -8,6 +8,7 @@ import {
   GetOffersByRequerimentController,
   GetOffersBySubUserController,
   GetOffersController,
+  getValidationController,
 } from "../controllers/offerController";
 import { deleteController } from "../controllers/offerController";
 export class OfferRouter {
@@ -27,6 +28,10 @@ export class OfferRouter {
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get("/getOffersByEntity/:uid", GetOffersByEntityController);
     this.router.get("/getOffersBySubUser/:uid", GetOffersBySubUserController);
+    this.router.get(
+      "/getValidation/:userID/:requerimentID",
+      getValidationController
+    );
 
     this.router.get("/delete/:uid", deleteController);
     this.router.post("/culminate", culminateController);

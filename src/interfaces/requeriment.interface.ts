@@ -10,7 +10,7 @@ export interface RequerimentI {
   completion_date: Date;
   submission_dateID: number;
   warranty: number;
-  durationID: number;
+  durationID?: number;
   allowed_bidersID: number;
   userID: string;
   subUserEmail: string;

@@ -945,8 +945,8 @@ export class RequerimentService {
 
       // AQUI USAR LA FUNCION EN DISPUTA //
       if (
-        purchaseOrderData?.[0].scoreState.scoreProvider &&
-        purchaseOrderData?.[0].scoreState.deliveredProvider !== delivered
+        purchaseOrderData?.[0].scoreState?.scoreProvider &&
+        purchaseOrderData?.[0].scoreState?.deliveredProvider !== delivered
       ) {
         this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
         this.inDispute(requerimentID, ProductModel);

@@ -12,8 +12,8 @@ export interface OfferFrontI {
   price: number;
   state: number;
   description?: string;
-  warranty: number;
-  warrantyTime: number;
+  warranty?: number;
+  warrantyTime?: number;
   deliveryTime: number;
   location: number;
   image?: string[];
@@ -47,8 +47,8 @@ function transformOffersData(response: {
     price: offer.budget, // 'budget' renombrado a 'price'
     state: offer.stateID, // 'stateID' renombrado a 'state'
     description: offer.description, // Sin cambios
-    warranty: offer.warranty, // Sin cambios
-    warrantyTime: offer.timeMeasurementID, // 'timeMeasurementID' renombrado a 'warrantyTime'
+    warranty: offer?.warranty, // Sin cambios
+    warrantyTime: offer?.timeMeasurementID, // 'timeMeasurementID' renombrado a 'warrantyTime'
     deliveryTime: offer.deliveryTimeID, // 'deliveryTimeID' renombrado a 'deliveryTime'
     location: offer.cityID, // 'cityID' renombrado a 'location'
     image: offer.images, //

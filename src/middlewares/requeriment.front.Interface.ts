@@ -20,10 +20,8 @@ export interface RequerimentFrontI {
   warranty?: number; // Mapea a warranty
   warrantyTime?: string; // Campo nuevo, relacionado con la duración de la garantía
   usage?: string; // Campo nuevo, sólo para liquidaciones
-  duration: number;
+  duration?: number;
   email: string;
-  
-  
 }
 
 // Interfaz para la respuesta
@@ -56,8 +54,8 @@ function transformData(response: {
     user: item.entityID, // Sin cambios
     subUser: item.userID,
     subUserEmail: item.subUserEmail,
-    warranty: item.warranty, // Mantener el campo 'warranty'
-    duration: item.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
+    warranty: item?.warranty, // Mantener el campo 'warranty'
+    duration: item?.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
     state: item.stateID, // Añadir un valor por defecto o según lógica
     images: item.images,
     files: item.files,
