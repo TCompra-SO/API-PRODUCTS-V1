@@ -44,11 +44,11 @@ const OfferSchema = new Schema<OfferI>({
   },
   warranty: {
     type: Number,
-    required: true,
+    required: false,
   },
   timeMeasurementID: {
     type: Number,
-    required: true,
+    required: false,
   },
   support: {
     type: Number,

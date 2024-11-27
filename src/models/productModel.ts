@@ -53,11 +53,11 @@ const ProductSchema = new Schema<RequerimentI>(
     },
     warranty: {
       type: Number,
-      required: true,
+      required: false,
     },
     durationID: {
       type: Number,
-      required: true,
+      required: false,
     },
     allowed_bidersID: {
       type: Number,
