@@ -222,7 +222,7 @@ export class RequerimentService {
             completion_date: 1,
             submission_dateID: 1,
             warranty: 1,
-            duration: 1,
+            durationID: 1,
             allowed_bidersID: 1,
             entityID: 1,
             subUserEmail: 1,
