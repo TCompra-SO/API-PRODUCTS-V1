@@ -121,12 +121,13 @@ export class PurchaseOrderService {
         totalIgv = parseFloat((price - subTotal).toFixed(2));
         total = price;
       }
+
       const newPurchaseOrder: Omit<PurchaseOrderI, "uid"> = {
         type: TypeRequeriment.PRODUCTS,
         userClientID: userClientID,
         userNameClient: (await requerimentBasicData).data?.[0].userName,
-        addressClient: (await baseClientData).data.data?.[0].address,
-        documentClient: (await baseClientData).data.data?.[0].document,
+        addressClient: (await baseClientData).data.data?.address,
+        documentClient: (await baseClientData).data.data?.document,
         emailClient: (await requerimentData).data?.[0].email,
         subUserClientID: subUserClientID,
         subUserClientEmail: (await requerimentData).data?.[0].subUserEmail,
@@ -146,7 +147,7 @@ export class PurchaseOrderService {
         subUserProviderID: subUserProviderID,
         nameSubUserProvider: (await offerBasicData).data?.[0].subUserName,
         subUserEmailProvider: (await offerBasicData).data?.[0].subUserEmail,
-        addressProvider: (await basicProviderData).data.data?.[0].address,
+        addressProvider: (await basicProviderData).data.data?.address,
         documentProvider: (await userProviderData).data.data?.[0].document,
         emailProvider: (await offerData).data?.[0].email,
         stateID: PurchaseOrderState.PENDING,
