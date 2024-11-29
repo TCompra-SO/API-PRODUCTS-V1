@@ -38,7 +38,10 @@ export const upload = multer({
   limits: { files: 5, fileSize: 5 * 1024 * 1024 },
 }).array("documents", 5);
 
-export const uploadDocuments = async (req: Request, res: Response) => {
+export const uploadDocumentsRequeriment = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { uid } = req.body;
     const files = req.files as Express.Multer.File[]; // Archivos cargados
@@ -59,7 +62,49 @@ export const uploadDocuments = async (req: Request, res: Response) => {
     const filePaths = files.map((file) => file.path);
 
     // Subir documentos y recibir las URLs
-    const responseUser = await FileService.uploadDocuments(filePaths, uid);
+    const responseUser = await FileService.uploadDocumentsRequeriment(
+      filePaths,
+      uid
+    );
+
+    // Eliminar archivos temporales después de subir
+    for (const filePath of filePaths) {
+      fs.unlink(filePath, (err) => {});
+    }
+
+    if (responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error al cargar los documentos", error });
+  }
+};
+
+export const uploadDocumentsOffer = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.body;
+    const files = req.files as Express.Multer.File[]; // Archivos cargados
+
+    // Validar que se hayan cargado archivos y que no superen el límite de 5
+    if (!files || files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Debes cargar al menos un documento PDF." });
+    }
+    if (files.length > 5) {
+      return res
+        .status(400)
+        .json({ message: "No puedes cargar más de 5 documentos PDF." });
+    }
+
+    // Extraer las rutas de los documentos
+    const filePaths = files.map((file) => file.path);
+
+    // Subir documentos y recibir las URLs
+    const responseUser = await FileService.uploadDocumentsOffer(filePaths, uid);
 
     // Eliminar archivos temporales después de subir
     for (const filePath of filePaths) {

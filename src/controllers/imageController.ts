@@ -36,7 +36,7 @@ export const upload = multer({
   limits: { files: 5, fileSize: 5 * 1024 * 1024 },
 }).array("images", 5);
 
-export const uploadImages = async (req: Request, res: Response) => {
+export const uploadImagesRequeriment = async (req: Request, res: Response) => {
   try {
     const { uid } = req.body;
     const files = req.files as Express.Multer.File[]; // Archivos cargados
@@ -57,7 +57,49 @@ export const uploadImages = async (req: Request, res: Response) => {
     const filePaths = files.map((file) => file.path);
 
     // Subir imágenes y recibir las URLs
-    const responseUser = await ImageService.uploadImages(filePaths, uid);
+    const responseUser = await ImageService.uploadImagesRequeriment(
+      filePaths,
+      uid
+    );
+
+    // Eliminar archivos temporales después de subir
+    for (const filePath of filePaths) {
+      fs.unlink(filePath, (err) => {});
+    }
+
+    if (responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error al cargar las imágenes", error });
+  }
+};
+
+export const uploadImagesOffer = async (req: Request, res: Response) => {
+  try {
+    const { uid } = req.body;
+    const files = req.files as Express.Multer.File[]; // Archivos cargados
+
+    // Validar que se hayan cargado archivos y que no superen el límite de 5
+    if (!files || files.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Debes cargar al menos una imagen." });
+    }
+    if (files.length > 5) {
+      return res
+        .status(400)
+        .json({ message: "No puedes cargar más de 5 imágenes." });
+    }
+
+    // Extraer las rutas de las imágenes
+    const filePaths = files.map((file) => file.path);
+
+    // Subir imágenes y recibir las URLs
+    const responseUser = await ImageService.uploadImagesOffer(filePaths, uid);
 
     // Eliminar archivos temporales después de subir
     for (const filePath of filePaths) {

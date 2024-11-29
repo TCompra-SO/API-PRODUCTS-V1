@@ -12,6 +12,8 @@ import {
 import PurchaseOrderModel from "../models/purchaseOrder";
 import { Console } from "node:console";
 import { TypeUser } from "../utils/Types";
+import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
+import { object } from "joi";
 let API_USER = process.env.API_USER;
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -84,14 +86,43 @@ export class OfferService {
         stateID: 1,
         publishDate: new Date(),
       });
+      //SEGUIR ANALIZANDO LA CREACION
+      const resultOffer = await this.GetOfferByUser(requerimentID, userID);
 
-      const resultOffer = this.GetOfferByUser(requerimentID, userID);
-      if ((await resultOffer).code === 200) {
+      const offerUserEntity = resultData.data.data?.[0].uid;
+
+      const resultOfferEntity = await this.GetOfferByUser(
+        requerimentID,
+        offerUserEntity
+      );
+      console.log("tines" + Object.keys(resultOfferEntity?.data ?? {}).length);
+      console.log(resultOfferEntity.data);
+      const validStates = [
+        OfferState.ACTIVE,
+        OfferState.WINNER,
+        OfferState.DISPUTE,
+        OfferState.FINISHED,
+      ];
+
+      console.log("stateID:", resultOfferEntity.data?.stateID);
+      console.log("OfferState.ELIMINATED:", OfferState.ELIMINATED);
+
+      if ((await resultOffer).code === 200 && resultOffer.data) {
         return {
           success: false,
           code: 409,
           error: {
-            msg: "Ya haz realizado una oferta a este requerimiento",
+            msg: "Ya has realizado una oferta a este requerimiento",
+          },
+        };
+      }
+      console.log(resultOfferEntity.code);
+      if (resultOfferEntity.code === 200) {
+        return {
+          success: false,
+          code: 409,
+          error: {
+            msg: "Otro usuario ya ha realizado una oferta a este requerimiento",
           },
         };
       } else {
@@ -126,16 +157,16 @@ export class OfferService {
             },
           };
         }
-
-        return {
-          success: true,
-          code: 200,
-          data: newOffer,
-          res: {
-            msg: "Se ha creado correctamente la Oferta",
-          },
-        };
       }
+
+      return {
+        success: true,
+        code: 200,
+        data: newOffer,
+        res: {
+          msg: "Se ha creado correctamente la Oferta",
+        },
+      };
     } catch (error) {
       console.log(error);
       return {
@@ -820,53 +851,70 @@ export class OfferService {
       ]);
 
       const offerUserID = resultData[0]?.userID;
-      const offerUserType = resultData[0]?.typeUser;
+      const offerEntityID = resultData[0]?.entityID;
+      const offerState = resultData[0]?.stateID;
       const requerimentUserID = requerimentData[0]?.userID;
-
-      if (resultData.length > 0) {
-        if (typeUser === TypeEntity.SUBUSER) {
-          //VERIFICAMOS SI EL USUARIO YA HIZO UNA OFERTA AL REQUERIMIENTO
-          if (offerUserID === userID) {
-            codeResponse = 1; // EL USUARIO HACE UNA OFERTA QUE YA HIZO
-          } else if (
-            offerUserID !== userID &&
-            offerUserType !== TypeEntity.SUBUSER
-          ) {
-            codeResponse = 2; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR EL USUARIO PRINCIPAL DE LA EMPRESA
-          } else {
+      const requerimentEntityID = requerimentData[0]?.entityID;
+      const requerimentState = requerimentData[0]?.stateID;
+      console.log(requerimentData);
+      console.log(requerimentEntityID);
+      if (
+        requerimentState === RequirementState.PUBLISHED ||
+        offerState === OfferState.ACTIVE ||
+        offerState === OfferState.WINNER ||
+        offerState === OfferState.DISPUTE ||
+        requerimentState ||
+        RequirementState.DISPUTE
+      ) {
+        if (resultData.length > 0) {
+          if (typeUser === TypeEntity.SUBUSER) {
+            //VERIFICAMOS SI EL USUARIO YA HIZO UNA OFERTA AL REQUERIMIENTO
+            if (offerUserID === userID) {
+              codeResponse = 1; // EL USUARIO HACE UNA OFERTA QUE YA HIZO
+            } else if (
+              offerUserID !== userID &&
+              offerUserID === offerEntityID
+            ) {
+              codeResponse = 2; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR EL USUARIO PRINCIPAL DE LA EMPRESA
+            } else {
+              codeResponse = 3; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR OTRO SUBUSUARIO DE LA EMPRESA
+            }
+          } else if (offerUserID === userID) {
+            codeResponse = 1; // HACE UNA OFERTA QUE YA HA REALIZADO
+          } else if (offerUserID !== userID) {
             codeResponse = 3; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR OTRO SUBUSUARIO DE LA EMPRESA
           }
-        } else if (offerUserID === userID) {
-          codeResponse = 1; // HACE UNA OFERTA QUE YA HA REALIZADO
-        } else if (offerUserID !== userID) {
-          codeResponse = 3; // HACE UNA OFERTA A UN REQUERIMIENTO QUE YA HA SIDO OFERTADO POR OTRO SUBUSUARIO DE LA EMPRESA
+        } else {
+          codeResponse = 4; /// esta entrando al 4 porque no hay offerID esta vacio
+        }
+
+        if (requerimentData.length > 0 && codeResponse === 4) {
+          if (typeUser === TypeEntity.SUBUSER) {
+            //VERIFICAMOS SI EL USUARIO INTENTA HACER UNA OFERTA A SU PROPIO REQUERIMIENTO
+            if (requerimentUserID === userID) {
+              codeResponse = 5; // El usuario intenta hacer una oferta a su propio requerimiento
+            } else if (
+              requerimentUserID !== userID &&
+              requerimentUserID === requerimentEntityID
+            ) {
+              codeResponse = 6; //El usuario intenta hacer oferta al requerimiento del Usuario Principal de su empresa
+            } else {
+              codeResponse = 7; // El usuario intenta hacer una oferta al requerimiento de un subUsuario de la empresa
+            }
+          } else if (requerimentUserID === userID) {
+            codeResponse = 5; // El usuario Principal intenta hacer una oferta a su propio requerimiento
+          } else if (requerimentUserID !== userID) {
+            codeResponse = 7; //El usuario  intenta hacer oferta a su propio requerimiento de otro subUsuario de la empresa
+          }
         }
       } else {
-        codeResponse = 4; /// esta entrando al 4 porque no hay offerID esta vacio
+        codeResponse = 4;
       }
-
-      if (requerimentData.length > 0 && codeResponse === 4) {
-        if (typeUser === TypeEntity.SUBUSER) {
-          //VERIFICAMOS SI EL USUARIO INTENTA HACER UNA OFERTA A SU PROPIO REQUERIMIENTO
-          if (requerimentUserID === userID) {
-            codeResponse = 5; // El usuario intenta hacer una oferta a su propio requerimiento
-          } else if (
-            requerimentUserID !== userID &&
-            typeUser !== TypeEntity.SUBUSER
-          ) {
-            codeResponse = 6; //El usuario intenta hacer oferta al requerimiento del Usuario Principal de su empresa
-          } else {
-            codeResponse = 7; // El usuario intenta hacer una oferta al requerimiento de un subUsuario de la empresa
-          }
-        } else if (requerimentUserID === userID) {
-          codeResponse = 5; // El usuario Principal intenta hacer una oferta a su propio requerimiento
-        } else if (requerimentUserID !== userID) {
-          codeResponse = 7; //El usuario  intenta hacer oferta a su propio requerimiento de otro subUsuario de la empresa
-        }
-      }
-      /*
-      console.log(offerUserID, " " + userID + " Codigo: " + codeResponse);
-      console.log(requerimentUserID, " " + userID + " Codigo: " + codeResponse);*/
+      console.log(
+        offerState,
+        " " + userID + " Requeriment: " + requerimentState
+      );
+      /*     console.log(requerimentUserID, " " + userID + " Codigo: " + codeResponse);*/
 
       return {
         success: true,
