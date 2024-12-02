@@ -273,6 +273,24 @@ const culminateController = async (req: Request, res: Response) => {
   }
 };
 
+const canceledController = async (req: Request, res: Response) => {
+  try {
+    const { requerimentID } = req.params;
+    const responseUser = await RequerimentService.canceled(requerimentID);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en canceledController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -285,4 +303,5 @@ export {
   deleteController,
   republishController,
   culminateController,
+  canceledController,
 };

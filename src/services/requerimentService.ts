@@ -1041,4 +1041,45 @@ export class RequerimentService {
       };
     }
   };
+
+  static canceled = async (uid: string) => {
+    try {
+      const resultData = await ProductModel.find({ uid: uid });
+      if (resultData[0]?.stateID === RequirementState.SELECTED) {
+      } else {
+        await OfferModel.updateMany(
+          {
+            requerimentID: uid,
+            stateID: { $nin: [5, 7] },
+          },
+          {
+            $set: {
+              stateID: OfferState.CANCELED,
+            },
+          }
+        );
+        return {
+          success: false,
+          code: 400,
+          error: {
+            msg: "El estado del requerimiento no permite realizar esta acción",
+          },
+        };
+      }
+      return {
+        success: true,
+        code: 200,
+        data: resultData,
+      };
+    } catch (error) {
+      console.error("Error en canceled", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
+        },
+      };
+    }
+  };
 }

@@ -10,7 +10,7 @@ import {
   TypeEntity,
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
-import { Console } from "node:console";
+import { Console, error } from "node:console";
 import { TypeUser } from "../utils/Types";
 import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 import { object } from "joi";
@@ -95,6 +95,11 @@ export class OfferService {
         requerimentID,
         offerUserEntity
       );
+
+      const codeResponse = (await this.getValidation(userID, requerimentID))
+        .data?.codeResponse;
+      console.log("Codigo: " + codeResponse);
+
       console.log("tines" + Object.keys(resultOfferEntity?.data ?? {}).length);
       console.log(resultOfferEntity.data);
       const validStates = [
@@ -107,7 +112,7 @@ export class OfferService {
       console.log("stateID:", resultOfferEntity.data?.stateID);
       console.log("OfferState.ELIMINATED:", OfferState.ELIMINATED);
 
-      if ((await resultOffer).code === 200 && resultOffer.data) {
+      if (codeResponse === 1) {
         return {
           success: false,
           code: 409,
@@ -116,8 +121,8 @@ export class OfferService {
           },
         };
       }
-      console.log(resultOfferEntity.code);
-      if (resultOfferEntity.code === 200) {
+
+      if (codeResponse === 3 || codeResponse === 7) {
         return {
           success: false,
           code: 409,
@@ -125,7 +130,7 @@ export class OfferService {
             msg: "Otro usuario ya ha realizado una oferta a este requerimiento",
           },
         };
-      } else {
+      } else if (codeResponse === 4) {
         const savedOffer = await newOffer.save();
         if (savedOffer) {
           const dataRequeriment =
@@ -157,6 +162,14 @@ export class OfferService {
             },
           };
         }
+      } else {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se ha podido realizar la oferta",
+          },
+        };
       }
 
       return {
@@ -846,26 +859,25 @@ export class OfferService {
           $match: {
             entityID: entityID,
             requerimentID: requerimentID, // Reemplaza con el valor que deseas buscar
+            stateID: { $nin: [5, 7] },
           },
         },
       ]);
-
+      const resultFilterData = await OfferModel.find({
+        requerimentID: requerimentID, // Buscar por requerimentID
+        entityID: entityID,
+        stateID: { $nin: [5, 7] }, // Excluir stateID 5 y 7
+      });
       const offerUserID = resultData[0]?.userID;
       const offerEntityID = resultData[0]?.entityID;
       const offerState = resultData[0]?.stateID;
       const requerimentUserID = requerimentData[0]?.userID;
       const requerimentEntityID = requerimentData[0]?.entityID;
       const requerimentState = requerimentData[0]?.stateID;
-      console.log(requerimentData);
-      console.log(requerimentEntityID);
-      if (
-        requerimentState === RequirementState.PUBLISHED ||
-        offerState === OfferState.ACTIVE ||
-        offerState === OfferState.WINNER ||
-        offerState === OfferState.DISPUTE ||
-        requerimentState ||
-        RequirementState.DISPUTE
-      ) {
+
+      console.log("Longitud: " + resultFilterData.length);
+      console.log("OfferUser: " + offerUserID + " UserID: " + userID);
+      if (resultFilterData.length > 0) {
         if (resultData.length > 0) {
           if (typeUser === TypeEntity.SUBUSER) {
             //VERIFICAMOS SI EL USUARIO YA HIZO UNA OFERTA AL REQUERIMIENTO

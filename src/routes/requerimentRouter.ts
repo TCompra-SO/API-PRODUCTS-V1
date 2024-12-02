@@ -11,6 +11,7 @@ import {
   getRequerimentsController,
   republishController,
   selectOfferController,
+  canceledController,
 } from "../controllers/requerimentController";
 
 export class RequerimentRouter {
@@ -37,6 +38,7 @@ export class RequerimentRouter {
     );
 
     this.router.get("/delete/:uid", deleteController);
+    this.router.get("/canceled/:requerimentID", canceledController);
     this.router.post("/republish", republishController);
     this.router.post("/culminate", culminateController);
   }
