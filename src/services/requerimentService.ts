@@ -1082,4 +1082,52 @@ export class RequerimentService {
       };
     }
   };
+
+  static updateNumberOffersRequeriment = async (
+    uid: string,
+    increase: boolean
+  ) => {
+    try {
+      // Buscar y actualizar el requerimiento por su UID
+      const updatedRequeriment = await ProductModel.findOneAndUpdate(
+        { uid }, // Usar un objeto de consulta para buscar por uid
+        {
+          $inc: { number_offers: increase ? +1 : -1 }, // Decrease numOffers by 1
+          $max: { number_offers: 0 }, // Prevent numOffers from dropping below 0
+          updated_at: new Date(), // Fecha de actualización
+        },
+        { new: true } // Retorna el documento actualizado
+      );
+
+      // Si no se encuentra el requerimiento o no se puede actualizar
+      if (!updatedRequeriment) {
+        return {
+          success: false,
+          code: 404,
+          error: {
+            msg: "No se ha encontrado el requerimiento",
+          },
+        };
+      }
+
+      // Si la actualización fue exitosa
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "El requerimiento ha sido actualizado correctamente",
+          data: updatedRequeriment,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
 }
