@@ -1042,37 +1042,139 @@ export class RequerimentService {
     }
   };
 
-  static canceled = async (uid: string) => {
+  static canceled = async (uid: string, reason?: string) => {
     try {
       const resultData = await ProductModel.find({ uid: uid });
-      if (resultData[0]?.stateID === RequirementState.SELECTED) {
-      } else {
-        await OfferModel.updateMany(
-          {
-            requerimentID: uid,
-            stateID: { $nin: [5, 7] },
-          },
-          {
-            $set: {
-              stateID: OfferState.CANCELED,
-            },
-          }
-        );
+      if (resultData[0]?.stateID === RequirementState.CANCELED) {
         return {
           success: false,
-          code: 400,
+          code: 401,
           error: {
-            msg: "El estado del requerimiento no permite realizar esta acción",
+            msg: "El Requerimiento ya se encuentra cancelado.",
           },
         };
       }
-      return {
-        success: true,
-        code: 200,
-        data: resultData,
-      };
+      if (resultData[0]?.stateID === RequirementState.SELECTED) {
+        const OfferID = resultData[0]?.winOffer.uid;
+        const offerData = (await OfferService.GetDetailOffer(OfferID)).data;
+        const purchaseOrderData = await PurchaseOrderModel.find({
+          requerimentID: uid, // Filtro por requerimentID
+          offerID: OfferID, // Filtro por offerID
+        });
+        console.log(offerData);
+        console.log("Estado oferta: " + offerData?.[0].stateID);
+        if (purchaseOrderData[0].stateID === PurchaseOrderState.CANCELED) {
+          await this.changeStateOffer(uid, OfferState.CANCELED);
+          await this.changeStateID(
+            ProductModel,
+            uid,
+            RequirementState.CANCELED
+          );
+          return {
+            success: true,
+            code: 200,
+            error: {
+              msg: "Se ha cancelado el Requerimiento exitosamente",
+            },
+          };
+        } else if (
+          purchaseOrderData[0].scoreState?.scoreProvider === true &&
+          offerData?.[0].stateID === OfferState.FINISHED
+        ) {
+          return {
+            success: false,
+            code: 400,
+            error: {
+              msg: "No se puede cancelar el Requerimiento porque el creador de la Oferta ya ha culminado",
+            },
+          };
+        } else {
+          console.log("entramos");
+          await PurchaseOrderModel.findOneAndUpdate(
+            { uid: purchaseOrderData[0].uid }, // Filtro para buscar por uid
+            {
+              canceledByCreator: true,
+              reasonCancellation: reason,
+              cancellationDate: new Date(),
+              stateID: PurchaseOrderState.CANCELED,
+            }, // Campos a actualizar
+            { new: true } // Devuelve el documento actualizado
+          );
+        }
+        await this.changeStateOffer(uid, OfferState.CANCELED); // cancelo todas las Ofertas del requerimiento
+        await this.changeStateID(OfferModel, OfferID, OfferState.CANCELED); // cancelo la oferta asociada
+        await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
+
+        return {
+          success: true,
+          code: 200,
+          error: {
+            msg: "Se ha cancelado el Requerimiento exitosamente",
+          },
+        };
+      } else {
+        await this.changeStateOffer(uid, OfferState.CANCELED);
+        await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
+
+        return {
+          success: true,
+          code: 200,
+          error: {
+            msg: "Se ha cancelado el Requerimiento exitosamente",
+          },
+        };
+      }
     } catch (error) {
       console.error("Error en canceled", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
+        },
+      };
+    }
+  };
+
+  static changeStateID = async (
+    ServiceModel: any,
+    uid: string,
+    stateID: number
+  ) => {
+    try {
+      await ServiceModel.updateOne(
+        { uid: uid },
+        {
+          $set: {
+            stateID: stateID,
+          },
+        }
+      );
+    } catch (error) {
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
+        },
+      };
+    }
+  };
+
+  static changeStateOffer = async (uid: string, stateID: number) => {
+    try {
+      await OfferModel.updateMany(
+        {
+          requerimentID: uid,
+          stateID: { $nin: [5, 7] },
+        },
+        {
+          $set: {
+            stateID: stateID,
+          },
+        }
+      );
+    } catch (error) {
       return {
         success: false,
         code: 500,

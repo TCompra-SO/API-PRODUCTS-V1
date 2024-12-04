@@ -151,6 +151,18 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     type: Object,
     required: false,
   },
+  canceledByCreator: {
+    type: Boolean,
+    required: false,
+  },
+  reasonCancellation: {
+    type: String,
+    required: false,
+  },
+  cancellationDate: {
+    type: Date,
+    required: false,
+  },
 });
 
 const PurchaseOrderModel = mongoose.model<PurchaseOrderI>(

@@ -675,7 +675,7 @@ export class OfferService {
           },
         };
       }
-      console.log(offerData.stateID);
+
       if (offerData.stateID !== OfferState.WINNER) {
         return {
           success: false,
@@ -707,7 +707,6 @@ export class OfferService {
         requestBody
       );
 
-      console.log(resultData);
       if (!resultData.data.success) {
         return {
           success: false,
@@ -850,10 +849,13 @@ export class OfferService {
           $match: {
             entityID: entityID,
             uid: requerimentID, // Reemplaza con el valor que deseas buscar
+            stateID: {
+              $nin: [RequirementState.CANCELED, RequirementState.ELIMINATED],
+            },
           },
         },
       ]);
-
+      console.log(requerimentData.length);
       const resultData = await OfferModel.aggregate([
         {
           $match: {
@@ -863,6 +865,7 @@ export class OfferService {
           },
         },
       ]);
+      // se ha Modificado AQUI /////////////////////// 02/12
       const resultFilterData = await OfferModel.find({
         requerimentID: requerimentID, // Buscar por requerimentID
         entityID: entityID,
@@ -877,7 +880,7 @@ export class OfferService {
 
       console.log("Longitud: " + resultFilterData.length);
       console.log("OfferUser: " + offerUserID + " UserID: " + userID);
-      if (resultFilterData.length > 0) {
+      if (resultFilterData.length > 0 || requerimentData.length > 0) {
         if (resultData.length > 0) {
           if (typeUser === TypeEntity.SUBUSER) {
             //VERIFICAMOS SI EL USUARIO YA HIZO UNA OFERTA AL REQUERIMIENTO
@@ -924,7 +927,7 @@ export class OfferService {
       }
       console.log(
         offerState,
-        " " + userID + " Requeriment: " + requerimentState
+        " " + requerimentUserID + " Requeriment: " + requerimentEntityID
       );
       /*     console.log(requerimentUserID, " " + userID + " Codigo: " + codeResponse);*/
 

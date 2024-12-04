@@ -275,8 +275,11 @@ const culminateController = async (req: Request, res: Response) => {
 
 const canceledController = async (req: Request, res: Response) => {
   try {
-    const { requerimentID } = req.params;
-    const responseUser = await RequerimentService.canceled(requerimentID);
+    const { requerimentID, reason } = req.body;
+    const responseUser = await RequerimentService.canceled(
+      requerimentID,
+      reason
+    );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
     } else {

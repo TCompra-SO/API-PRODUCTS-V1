@@ -35,6 +35,9 @@ export interface PurchaseOrderI {
   location_Filter: number;
   warranty_Filter: number;
   scoreState?: ScoreStateI;
+  canceledByCreator?: boolean;
+  reasonCancellation?: string;
+  cancellationDate?: Date;
 }
 
 export interface ScoreStateI {
