@@ -593,10 +593,14 @@ export class OfferService {
     }
   };
 
-  static updateStateOffer = async (offerId: string, state: OfferState) => {
+  static updateStateOffer = async (
+    offerId: any,
+    state: OfferState,
+    cond?: { [key: string]: any }
+  ) => {
     try {
       const updatedOffer = await OfferModel.findOneAndUpdate(
-        { uid: offerId },
+        { ...cond, uid: offerId },
         {
           $set: {
             stateID: state,
@@ -612,32 +616,13 @@ export class OfferService {
 
   static deleteOffer = async (offerId: string) => {
     try {
-      const offerData = await OfferModel.findOne({
-        uid: offerId,
-        stateID: OfferState.ACTIVE,
-      });
+      const updatedOffer = await OfferService.updateStateOffer(
+        offerId,
+        OfferState.ELIMINATED,
+        { stateID: OfferState.ACTIVE }
+      );
 
-      if (offerData) {
-        const updatedOffer = await OfferService.updateStateOffer(
-          offerId,
-          OfferState.ELIMINATED
-        );
-        if (!updatedOffer)
-          return {
-            success: false,
-            code: 404,
-            error: {
-              msg: "No se encontró la oferta",
-            },
-          };
-        return {
-          success: true,
-          code: 200,
-          res: {
-            msg: "Se eliminó la oferta exitosamente",
-          },
-        };
-      } else
+      if (!updatedOffer)
         return {
           success: false,
           code: 404,
@@ -645,6 +630,19 @@ export class OfferService {
             msg: "Oferta no encontrada o estado no permite eliminar",
           },
         };
+
+      await RequerimentService.updateNumberOffersRequeriment(
+        updatedOffer.requerimentID,
+        false
+      );
+
+      return {
+        success: true,
+        code: 200,
+        res: {
+          msg: "Se eliminó la oferta exitosamente",
+        },
+      };
     } catch (error) {
       return {
         success: false,
