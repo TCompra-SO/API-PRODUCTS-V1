@@ -743,19 +743,38 @@ export class OfferService {
           },
         };
       } else {
-        await PurchaseOrderModel.updateOne(
-          {
-            requerimentID: requerimentID,
-            offerID: offerID,
-          },
-          {
-            $set: {
-              "scoreState.scoreProvider": true,
-              "scoreState.deliveredProvider": delivered,
-              stateID: PurchaseOrderState.FINISHED,
+        if (
+          purchaseOrderData?.[0].scoreState?.scoreClient &&
+          purchaseOrderData?.[0].scoreState?.deliveredClient === delivered
+        ) {
+          await PurchaseOrderModel.updateOne(
+            {
+              requerimentID: requerimentID,
+              offerID: offerID,
             },
-          }
-        );
+            {
+              $set: {
+                "scoreState.scoreProvider": true,
+                "scoreState.deliveredProvider": delivered,
+                stateID: PurchaseOrderState.FINISHED,
+              },
+            }
+          );
+        } else {
+          await PurchaseOrderModel.updateOne(
+            {
+              requerimentID: requerimentID,
+              offerID: offerID,
+            },
+            {
+              $set: {
+                "scoreState.scoreProvider": true,
+                "scoreState.deliveredProvider": delivered,
+                stateID: PurchaseOrderState.PENDING,
+              },
+            }
+          );
+        }
 
         await OfferModel.updateOne(
           {
@@ -942,6 +961,90 @@ export class OfferService {
       console.log(error);
       return {
         success: false,
+        code: 500,
+        error: {
+          msg: "Error interno del servidor.",
+        },
+      };
+    }
+  };
+
+  static canceled = async (
+    offerID: string,
+    reason?: string,
+    canceledByCreator?: boolean
+  ) => {
+    try {
+      const offerData = await this.GetDetailOffer(offerID);
+      const stateID = offerData.data?.[0].stateID;
+      const purchaseOrderData = await PurchaseOrderModel.findOne({
+        offerID: offerID,
+        stateID: PurchaseOrderState.PENDING,
+      });
+      const requerimentID = purchaseOrderData?.requerimentID;
+
+      if (stateID === OfferState.CANCELED) {
+        return {
+          success: false,
+          code: 400,
+          error: {
+            msg: "La Oferta ya fue cancelada",
+          },
+        };
+      } else if (
+        stateID === OfferState.WINNER ||
+        purchaseOrderData?.stateID === PurchaseOrderState.PENDING
+      ) {
+        await OfferModel.updateOne(
+          { uid: offerID }, // Busca el documento por el campo `uid`
+          {
+            $set: {
+              stateID: OfferState.CANCELED, // Actualiza el campo `stateID`
+              canceledByCreator: false, // Actualiza el campo `canceledByCreator`
+            },
+          }
+        );
+        await PurchaseOrderModel.updateOne(
+          {
+            uid: purchaseOrderData?.uid,
+          },
+          {
+            $set: {
+              stateID: PurchaseOrderState.CANCELED,
+              canceledByCreator: canceledByCreator,
+              reasonCancellation: reason,
+            },
+          }
+        );
+
+        await ProductModel.updateOne(
+          { uid: requerimentID },
+          {
+            $set: {
+              stateID: RequirementState.PUBLISHED,
+            },
+          }
+        );
+        return {
+          success: true,
+          code: 200,
+          res: {
+            msg: "La oferta fue cancelada con éxito",
+          },
+        };
+      } else {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se puede cancelar la oferta",
+          },
+        };
+      }
+    } catch (error) {
+      console.log(error);
+      return {
+        succes: false,
         code: 500,
         error: {
           msg: "Error interno del servidor.",

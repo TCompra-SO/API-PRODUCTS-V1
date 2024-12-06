@@ -6,7 +6,7 @@ export enum RequirementState {
   EXPIRED = 5,
   CANCELED = 6,
   ELIMINATED = 7,
-  DISPUTE = 8,
+  DISPUTE = 4,
 }
 
 export enum OfferState {

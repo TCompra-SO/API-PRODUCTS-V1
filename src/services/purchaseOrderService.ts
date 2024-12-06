@@ -417,4 +417,30 @@ export class PurchaseOrderService {
       };
     }
   };
+
+  static canceled = async (purchaseOrderID: string) => {
+    try {
+      const purchaseOrderData = await this.getPurchaseOrderID(purchaseOrderID);
+      if (purchaseOrderData.data?.stateID === PurchaseOrderState.PENDING) {
+        console.log(purchaseOrderData.data?.stateID);
+      }
+      return {
+        success: true,
+        code: 200,
+        data: purchaseOrderData,
+        res: {
+          message: "La Orden de Compra ha sido cancelada con éxito",
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
 }

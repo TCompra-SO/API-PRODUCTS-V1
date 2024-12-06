@@ -214,6 +214,28 @@ const getValidationController = async (req: Request, res: Response) => {
   }
 };
 
+const canceledController = async (req: Request, res: Response) => {
+  try {
+    const { offerID, reason, canceledByCreator } = req.body;
+    const responseUser = await OfferService.canceled(
+      offerID,
+      reason,
+      canceledByCreator
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en canceledController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
@@ -225,4 +247,5 @@ export {
   deleteController,
   culminateController,
   getValidationController,
+  canceledController,
 };

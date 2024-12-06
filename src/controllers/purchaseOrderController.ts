@@ -178,6 +178,24 @@ const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
   }
 };
 
+const canceledController = async (req: Request, res: Response) => {
+  const { purchaseOrderID } = req.params;
+  try {
+    const responseUser = await PurchaseOrderService.canceled(purchaseOrderID);
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en canceledController", error);
+    return res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreatePurchaseOrderController,
   getPurchaseOrdersController,
@@ -187,4 +205,5 @@ export {
   getPurchaseOrderPDFController,
   getPurchaseOrdersByProvider,
   getPurchaseOrdersByClient,
+  canceledController,
 };

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  canceledController,
   CreateOfferController,
   culminateController,
   getbasicRateDataController,
@@ -35,6 +36,7 @@ export class OfferRouter {
 
     this.router.get("/delete/:uid", deleteController);
     this.router.post("/culminate", culminateController);
+    this.router.post("/canceled", canceledController);
   }
 
   static getRouter(): Router {

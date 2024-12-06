@@ -60,7 +60,7 @@ const ProductSchema = new Schema<RequerimentI>(
       required: false,
     },
     allowed_bidersID: {
-      type: Number,
+      type: [Number],
       required: true,
     },
     entityID: {

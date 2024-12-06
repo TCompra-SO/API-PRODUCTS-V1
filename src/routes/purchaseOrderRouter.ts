@@ -8,6 +8,7 @@ import {
   getPurchaseOrderPDFController,
   getPurchaseOrdersByProvider,
   getPurchaseOrdersByClient,
+  canceledController,
 } from "../controllers/purchaseOrderController";
 
 export class PurchaseOrderRouter {
@@ -40,6 +41,8 @@ export class PurchaseOrderRouter {
       "/getpurchaseOrdersByClient/:uid/:typeUser",
       getPurchaseOrdersByClient
     );
+
+    this.router.get("/canceled/:purchaseOrderID", canceledController);
   }
 
   static getRouter(): Router {

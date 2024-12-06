@@ -897,7 +897,7 @@ export class RequerimentService {
           },
         };
       }
-      console.log(requerimentData.stateID);
+
       if (requerimentData.stateID !== RequirementState.SELECTED) {
         return {
           success: false,
@@ -932,7 +932,6 @@ export class RequerimentService {
         requestBody
       );
 
-      console.log(resultData);
       if (!resultData.data.success) {
         return {
           success: false,
@@ -960,19 +959,38 @@ export class RequerimentService {
           },
         };
       } else {
-        await PurchaseOrderModel.updateOne(
-          {
-            requerimentID: requerimentID,
-            offerID: offerID,
-          },
-          {
-            $set: {
-              "scoreState.scoreClient": true,
-              "scoreState.deliveredClient": delivered,
-              stateID: PurchaseOrderState.FINISHED,
+        if (
+          purchaseOrderData?.[0].scoreState?.scoreProvider &&
+          purchaseOrderData?.[0].scoreState?.deliveredProvider === delivered
+        ) {
+          await PurchaseOrderModel.updateOne(
+            {
+              requerimentID: requerimentID,
+              offerID: offerID,
             },
-          }
-        );
+            {
+              $set: {
+                "scoreState.scoreClient": true,
+                "scoreState.deliveredClient": delivered,
+                stateID: PurchaseOrderState.FINISHED,
+              },
+            }
+          );
+        } else {
+          await PurchaseOrderModel.updateOne(
+            {
+              requerimentID: requerimentID,
+              offerID: offerID,
+            },
+            {
+              $set: {
+                "scoreState.scoreClient": true,
+                "scoreState.deliveredClient": delivered,
+                stateID: PurchaseOrderState.PENDING,
+              },
+            }
+          );
+        }
 
         await ProductModel.updateOne(
           {
@@ -1064,7 +1082,7 @@ export class RequerimentService {
         console.log(offerData);
         console.log("Estado oferta: " + offerData?.[0].stateID);
         if (purchaseOrderData[0].stateID === PurchaseOrderState.CANCELED) {
-          await this.changeStateOffer(uid, OfferState.CANCELED);
+          await this.changeStateOffer(uid, OfferState.CANCELED, true);
           await this.changeStateID(
             ProductModel,
             uid,
@@ -1101,7 +1119,7 @@ export class RequerimentService {
             { new: true } // Devuelve el documento actualizado
           );
         }
-        await this.changeStateOffer(uid, OfferState.CANCELED); // cancelo todas las Ofertas del requerimiento
+        await this.changeStateOffer(uid, OfferState.CANCELED, true); // cancelo todas las Ofertas del requerimiento
         await this.changeStateID(OfferModel, OfferID, OfferState.CANCELED); // cancelo la oferta asociada
         await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
 
@@ -1113,7 +1131,7 @@ export class RequerimentService {
           },
         };
       } else {
-        await this.changeStateOffer(uid, OfferState.CANCELED);
+        await this.changeStateOffer(uid, OfferState.CANCELED, true);
         await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
 
         return {
@@ -1161,7 +1179,11 @@ export class RequerimentService {
     }
   };
 
-  static changeStateOffer = async (uid: string, stateID: number) => {
+  static changeStateOffer = async (
+    uid: string,
+    stateID: number,
+    canceledByCreator: boolean
+  ) => {
     try {
       await OfferModel.updateMany(
         {
@@ -1171,6 +1193,7 @@ export class RequerimentService {
         {
           $set: {
             stateID: stateID,
+            canceledByCreator: canceledByCreator,
           },
         }
       );
