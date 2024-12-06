@@ -549,6 +549,7 @@ export class OfferService {
             userImage: "", // URL de imagen (asigna el campo correspondiente si existe)
             subUserId: "$userID", // ID de la entidad
             subUserName: "", // Nombre de la subentidad (agrega el campo si existe)
+            canceledByCreator: 1,
           },
         },
       ]);
@@ -1000,7 +1001,7 @@ export class OfferService {
           {
             $set: {
               stateID: OfferState.CANCELED, // Actualiza el campo `stateID`
-              canceledByCreator: false, // Actualiza el campo `canceledByCreator`
+              canceledByCreator: canceledByCreator, // Actualiza el campo `canceledByCreator`
             },
           }
         );
@@ -1011,7 +1012,7 @@ export class OfferService {
           {
             $set: {
               stateID: PurchaseOrderState.CANCELED,
-              canceledByCreator: canceledByCreator,
+              canceledByCreator: false,
               reasonCancellation: reason,
             },
           }
