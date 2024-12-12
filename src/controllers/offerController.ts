@@ -26,7 +26,15 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
     const responseUser = await OfferService.GetDetailOffer(uid);
 
     if (responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      res.status(responseUser.code).send(
+        transformOffersData(
+          responseUser as {
+            success: boolean;
+            code: number;
+            data: any[];
+          }
+        )
+      );
     } else {
       res.status(responseUser.code).send(responseUser.error);
     }

@@ -258,6 +258,8 @@ export class OfferService {
             publishDate: 1,
             userID: 1,
             entityID: 1,
+            files: 1,
+            images: 1,
             canceledByCreator: 1,
             selectionDate: 1,
             delivered: 1,
@@ -268,7 +270,8 @@ export class OfferService {
         },
       ]);
 
-      if (detailOffer) {
+      // Validar si se encontró la oferta
+      if (detailOffer && detailOffer.length > 0) {
         return {
           success: true,
           code: 200,
@@ -278,8 +281,9 @@ export class OfferService {
         return {
           success: false,
           code: 404,
-          message:
-            "No se encontró ninguna oferta con los datos proporcionados.",
+          error: {
+            msg: "No se encontró ninguna oferta con los datos proporcionados.",
+          },
         };
       }
     } catch (error) {
