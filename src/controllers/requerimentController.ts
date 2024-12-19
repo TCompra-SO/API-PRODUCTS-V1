@@ -29,7 +29,11 @@ const createRequerimentController = async (
 
 const getRequerimentsController = async (req: Request, res: Response) => {
   try {
-    const responseUser = await RequerimentService.getRequeriments();
+    const { page, pageSize } = req.params;
+    const responseUser = await RequerimentService.getRequeriments(
+      Number(page),
+      Number(pageSize)
+    );
 
     // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {

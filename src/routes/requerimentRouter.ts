@@ -23,7 +23,10 @@ export class RequerimentRouter {
     this.router.post("/create", createRequerimentController);
     this.router.post("/selectOffer", selectOfferController);
 
-    this.router.get("/getRequeriments", getRequerimentsController);
+    this.router.get(
+      "/getRequeriments/:page/:pageSize",
+      getRequerimentsController
+    );
     this.router.get("/getRequeriment/:uid", getRequerimentIDController);
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get("/expired", expiredController);

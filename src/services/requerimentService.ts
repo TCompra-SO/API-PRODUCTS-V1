@@ -106,7 +106,7 @@ export class RequerimentService {
     }
   };
 
-  static getRequeriments = async () => {
+  static getRequeriments = async (page: number, pageSize: number) => {
     try {
       const requeriments = await ProductModel.aggregate([
         {
@@ -156,7 +156,17 @@ export class RequerimentService {
             },
           },
         },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
       ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalDocuments = await ProductModel.countDocuments();
+
       if (!requeriments) {
         return {
           success: false,
@@ -171,6 +181,12 @@ export class RequerimentService {
         success: true,
         code: 200,
         data: requeriments,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       return {

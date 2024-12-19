@@ -375,8 +375,57 @@ export class OfferService {
 
   static getOffersByRequeriment = async (requerimentID: string) => {
     try {
-      const result = await OfferModel.find({ requerimentID });
+      // const result = await OfferModel.find({ requerimentID });
 
+      const result = await OfferModel.aggregate([
+        // Fase de lookup para unir la colección de productos
+        { $match: { requerimentID } },
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de productos (ProductModel)
+            localField: "requerimentID", // Campo en OfferModel
+            foreignField: "uid", // Campo en ProductModel que coincide
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+          },
+        },
+
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de OfferModel
+            uid: 1,
+            name: 1,
+            email: 1,
+            subUserEmail: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            files: 1,
+            images: 1,
+            canceledByCreator: 1,
+            selectionDate: 1,
+            delivered: 1,
+
+            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            },
+          },
+        },
+      ]);
+      console.log(result);
       return {
         success: true,
         code: 200,

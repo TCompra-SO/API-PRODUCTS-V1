@@ -127,10 +127,16 @@ const GetOffersByRequerimentController = async (
     const responseUser = await OfferService.getOffersByRequeriment(
       requerimentID
     );
-    if (responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
-    } else {
-      res.status(responseUser.code).send(responseUser.error);
+    if (responseUser && responseUser.success) {
+      if (responseUser.data) {
+        res.status(responseUser.code).send(transformOffersData(responseUser));
+      } else {
+        // Si 'data' es undefined, puedes devolver un mensaje de error o manejarlo como prefieras
+        res.status(404).send({
+          success: false,
+          msg: "No se encontraron requerimientos",
+        });
+      }
     }
   } catch (error) {
     console.error("Error en GetOffersByRequerimentController");
