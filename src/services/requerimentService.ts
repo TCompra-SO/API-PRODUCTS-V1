@@ -12,6 +12,7 @@ import {
   RequirementState,
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
+import { number } from "joi";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -287,8 +288,15 @@ export class RequerimentService {
     }
   };
 
-  static getRequerimentsByEntity = async (uid: string) => {
+  static getRequerimentsByEntity = async (
+    uid: string,
+    page: number,
+    pageSize: number
+  ) => {
     try {
+      if (!page || page < 1) page = 1; // Valor por defecto para la página
+      if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
+
       const result = await ProductModel.aggregate([
         // Buscar el requerimiento por su uid
         {
@@ -347,6 +355,12 @@ export class RequerimentService {
             }, // Aquí incluimos todos los campos de la oferta ganadora
           },
         },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
       ]);
       return {
         success: true,
@@ -363,8 +377,14 @@ export class RequerimentService {
     }
   };
 
-  static getRequerimentsbySubUser = async (uid: string) => {
+  static getRequerimentsbySubUser = async (
+    uid: string,
+    page: number,
+    pageSize: number
+  ) => {
     try {
+      if (!page || page < 1) page = 1; // Valor por defecto para la página
+      if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
       const result = await ProductModel.aggregate([
         // Buscar el requerimiento por su userid
         {
@@ -422,6 +442,12 @@ export class RequerimentService {
               entityID: 1,
             }, // Aquí incluimos todos los campos de la oferta ganadora
           },
+        },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
       return {

@@ -84,8 +84,12 @@ const getRequerimentsByEntityController = async (
   res: Response
 ) => {
   try {
-    const { uid } = req.params;
-    const responseUser = await RequerimentService.getRequerimentsByEntity(uid);
+    const { uid, page, pageSize } = req.params;
+    const responseUser = await RequerimentService.getRequerimentsByEntity(
+      uid,
+      Number(page),
+      Number(pageSize)
+    );
     // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
@@ -117,8 +121,12 @@ const getRequerimentsBySubUserController = async (
   res: Response
 ) => {
   try {
-    const { uid } = req.params;
-    const responseUser = await RequerimentService.getRequerimentsbySubUser(uid);
+    const { uid, page, pageSize } = req.params;
+    const responseUser = await RequerimentService.getRequerimentsbySubUser(
+      uid,
+      Number(page),
+      Number(pageSize)
+    );
     // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
       if (responseUser.data) {

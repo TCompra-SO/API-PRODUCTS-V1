@@ -36,7 +36,11 @@ const CreatePurchaseOrderController = async (req: Request, res: Response) => {
 
 const getPurchaseOrdersController = async (req: Request, res: Response) => {
   try {
-    const responseUser = await PurchaseOrderService.getPurchaseOrders();
+    const { page, pageSize } = req.params;
+    const responseUser = await PurchaseOrderService.getPurchaseOrders(
+      Number(page),
+      Number(pageSize)
+    );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
     } else {
@@ -55,10 +59,12 @@ const getPurchaseOrdersProviderController = async (
   req: Request,
   res: Response
 ) => {
-  const { userProviderID } = req.params;
+  const { userProviderID, page, pageSize } = req.params;
   try {
     const responseUser = await PurchaseOrderService.getPurchaseOrdersProvider(
-      userProviderID
+      userProviderID,
+      Number(page),
+      Number(pageSize)
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -78,10 +84,12 @@ const getPurchaseOrdersClientController = async (
   req: Request,
   res: Response
 ) => {
-  const { userClientID } = req.params;
+  const { userClientID, page, pageSize } = req.params;
   try {
     const responseUser = await PurchaseOrderService.getPurchaseOrdersClient(
-      userClientID
+      userClientID,
+      Number(page),
+      Number(pageSize)
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -116,12 +124,14 @@ const getPurchaseOrderIDController = async (req: Request, res: Response) => {
 };
 
 const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
-  const { uid, typeUser } = req.params;
+  const { uid, typeUser, page, pageSize } = req.params;
   try {
     const responseUser =
       await PurchaseOrderService.getPurchaseOrdersByEntityProvider(
         uid,
-        Number(typeUser)
+        Number(typeUser),
+        Number(page),
+        Number(pageSize)
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -138,12 +148,14 @@ const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
 };
 
 const getPurchaseOrdersByClient = async (req: Request, res: Response) => {
-  const { uid, typeUser } = req.params;
+  const { uid, typeUser, page, pageSize } = req.params;
   try {
     const responseUser =
       await PurchaseOrderService.getPurchaseOrdersByEntityClient(
         uid,
-        Number(typeUser)
+        Number(typeUser),
+        Number(page),
+        Number(pageSize)
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);

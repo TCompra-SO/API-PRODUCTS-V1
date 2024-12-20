@@ -194,9 +194,14 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrders = async () => {
+  static getPurchaseOrders = async (page: number, pageSize: number) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
-      const result = await PurchaseOrderModel.find();
+      const result = await PurchaseOrderModel.find()
+        .skip((page - 1) * pageSize) // Omitir documentos según la página
+        .limit(pageSize); // Limitar el número de documentos por página;
+
       return {
         success: true,
         code: 200,
@@ -214,9 +219,17 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrdersClient = async (userClientID: string) => {
+  static getPurchaseOrdersClient = async (
+    userClientID: string,
+    page: number,
+    pageSize: number
+  ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
-      const result = await PurchaseOrderModel.find({ userClientID });
+      const result = await PurchaseOrderModel.find({ userClientID })
+        .skip((page - 1) * pageSize) // Omitir documentos según la página
+        .limit(pageSize); // Limitar el número de documentos por página;;
 
       return {
         success: true,
@@ -235,9 +248,17 @@ export class PurchaseOrderService {
     }
   };
 
-  static getPurchaseOrdersProvider = async (userProviderID: string) => {
+  static getPurchaseOrdersProvider = async (
+    userProviderID: string,
+    page: number,
+    pageSize: number
+  ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
-      const result = await PurchaseOrderModel.find({ userProviderID });
+      const result = await PurchaseOrderModel.find({ userProviderID })
+        .skip((page - 1) * pageSize) // Omitir documentos según la página
+        .limit(pageSize); // Limitar el número de documentos por página;
 
       return {
         success: true,
@@ -288,16 +309,24 @@ export class PurchaseOrderService {
 
   static getPurchaseOrdersByEntityProvider = async (
     uid: string,
-    typeUser: number
+    typeUser: number,
+    page: number,
+    pageSize: number
   ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       let result;
       if (TypeUser.ADMIN === typeUser) {
-        result = await PurchaseOrderModel.find({ userProviderID: uid });
+        result = await PurchaseOrderModel.find({ userProviderID: uid })
+          .skip((page - 1) * pageSize) // Omitir documentos según la página
+          .limit(pageSize); // Limitar el número de documentos por página
       } else {
         result = await PurchaseOrderModel.find({
           subUserProviderID: uid,
-        });
+        })
+          .skip((page - 1) * pageSize) // Omitir documentos según la página
+          .limit(pageSize); // Limitar el número de documentos por página
       }
       return {
         success: true,
@@ -318,18 +347,24 @@ export class PurchaseOrderService {
 
   static getPurchaseOrdersByEntityClient = async (
     uid: string,
-    typeUser: number
+    typeUser: number,
+    page: number,
+    pageSize: number
   ) => {
     try {
       let result;
       if (TypeUser.ADMIN === typeUser) {
         result = await PurchaseOrderModel.find({
           userClientID: uid,
-        });
+        })
+          .skip((page - 1) * pageSize) // Omitir documentos según la página
+          .limit(pageSize); // Limitar el número de documentos por página;
       } else {
         result = await PurchaseOrderModel.find({
           subUserClientID: uid,
-        });
+        })
+          .skip((page - 1) * pageSize) // Omitir documentos según la página
+          .limit(pageSize); // Limitar el número de documentos por página;
       }
 
       return {

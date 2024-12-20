@@ -49,7 +49,11 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
 
 const GetOffersController = async (req: Request, res: Response) => {
   try {
-    const responseUser = await OfferService.GetOffers();
+    const { page, pageSize } = req.params;
+    const responseUser = await OfferService.GetOffers(
+      Number(page),
+      Number(pageSize)
+    );
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));
@@ -71,9 +75,13 @@ const GetOffersController = async (req: Request, res: Response) => {
 };
 
 const GetOffersByEntityController = async (req: Request, res: Response) => {
-  const { uid } = req.params;
+  const { uid, page, pageSize } = req.params;
   try {
-    const responseUser = await OfferService.getOffersByEntity(uid);
+    const responseUser = await OfferService.getOffersByEntity(
+      uid,
+      Number(page),
+      Number(pageSize)
+    );
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));
@@ -95,9 +103,13 @@ const GetOffersByEntityController = async (req: Request, res: Response) => {
 };
 
 const GetOffersBySubUserController = async (req: Request, res: Response) => {
-  const { uid } = req.params;
+  const { uid, page, pageSize } = req.params;
   try {
-    const responseUser = await OfferService.getOffersBySubUser(uid);
+    const responseUser = await OfferService.getOffersBySubUser(
+      uid,
+      Number(page),
+      Number(pageSize)
+    );
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));
@@ -123,9 +135,11 @@ const GetOffersByRequerimentController = async (
   res: Response
 ) => {
   try {
-    const { requerimentID } = req.params;
+    const { requerimentID, page, pageSize } = req.params;
     const responseUser = await OfferService.getOffersByRequeriment(
-      requerimentID
+      requerimentID,
+      Number(page),
+      Number(pageSize)
     );
     if (responseUser && responseUser.success) {
       if (responseUser.data) {

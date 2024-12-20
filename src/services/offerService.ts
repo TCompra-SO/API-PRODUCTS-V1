@@ -297,8 +297,10 @@ export class OfferService {
     }
   };
 
-  static GetOffers = async () => {
+  static GetOffers = async (page: number, pageSize: number) => {
     try {
+      if (!page || page < 1) page = 1; // Valor por defecto para la página
+      if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
       const result = await OfferModel.aggregate([
         // Fase de lookup para unir la colección de productos
         {
@@ -345,6 +347,12 @@ export class OfferService {
             },
           },
         },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
       ]);
       if (result) {
         return {
@@ -373,7 +381,13 @@ export class OfferService {
     }
   };
 
-  static getOffersByRequeriment = async (requerimentID: string) => {
+  static getOffersByRequeriment = async (
+    requerimentID: string,
+    page?: number,
+    pageSize?: number
+  ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       // const result = await OfferModel.find({ requerimentID });
 
@@ -424,8 +438,14 @@ export class OfferService {
             },
           },
         },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
       ]);
-      console.log(result);
+
       return {
         success: true,
         code: 200,
@@ -443,8 +463,14 @@ export class OfferService {
     }
   };
 
-  static getOffersByEntity = async (uid: string) => {
+  static getOffersByEntity = async (
+    uid: string,
+    page: number,
+    pageSize: number
+  ) => {
     try {
+      if (!page || page < 1) page = 1;
+      if (!pageSize || pageSize < 1) pageSize = 10;
       const result = await OfferModel.aggregate([
         {
           $match: {
@@ -495,6 +521,12 @@ export class OfferService {
             },
           },
         },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
       ]);
       return {
         success: true,
@@ -513,7 +545,13 @@ export class OfferService {
     }
   };
 
-  static getOffersBySubUser = async (uid: string) => {
+  static getOffersBySubUser = async (
+    uid: string,
+    page: number,
+    pageSize: number
+  ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       const result = await OfferModel.aggregate([
         {
@@ -564,6 +602,12 @@ export class OfferService {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             },
           },
+        },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
       return {

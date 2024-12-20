@@ -21,14 +21,20 @@ export class OfferRouter {
     this.router.post("/create", CreateOfferController);
 
     this.router.get("/getDetailOffer/:uid", GetDetailOfferController);
-    this.router.get("/getOffers", GetOffersController);
+    this.router.get("/getOffers/:page/:pageSize", GetOffersController);
     this.router.get(
-      "/getOffersByRequeriment/:requerimentID",
+      "/getOffersByRequeriment/:requerimentID/:page/:pageSize",
       GetOffersByRequerimentController
     );
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
-    this.router.get("/getOffersByEntity/:uid", GetOffersByEntityController);
-    this.router.get("/getOffersBySubUser/:uid", GetOffersBySubUserController);
+    this.router.get(
+      "/getOffersByEntity/:uid/:page/:pageSize",
+      GetOffersByEntityController
+    );
+    this.router.get(
+      "/getOffersBySubUser/:uid/:page/:pageSize",
+      GetOffersBySubUserController
+    );
     this.router.get(
       "/getValidation/:userID/:requerimentID",
       getValidationController
