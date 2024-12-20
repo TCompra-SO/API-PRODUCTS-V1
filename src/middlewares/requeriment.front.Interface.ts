@@ -35,7 +35,8 @@ function transformData(response: {
   success: boolean;
   code: number;
   data: RequerimentI[];
-}): { success: boolean; code: number; data: RequerimentFrontI[] } {
+  res: any;
+}): { success: boolean; code: number; data: RequerimentFrontI[]; res: any } {
   const transformedData: RequerimentFrontI[] = response.data.map((item) => ({
     key: item.uid, // Aquí 'uid' viene de RequerimentI y lo renombramos a 'key'
     title: item.name, // 'name' renombrado a 'title'
@@ -66,6 +67,7 @@ function transformData(response: {
     success: response.success,
     code: response.code,
     data: transformedData,
+    res: response.res,
   };
 }
 

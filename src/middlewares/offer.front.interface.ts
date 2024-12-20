@@ -34,7 +34,8 @@ function transformOffersData(response: {
   success: boolean;
   code: number;
   data: OfferFrontE[];
-}): { success: boolean; code: number; data: OfferFrontI[] } {
+  res: any;
+}): { success: boolean; code: number; data: OfferFrontI[]; res: any } {
   const transformedData: OfferFrontI[] = response.data.map((offer) => ({
     key: offer.uid, // 'uid' renombrado a 'key'
     title: offer.name, // 'name' renombrado a 'title'
@@ -65,6 +66,7 @@ function transformOffersData(response: {
     success: response.success,
     code: response.code,
     data: transformedData,
+    res: response.res,
   };
 }
 

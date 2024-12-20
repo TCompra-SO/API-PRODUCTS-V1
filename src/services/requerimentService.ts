@@ -296,8 +296,7 @@ export class RequerimentService {
     try {
       if (!page || page < 1) page = 1; // Valor por defecto para la página
       if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
-
-      const result = await ProductModel.aggregate([
+      const pipeline = [
         // Buscar el requerimiento por su uid
         {
           $match: {
@@ -355,6 +354,10 @@ export class RequerimentService {
             }, // Aquí incluimos todos los campos de la oferta ganadora
           },
         },
+      ];
+
+      const result = await ProductModel.aggregate([
+        ...pipeline,
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -362,10 +365,20 @@ export class RequerimentService {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await ProductModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);
@@ -385,7 +398,8 @@ export class RequerimentService {
     try {
       if (!page || page < 1) page = 1; // Valor por defecto para la página
       if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
-      const result = await ProductModel.aggregate([
+
+      const pipeline = [
         // Buscar el requerimiento por su userid
         {
           $match: {
@@ -443,6 +457,9 @@ export class RequerimentService {
             }, // Aquí incluimos todos los campos de la oferta ganadora
           },
         },
+      ];
+      const result = await ProductModel.aggregate([
+        ...pipeline,
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -450,10 +467,21 @@ export class RequerimentService {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await ProductModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
+
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);

@@ -32,6 +32,7 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
             success: boolean;
             code: number;
             data: any[];
+            res: any;
           }
         )
       );

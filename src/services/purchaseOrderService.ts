@@ -202,10 +202,17 @@ export class PurchaseOrderService {
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;
 
+      const totalDocuments = await PurchaseOrderModel.countDocuments();
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);
@@ -226,15 +233,23 @@ export class PurchaseOrderService {
   ) => {
     if (!page || page < 1) page = 1;
     if (!pageSize || pageSize < 1) pageSize = 10;
+
     try {
       const result = await PurchaseOrderModel.find({ userClientID })
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;;
-
+      const totalDocuments = (await PurchaseOrderModel.find({ userClientID }))
+        .length;
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);
@@ -259,11 +274,18 @@ export class PurchaseOrderService {
       const result = await PurchaseOrderModel.find({ userProviderID })
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;
-
+      const totalDocuments = (await PurchaseOrderModel.find({ userProviderID }))
+        .length;
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);
@@ -317,21 +339,35 @@ export class PurchaseOrderService {
     if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       let result;
+      let totalDocuments;
       if (TypeUser.ADMIN === typeUser) {
         result = await PurchaseOrderModel.find({ userProviderID: uid })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página
+        totalDocuments = (
+          await PurchaseOrderModel.find({ userProviderID: uid })
+        ).length;
       } else {
         result = await PurchaseOrderModel.find({
           subUserProviderID: uid,
         })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página
+        totalDocuments = (
+          await PurchaseOrderModel.find({ subUserProviderID: uid })
+        ).length;
       }
+
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);
@@ -353,24 +389,37 @@ export class PurchaseOrderService {
   ) => {
     try {
       let result;
+      let totalDocuments;
       if (TypeUser.ADMIN === typeUser) {
         result = await PurchaseOrderModel.find({
           userClientID: uid,
         })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página;
+        totalDocuments = (await PurchaseOrderModel.find({ userClientID: uid }))
+          .length;
       } else {
         result = await PurchaseOrderModel.find({
           subUserClientID: uid,
         })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página;
+
+        totalDocuments = (
+          await PurchaseOrderModel.find({ subUserClientID: uid })
+        ).length;
       }
 
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.log(error);

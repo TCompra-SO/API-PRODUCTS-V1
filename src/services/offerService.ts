@@ -359,6 +359,7 @@ export class OfferService {
           success: true,
           code: 200,
           data: result,
+          res: "",
         };
       } else {
         return {
@@ -390,8 +391,7 @@ export class OfferService {
     if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       // const result = await OfferModel.find({ requerimentID });
-
-      const result = await OfferModel.aggregate([
+      const pipeline = [
         // Fase de lookup para unir la colección de productos
         { $match: { requerimentID } },
         {
@@ -438,6 +438,9 @@ export class OfferService {
             },
           },
         },
+      ];
+      const result = await OfferModel.aggregate([
+        ...pipeline,
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -445,11 +448,19 @@ export class OfferService {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
-
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await OfferModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.error("Error al obtener las ofertas:", error);
@@ -471,7 +482,8 @@ export class OfferService {
     try {
       if (!page || page < 1) page = 1;
       if (!pageSize || pageSize < 1) pageSize = 10;
-      const result = await OfferModel.aggregate([
+
+      const pipeline = [
         {
           $match: {
             entityID: uid,
@@ -521,6 +533,9 @@ export class OfferService {
             },
           },
         },
+      ];
+      const result = await OfferModel.aggregate([
+        ...pipeline,
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -528,10 +543,20 @@ export class OfferService {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await OfferModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.error("Error al obtener las ofertas:", error);
@@ -552,57 +577,61 @@ export class OfferService {
   ) => {
     if (!page || page < 1) page = 1;
     if (!pageSize || pageSize < 1) pageSize = 10;
+
+    const pipeline = [
+      {
+        $match: {
+          userID: uid,
+        },
+      },
+      {
+        $lookup: {
+          from: "products", // Nombre de la colección de productos (ProductModel)
+          localField: "requerimentID", // Campo en OfferModel
+          foreignField: "uid", // Campo en ProductModel que coincide
+          as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+        },
+      },
+
+      // Fase de proyección para obtener solo los campos deseados
+      {
+        $project: {
+          _id: 0, // Excluir el _id de OfferModel
+          uid: 1,
+          name: 1,
+          email: 1,
+          subUserEmail: 1,
+          description: 1,
+          cityID: 1,
+          deliveryTimeID: 1,
+          currencyID: 1,
+          warranty: 1,
+          timeMeasurementID: 1,
+          support: 1,
+          budget: 1,
+          includesIGV: 1,
+          includesDelivery: 1,
+          requerimentID: 1,
+          stateID: 1,
+          publishDate: 1,
+          userID: 1,
+          entityID: 1,
+          files: 1,
+          images: 1,
+          canceledByCreator: 1,
+          selectionDate: 1,
+          delivered: 1,
+
+          // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+          requerimentTitle: {
+            $arrayElemAt: ["$requerimentDetails.name", 0],
+          },
+        },
+      },
+    ];
     try {
       const result = await OfferModel.aggregate([
-        {
-          $match: {
-            userID: uid,
-          },
-        },
-        {
-          $lookup: {
-            from: "products", // Nombre de la colección de productos (ProductModel)
-            localField: "requerimentID", // Campo en OfferModel
-            foreignField: "uid", // Campo en ProductModel que coincide
-            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
-          },
-        },
-
-        // Fase de proyección para obtener solo los campos deseados
-        {
-          $project: {
-            _id: 0, // Excluir el _id de OfferModel
-            uid: 1,
-            name: 1,
-            email: 1,
-            subUserEmail: 1,
-            description: 1,
-            cityID: 1,
-            deliveryTimeID: 1,
-            currencyID: 1,
-            warranty: 1,
-            timeMeasurementID: 1,
-            support: 1,
-            budget: 1,
-            includesIGV: 1,
-            includesDelivery: 1,
-            requerimentID: 1,
-            stateID: 1,
-            publishDate: 1,
-            userID: 1,
-            entityID: 1,
-            files: 1,
-            images: 1,
-            canceledByCreator: 1,
-            selectionDate: 1,
-            delivered: 1,
-
-            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
-            requerimentTitle: {
-              $arrayElemAt: ["$requerimentDetails.name", 0],
-            },
-          },
-        },
+        ...pipeline,
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -610,10 +639,21 @@ export class OfferService {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
       ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await OfferModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
+
       return {
         success: true,
         code: 200,
         data: result,
+        res: {
+          totalDocuments,
+          totalPages: Math.ceil(totalDocuments / pageSize),
+          currentPage: page,
+          pageSize,
+        },
       };
     } catch (error) {
       console.error("Error al obtener las ofertas:", error);
