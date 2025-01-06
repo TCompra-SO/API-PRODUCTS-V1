@@ -13,6 +13,8 @@ import {
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
 import { number } from "joi";
+import mongoose from "mongoose";
+import { TypeUser, TypeEntity } from "../utils/Types";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -87,6 +89,9 @@ export class RequerimentService {
           },
         };
       }
+
+      await this.manageCount(entityID, userID, "numProducts");
+
       return {
         success: true,
         code: 200,
@@ -103,6 +108,73 @@ export class RequerimentService {
         error: {
           msg: "Error interno en el Servidor",
         },
+      };
+    }
+  };
+  ////////////////////////FALTA PROBAR AQUI
+  static manageCount = async (
+    entityID: string,
+    userID: string,
+    field: string
+  ) => {
+    const ResourceCountersCollection =
+      mongoose.connection.collection("resourcecounters");
+
+    const UserMasterCollection = mongoose.connection.collection("usermasters");
+    const CompanyModel = mongoose.connection.collection("companys");
+
+    try {
+      const CompanyData = await CompanyModel.findOne({ uid: userID });
+
+      let typeEntity;
+      const userMasterData = await UserMasterCollection.findOne({
+        role: TypeEntity.MASTER,
+      });
+
+      if (entityID !== userID) {
+        typeEntity = TypeEntity.COMPANY;
+
+        // Crear o actualizar el contador del campo (por ejemplo, numProducts) para el usuario (subusuario)
+        await ResourceCountersCollection.updateOne(
+          { uid: userID, typeEntity: TypeEntity.SUBUSER },
+          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
+          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
+        );
+        // Crear o actualizar el contador del campo para la compañía
+        await ResourceCountersCollection.updateOne(
+          { uid: entityID, typeEntity: TypeEntity.COMPANY },
+          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
+          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
+        );
+      } else if (CompanyData) {
+        typeEntity = TypeEntity.COMPANY;
+        // Crear o actualizar el contador del campo para la compañía
+        await ResourceCountersCollection.updateOne(
+          { uid: entityID, typeEntity: TypeEntity.COMPANY },
+          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
+          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
+        );
+      } else {
+        typeEntity = TypeEntity.USER;
+
+        // Crear o actualizar el contador del campo para el usuario
+        await ResourceCountersCollection.updateOne(
+          { uid: entityID, typeEntity: TypeEntity.USER },
+          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
+          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
+        );
+      }
+
+      await ResourceCountersCollection.updateOne(
+        { uid: userMasterData?.uid, typeEntity: TypeEntity.MASTER },
+        { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
+        { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
+      );
+    } catch (error: any) {
+      console.error("Error en manageCount:", error.message);
+      return {
+        success: false,
+        error: error.message,
       };
     }
   };
@@ -123,6 +195,12 @@ export class RequerimentService {
             // Si hay más de un resultado, los aplanamos
             path: "$winOffer",
             preserveNullAndEmptyArrays: true, // Para mantener los requerimientos sin una oferta ganadora
+          },
+        },
+        {
+          $match: {
+            // Filtrar documentos donde stateID = 1
+            stateID: 1,
           },
         },
         {
@@ -158,6 +236,11 @@ export class RequerimentService {
           },
         },
         {
+          $sort: {
+            publish_date: -1, // Orden descendente (más reciente primero)
+          },
+        },
+        {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
         {
@@ -166,7 +249,7 @@ export class RequerimentService {
       ]);
 
       // Obtener el número total de documentos (sin paginación)
-      const totalDocuments = await ProductModel.countDocuments();
+      const totalDocuments = await ProductModel.countDocuments({ stateID: 1 });
 
       if (!requeriments) {
         return {
@@ -301,6 +384,7 @@ export class RequerimentService {
         {
           $match: {
             entityID: uid,
+            stateID: { $ne: 7 }, // Excluir documentos donde stateID = 7
           },
         },
         // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
@@ -358,6 +442,11 @@ export class RequerimentService {
 
       const result = await ProductModel.aggregate([
         ...pipeline,
+        {
+          $sort: {
+            publish_date: -1, // Orden descendente (más reciente primero)
+          },
+        },
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -404,6 +493,7 @@ export class RequerimentService {
         {
           $match: {
             userID: uid,
+            stateID: { $ne: 7 }, // Excluir documentos donde stateID = 7
           },
         },
         // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
@@ -460,6 +550,11 @@ export class RequerimentService {
       ];
       const result = await ProductModel.aggregate([
         ...pipeline,
+        {
+          $sort: {
+            publish_date: -1, // Orden descendente (más reciente primero)
+          },
+        },
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -1149,8 +1244,7 @@ export class RequerimentService {
           requerimentID: uid, // Filtro por requerimentID
           offerID: OfferID, // Filtro por offerID
         });
-        console.log(offerData);
-        console.log("Estado oferta: " + offerData?.[0].stateID);
+
         if (purchaseOrderData[0].stateID === PurchaseOrderState.CANCELED) {
           await this.changeStateOffer(uid, OfferState.CANCELED, true);
           await this.changeStateID(

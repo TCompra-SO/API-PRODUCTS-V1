@@ -98,10 +98,9 @@ export class OfferService {
 
       const codeResponse = (await this.getValidation(userID, requerimentID))
         .data?.codeResponse;
-      console.log("Codigo: " + codeResponse);
 
       console.log("tines" + Object.keys(resultOfferEntity?.data ?? {}).length);
-      console.log(resultOfferEntity.data);
+
       const validStates = [
         OfferState.ACTIVE,
         OfferState.WINNER,
@@ -144,6 +143,7 @@ export class OfferService {
               number_offers: currentOffers + 1,
             };
             RequerimentService.updateRequeriment(requerimentID, updateData);
+            RequerimentService.manageCount(entityID, userID, "numOffers");
           } else {
             return {
               success: false,
@@ -301,99 +301,8 @@ export class OfferService {
     try {
       if (!page || page < 1) page = 1; // Valor por defecto para la página
       if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
-      const result = await OfferModel.aggregate([
-        // Fase de lookup para unir la colección de productos
-        {
-          $lookup: {
-            from: "products", // Nombre de la colección de productos (ProductModel)
-            localField: "requerimentID", // Campo en OfferModel
-            foreignField: "uid", // Campo en ProductModel que coincide
-            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
-          },
-        },
-
-        // Fase de proyección para obtener solo los campos deseados
-        {
-          $project: {
-            _id: 0, // Excluir el _id de OfferModel
-            uid: 1,
-            name: 1,
-            email: 1,
-            subUserEmail: 1,
-            description: 1,
-            cityID: 1,
-            deliveryTimeID: 1,
-            currencyID: 1,
-            warranty: 1,
-            timeMeasurementID: 1,
-            support: 1,
-            budget: 1,
-            includesIGV: 1,
-            includesDelivery: 1,
-            requerimentID: 1,
-            stateID: 1,
-            publishDate: 1,
-            userID: 1,
-            entityID: 1,
-            files: 1,
-            images: 1,
-            canceledByCreator: 1,
-            selectionDate: 1,
-            delivered: 1,
-
-            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
-            requerimentTitle: {
-              $arrayElemAt: ["$requerimentDetails.name", 0],
-            },
-          },
-        },
-        {
-          $skip: (page - 1) * pageSize, // Saltar documentos según la página
-        },
-        {
-          $limit: pageSize, // Limitar a la cantidad de documentos por página
-        },
-      ]);
-      if (result) {
-        return {
-          success: true,
-          code: 200,
-          data: result,
-          res: "",
-        };
-      } else {
-        return {
-          success: false,
-          code: 403,
-          error: {
-            msg: "No se encontraron ofertas",
-          },
-        };
-      }
-    } catch (error) {
-      console.error("Error al obtener las ofertas:", error);
-      return {
-        success: false,
-        code: 500,
-        error: {
-          msg: "Hubo un error al obtener las ofertas.",
-        },
-      };
-    }
-  };
-
-  static getOffersByRequeriment = async (
-    requerimentID: string,
-    page?: number,
-    pageSize?: number
-  ) => {
-    if (!page || page < 1) page = 1;
-    if (!pageSize || pageSize < 1) pageSize = 10;
-    try {
-      // const result = await OfferModel.find({ requerimentID });
       const pipeline = [
         // Fase de lookup para unir la colección de productos
-        { $match: { requerimentID } },
         {
           $lookup: {
             from: "products", // Nombre de la colección de productos (ProductModel)
@@ -441,6 +350,125 @@ export class OfferService {
       ];
       const result = await OfferModel.aggregate([
         ...pipeline,
+        {
+          $sort: {
+            publishDate: -1, // Orden descendente (más reciente primero)
+          },
+        },
+        {
+          $skip: (page - 1) * pageSize, // Saltar documentos según la página
+        },
+        {
+          $limit: pageSize, // Limitar a la cantidad de documentos por página
+        },
+      ]);
+
+      // Obtener el número total de documentos (sin paginación)
+      const totalData = await OfferModel.aggregate(pipeline);
+      const totalDocuments = totalData.length;
+
+      if (result) {
+        return {
+          success: true,
+          code: 200,
+          data: result,
+          res: {
+            totalDocuments,
+            totalPages: Math.ceil(totalDocuments / pageSize),
+            currentPage: page,
+            pageSize,
+          },
+        };
+      } else {
+        return {
+          success: false,
+          code: 403,
+          error: {
+            msg: "No se encontraron ofertas",
+          },
+        };
+      }
+    } catch (error) {
+      console.error("Error al obtener las ofertas:", error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Hubo un error al obtener las ofertas.",
+        },
+      };
+    }
+  };
+
+  static getOffersByRequeriment = async (
+    requerimentID: string,
+    page?: number,
+    pageSize?: number
+  ) => {
+    if (!page || page < 1) page = 1;
+    if (!pageSize || pageSize < 1) pageSize = 10;
+    try {
+      // const result = await OfferModel.find({ requerimentID });
+      const pipeline = [
+        // Fase de lookup para unir la colección de productos
+        {
+          $match: {
+            requerimentID, // Filtra por el `requerimentID` proporcionado
+            stateID: { $ne: 7 }, // Excluye los documentos con `stateID = 7`
+          },
+        },
+        {
+          $lookup: {
+            from: "products", // Nombre de la colección de productos (ProductModel)
+            localField: "requerimentID", // Campo en OfferModel
+            foreignField: "uid", // Campo en ProductModel que coincide
+            as: "requerimentDetails", // Nombre del campo que contendrá los detalles del producto relacionado
+          },
+        },
+
+        // Fase de proyección para obtener solo los campos deseados
+        {
+          $project: {
+            _id: 0, // Excluir el _id de OfferModel
+            uid: 1,
+            name: 1,
+            email: 1,
+            subUserEmail: 1,
+            description: 1,
+            cityID: 1,
+            deliveryTimeID: 1,
+            currencyID: 1,
+            warranty: 1,
+            timeMeasurementID: 1,
+            support: 1,
+            budget: 1,
+            includesIGV: 1,
+            includesDelivery: 1,
+            requerimentID: 1,
+            stateID: 1,
+            publishDate: 1,
+            userID: 1,
+            entityID: 1,
+            files: 1,
+            images: 1,
+            canceledByCreator: 1,
+            selectionDate: 1,
+            delivered: 1,
+
+            // Extrae el campo 'name' de `ProductModel` (en `requerimentDetails`) como `requerimentTitle`
+            requerimentTitle: {
+              $arrayElemAt: ["$requerimentDetails.name", 0],
+            },
+          },
+        },
+      ];
+      const result = await OfferModel.aggregate([
+        ...pipeline,
+        {
+          $sort: {
+            publishDate: -1, // Orden descendente (más reciente primero)
+          },
+        },
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
@@ -487,6 +515,7 @@ export class OfferService {
         {
           $match: {
             entityID: uid,
+            stateID: { $ne: 7 }, // Excluye los documentos con `stateID = 7`
           },
         },
         {
@@ -537,6 +566,11 @@ export class OfferService {
       const result = await OfferModel.aggregate([
         ...pipeline,
         {
+          $sort: {
+            publishDate: -1, // Orden descendente (más reciente primero)
+          },
+        },
+        {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },
         {
@@ -582,6 +616,7 @@ export class OfferService {
       {
         $match: {
           userID: uid,
+          stateID: { $ne: 7 }, // Excluye los documentos con `stateID = 7`
         },
       },
       {
@@ -632,6 +667,11 @@ export class OfferService {
     try {
       const result = await OfferModel.aggregate([
         ...pipeline,
+        {
+          $sort: {
+            publishDate: -1, // Orden descendente (más reciente primero)
+          },
+        },
         {
           $skip: (page - 1) * pageSize, // Saltar documentos según la página
         },

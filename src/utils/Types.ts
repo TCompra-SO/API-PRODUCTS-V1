@@ -34,4 +34,5 @@ export enum TypeEntity {
   COMPANY = "Company",
   USER = "User",
   SUBUSER = "SubUser",
+  MASTER = "Master",
 }

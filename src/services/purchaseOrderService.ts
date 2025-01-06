@@ -167,13 +167,38 @@ export class PurchaseOrderService {
 
       const CreateOrder = new PurchaseOrderModel(newPurchaseOrder);
       await CreateOrder.save();
-      const sendMail = sendEmailPurchaseOrder(newPurchaseOrder);
+      await RequerimentService.manageCount(
+        userProviderID,
+        subUserProviderID,
+        "numPurchaseOrdersProvider"
+      );
+
+      await RequerimentService.manageCount(
+        userClientID,
+        subUserClientID,
+        "numPurchaseOrdersClient"
+      );
+      // const sendMail = sendEmailPurchaseOrder(newPurchaseOrder);
       let responseEmail = "";
-      if ((await sendMail).success) {
+      /*  if ((await sendMail).success) {
         responseEmail = "Orden de Compra enviada al Email correctamente";
       } else {
         responseEmail = "No se ha podido enviar la Orden al Correo";
-      }
+      }*/
+
+      // Inicia el envío del correo en segundo plano
+      sendEmailPurchaseOrder(newPurchaseOrder)
+        .then((result) => {
+          if (result.success) {
+            responseEmail = "Orden de Compra enviada al Email correctamente";
+          } else {
+            responseEmail = "No se ha podido enviar la Orden al Correo";
+          }
+        })
+        .catch((error) => {
+          console.error("Error al enviar el correo:", error);
+        });
+
       return {
         success: true,
         code: 200,
@@ -199,6 +224,7 @@ export class PurchaseOrderService {
     if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       const result = await PurchaseOrderModel.find()
+        .sort({ createDate: -1 })
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;
 
@@ -236,6 +262,7 @@ export class PurchaseOrderService {
 
     try {
       const result = await PurchaseOrderModel.find({ userClientID })
+        .sort({ createDate: -1 })
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;;
       const totalDocuments = (await PurchaseOrderModel.find({ userClientID }))
@@ -272,6 +299,7 @@ export class PurchaseOrderService {
     if (!pageSize || pageSize < 1) pageSize = 10;
     try {
       const result = await PurchaseOrderModel.find({ userProviderID })
+        .sort({ createDate: -1 })
         .skip((page - 1) * pageSize) // Omitir documentos según la página
         .limit(pageSize); // Limitar el número de documentos por página;
       const totalDocuments = (await PurchaseOrderModel.find({ userProviderID }))
@@ -342,6 +370,7 @@ export class PurchaseOrderService {
       let totalDocuments;
       if (TypeUser.ADMIN === typeUser) {
         result = await PurchaseOrderModel.find({ userProviderID: uid })
+          .sort({ createDate: -1 })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página
         totalDocuments = (
@@ -394,6 +423,7 @@ export class PurchaseOrderService {
         result = await PurchaseOrderModel.find({
           userClientID: uid,
         })
+          .sort({ createDate: -1 })
           .skip((page - 1) * pageSize) // Omitir documentos según la página
           .limit(pageSize); // Limitar el número de documentos por página;
         totalDocuments = (await PurchaseOrderModel.find({ userClientID: uid }))
