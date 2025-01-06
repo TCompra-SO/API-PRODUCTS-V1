@@ -143,7 +143,11 @@ export class OfferService {
               number_offers: currentOffers + 1,
             };
             RequerimentService.updateRequeriment(requerimentID, updateData);
-            RequerimentService.manageCount(entityID, userID, "numOffers");
+            RequerimentService.manageCount(
+              entityID,
+              userID,
+              "numOffersProducts"
+            );
           } else {
             return {
               success: false,
