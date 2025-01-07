@@ -12,6 +12,7 @@ import {
   republishController,
   selectOfferController,
   canceledController,
+  searchMainFiltersController,
 } from "../controllers/requerimentController";
 
 export class RequerimentRouter {
@@ -44,6 +45,7 @@ export class RequerimentRouter {
     this.router.post("/canceled", canceledController);
     this.router.post("/republish", republishController);
     this.router.post("/culminate", culminateController);
+    this.router.post("/searchMainFilters", searchMainFiltersController);
   }
 
   static getRouter(): Router {

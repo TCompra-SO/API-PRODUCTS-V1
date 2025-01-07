@@ -306,6 +306,42 @@ const canceledController = async (req: Request, res: Response) => {
   }
 };
 
+const searchMainFiltersController = async (req: Request, res: Response) => {
+  try {
+    const {
+      keyWords,
+      location,
+      category,
+      startDate,
+      endDate,
+      companyId,
+      page,
+      pageSize,
+    } = req.body;
+    const responseUser = await RequerimentService.searchMainFilters(
+      keyWords,
+      Number(location),
+      Number(category),
+      startDate,
+      endDate,
+      companyId,
+      Number(page),
+      Number(pageSize)
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en searchMainFiltersController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -319,4 +355,5 @@ export {
   republishController,
   culminateController,
   canceledController,
+  searchMainFiltersController,
 };
