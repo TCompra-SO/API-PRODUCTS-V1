@@ -10,6 +10,7 @@ import {
   getPurchaseOrdersByClient,
   canceledController,
   searchPurchaseOrdersByProviderController,
+  searchPurchaseOrdersByClientController,
 } from "../controllers/purchaseOrderController";
 
 export class PurchaseOrderRouter {
@@ -25,7 +26,10 @@ export class PurchaseOrderRouter {
       "/searchPurchaseOrdersByProvider",
       searchPurchaseOrdersByProviderController
     );
-
+    this.router.post(
+      "/searchPurchaseOrdersByClient",
+      searchPurchaseOrdersByClientController
+    );
     this.router.get(
       "/getPurchaseOrders/:page/:pageSize",
       getPurchaseOrdersController

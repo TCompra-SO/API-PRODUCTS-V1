@@ -21,23 +21,23 @@ export interface RequerimentFrontI {
   warrantyTime?: string; // Campo nuevo, relacionado con la duración de la garantía
   usage?: string; // Campo nuevo, sólo para liquidaciones
   duration?: number;
-  email: string;
+  email?: string;
 }
 
 // Interfaz para la respuesta
 interface ApiResponse {
   success: boolean;
   code: number;
-  data: RequerimentFrontI[];
+  data: any[];
 }
 
-function transformData(response: {
+function transformData(response: any): {
   success: boolean;
   code: number;
-  data: RequerimentI[];
-  res: any;
-}): { success: boolean; code: number; data: RequerimentFrontI[]; res: any } {
-  const transformedData: RequerimentFrontI[] = response.data.map((item) => ({
+  data: any[];
+  res?: any;
+} {
+  const transformedData: any[] = response.data.map((item: RequerimentI) => ({
     key: item.uid, // Aquí 'uid' viene de RequerimentI y lo renombramos a 'key'
     title: item.name, // 'name' renombrado a 'title'
     description: item.description, // Sin cambios

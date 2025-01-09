@@ -1444,6 +1444,16 @@ export class RequerimentService {
         ],
       };
 
+      // Definimos la proyección para excluir campos específicos
+      const projection = {
+        _id: 1,
+        createdAt: 0, // Excluir el campo 'createdAt'
+        updatedAt: 0, // Excluir el campo 'updatedAt'
+        payment_methodID: 0, // Excluir el campo 'payment_methodID'
+        submission_dateID: 0,
+        allowed_bidersID: 0,
+      };
+
       if (location) {
         searchConditions.cityID = location;
       }
@@ -1473,7 +1483,7 @@ export class RequerimentService {
       // Primero intentamos hacer la búsqueda en MongoDB
       const skip = (page - 1) * pageSize;
 
-      let results = await ProductModel.find(searchConditions)
+      let results = await ProductModel.find(searchConditions, projection)
         .skip(skip)
         .limit(pageSize)
         .sort({ publish_date: -1 });
@@ -1486,7 +1496,8 @@ export class RequerimentService {
 
         // Obtener todos los registros sin aplicar el filtro de palabras clave
         const allResults = await ProductModel.find(
-          searchConditionsWithoutKeyWords
+          searchConditionsWithoutKeyWords,
+          projection
         );
 
         // Configurar Fuse.js
@@ -1518,9 +1529,10 @@ export class RequerimentService {
         code: 200,
         data: results,
         res: {
-          total,
+          totalDocuments: total,
           totalPages: Math.ceil(total / pageSize),
           currentPage: page,
+          pageSize,
         },
       };
     } catch (error) {

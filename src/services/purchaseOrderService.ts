@@ -487,6 +487,7 @@ export class PurchaseOrderService {
       } else {
         fieldName = "subUserProviderID";
       }
+      console.log(fieldName);
       const searchConditions: any = {
         $or: [
           { requirementTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
@@ -502,6 +503,7 @@ export class PurchaseOrderService {
         .skip(skip)
         .limit(pageSize)
         .sort({ createDate: -1 });
+
       // COREGIR
       if (keyWords && results.length === 0) {
         // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
@@ -516,6 +518,101 @@ export class PurchaseOrderService {
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
           keys: ["requerimentTitle", "userNameClient"], // Las claves por las que buscar (name y description)
+          threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
+        });
+
+        // Buscar usando Fuse.js
+        results = fuse.search(keyWords).map((result) => result.item);
+
+        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
+        results.sort((a, b) => {
+          return b.createDate.getTime() - a.createDate.getTime(); // Convertimos las fechas a timestamps
+        });
+        // Total de resultados (count usando Fuse.js)
+        total = results.length;
+
+        // Aplicar paginación sobre los resultados ordenados de Fuse.js
+        const start = (page - 1) * pageSize;
+        results = results.slice(start, start + pageSize);
+      } else {
+        // Si encontramos resultados en MongoDB, el total es la cantidad de documentos encontrados
+        total = await PurchaseOrderModel.countDocuments(searchConditions);
+      }
+      return {
+        success: true,
+        code: 200,
+        data: results,
+        res: {
+          total,
+          totalPages: Math.ceil(total / pageSize),
+          currentPage: page,
+          pageSize,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static searchPurchaseOrderByClient = async (
+    keyWords: string,
+    typeUser: number,
+    userId: string,
+    page?: number,
+    pageSize?: number
+  ) => {
+    page = !page || page < 1 ? 1 : page;
+    pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
+    let total = 0;
+    try {
+      if (!keyWords) {
+        keyWords = "";
+      }
+      let fieldName;
+      if (TypeUser.ADMIN === typeUser) {
+        fieldName = "userClientID";
+      } else {
+        fieldName = "subUserClientID";
+      }
+
+      const searchConditions: any = {
+        $or: [
+          { requirementTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
+          { userNameClient: { $regex: keyWords, $options: "i" } },
+        ],
+        [fieldName]: userId,
+      };
+
+      // Primero intentamos hacer la búsqueda en MongoDB
+      const skip = (page - 1) * pageSize;
+
+      let results = await PurchaseOrderModel.find(searchConditions)
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createDate: -1 });
+
+      console.log(results);
+      // COREGIR
+      if (keyWords && results.length === 0) {
+        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
+        const searchConditionsWithoutKeyWords = { ...searchConditions };
+        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
+
+        // Obtener todos los registros sin aplicar el filtro de palabras clave
+        const allResults = await PurchaseOrderModel.find(
+          searchConditionsWithoutKeyWords
+        );
+
+        // Configurar Fuse.js
+        const fuse = new Fuse(allResults, {
+          keys: ["requerimentTitle", "userNameProvider"], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 

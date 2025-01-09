@@ -212,13 +212,13 @@ const searchPurchaseOrdersByProviderController = async (
   req: Request,
   res: Response
 ) => {
-  const { keyWords, typeUser, userId, page, pageSize } = req.params;
+  const { keyWords, typeUser, userProviderId, page, pageSize } = req.body;
   try {
     const responseUser =
       await PurchaseOrderService.searchPurchaseOrderByProvider(
         keyWords,
         Number(typeUser),
-        userId,
+        userProviderId,
         Number(page),
         Number(pageSize)
       );
@@ -229,6 +229,33 @@ const searchPurchaseOrdersByProviderController = async (
     }
   } catch (error) {
     console.error("Error en searchPurchaseOrdersByProviderController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+const searchPurchaseOrdersByClientController = async (
+  req: Request,
+  res: Response
+) => {
+  const { keyWords, typeUser, userClientId, page, pageSize } = req.body;
+  try {
+    const responseUser = await PurchaseOrderService.searchPurchaseOrderByClient(
+      keyWords,
+      Number(typeUser),
+      userClientId,
+      Number(page),
+      Number(pageSize)
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en searchPurchaseOrdersByClientController", error);
     res.status(500).send({
       success: false,
       msg: "Error interno del Servidor",
@@ -247,4 +274,5 @@ export {
   getPurchaseOrdersByClient,
   canceledController,
   searchPurchaseOrdersByProviderController,
+  searchPurchaseOrdersByClientController,
 };

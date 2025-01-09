@@ -329,7 +329,7 @@ const searchMainFiltersController = async (req: Request, res: Response) => {
       Number(pageSize)
     );
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      res.status(responseUser.code).send(transformData(responseUser));
     } else {
       res.status(responseUser.code).send(responseUser.error);
     }
@@ -352,7 +352,7 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
       Number(pageSize)
     );
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      res.status(responseUser.code).send(transformData(responseUser));
     } else {
       res.status(responseUser.code).send(responseUser.error);
     }
@@ -364,8 +364,6 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
     });
   }
 };
-
-
 
 export {
   createRequerimentController,
