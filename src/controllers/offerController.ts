@@ -265,6 +265,29 @@ const canceledController = async (req: Request, res: Response) => {
   }
 };
 
+const searchOffersByUserController = async (req: Request, res: Response) => {
+  try {
+    const { keyWords, userId, page, pageSize } = req.body;
+    const responseUser = await OfferService.searchOffersByUser(
+      keyWords,
+      userId,
+      Number(page),
+      Number(pageSize)
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en searchOffersByUserController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   CreateOfferController,
   GetDetailOfferController,
@@ -277,4 +300,5 @@ export {
   culminateController,
   getValidationController,
   canceledController,
+  searchOffersByUserController,
 };

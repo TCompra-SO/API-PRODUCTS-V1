@@ -342,6 +342,31 @@ const searchMainFiltersController = async (req: Request, res: Response) => {
   }
 };
 
+const searchProductsByUserController = async (req: Request, res: Response) => {
+  try {
+    const { keyWords, userId, page, pageSize } = req.body;
+    const responseUser = await RequerimentService.searchProductsByUser(
+      keyWords,
+      userId,
+      Number(page),
+      Number(pageSize)
+    );
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en searchProductsByUserController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -356,4 +381,5 @@ export {
   culminateController,
   canceledController,
   searchMainFiltersController,
+  searchProductsByUserController,
 };

@@ -10,6 +10,7 @@ import {
   GetOffersBySubUserController,
   GetOffersController,
   getValidationController,
+  searchOffersByUserController,
 } from "../controllers/offerController";
 import { deleteController } from "../controllers/offerController";
 export class OfferRouter {
@@ -43,6 +44,7 @@ export class OfferRouter {
     this.router.get("/delete/:uid", deleteController);
     this.router.post("/culminate", culminateController);
     this.router.post("/canceled", canceledController);
+    this.router.post("/searchOffersByUser", searchOffersByUserController);
   }
 
   static getRouter(): Router {

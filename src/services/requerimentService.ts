@@ -1454,10 +1454,9 @@ export class RequerimentService {
         searchConditions.entityID = companyId;
       }
 
-      // Filtrar por rango de fechas (startDate y endDate)
       if (startDate) {
-        searchConditions.completion_date = {
-          ...searchConditions.completion_date,
+        searchConditions.publish_date = {
+          ...searchConditions.publish_date,
           $gte: new Date(startDate),
         };
       }
@@ -1465,9 +1464,9 @@ export class RequerimentService {
       if (endDate) {
         const end = new Date(endDate);
         end.setUTCHours(23, 59, 59, 999); // Ajustar a las 23:59:59.999 en UTC
-        searchConditions.completion_date = {
-          ...searchConditions.completion_date,
-          $lte: end, // Filtro menor o igual a la fecha ajustada
+        searchConditions.publish_date = {
+          ...searchConditions.publish_date,
+          $lte: end,
         };
       }
 
@@ -1493,6 +1492,89 @@ export class RequerimentService {
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
           keys: ["name", "description"], // Las claves por las que buscar (name y description)
+          threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
+        });
+
+        // Buscar usando Fuse.js
+        results = fuse.search(keyWords).map((result) => result.item);
+
+        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
+        results.sort((a, b) => {
+          return b.publish_date.getTime() - a.publish_date.getTime(); // Convertimos las fechas a timestamps
+        });
+        // Total de resultados (count usando Fuse.js)
+        total = results.length;
+
+        // Aplicar paginación sobre los resultados ordenados de Fuse.js
+        const start = (page - 1) * pageSize;
+        results = results.slice(start, start + pageSize);
+      } else {
+        // Si encontramos resultados en MongoDB, el total es la cantidad de documentos encontrados
+        total = await ProductModel.countDocuments(searchConditions);
+      }
+
+      return {
+        success: true,
+        code: 200,
+        data: results,
+        res: {
+          total,
+          totalPages: Math.ceil(total / pageSize),
+          currentPage: page,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static searchProductsByUser = async (
+    keyWords: string,
+    userId: string,
+    page?: number,
+    pageSize?: number
+  ) => {
+    page = !page || page < 1 ? 1 : page;
+    pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
+    let total = 0;
+    try {
+      if (!keyWords) {
+        keyWords = "";
+      }
+      const searchConditions: any = {
+        $or: [{ name: { $regex: keyWords, $options: "i" } }],
+        userID: userId,
+      };
+
+      // Primero intentamos hacer la búsqueda en MongoDB
+      const skip = (page - 1) * pageSize;
+
+      let results = await ProductModel.find(searchConditions)
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ publish_date: -1 });
+
+      // Si no hay resultados en MongoDB, usamos Fuse.js para hacer una búsqueda difusa
+      if (keyWords && results.length === 0) {
+        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
+        const searchConditionsWithoutKeyWords = { ...searchConditions };
+        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
+
+        // Obtener todos los registros sin aplicar el filtro de palabras clave
+        const allResults = await ProductModel.find(
+          searchConditionsWithoutKeyWords
+        );
+
+        // Configurar Fuse.js
+        const fuse = new Fuse(allResults, {
+          keys: ["name"], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 
