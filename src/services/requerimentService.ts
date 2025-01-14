@@ -1,4 +1,5 @@
 import { RequerimentI } from "../interfaces/requeriment.interface";
+import { SortOrder } from "mongoose";
 import ProductModel from "../models/productModel";
 import Joi from "joi";
 import axios from "axios";
@@ -6,8 +7,10 @@ import { OfferService } from "./offerService";
 import { OfferModel } from "../models/offerModel";
 import { PurchaseOrderService } from "./purchaseOrderService";
 import Fuse from "fuse.js";
+import { PipelineStage } from "mongoose";
 import {
   OfferState,
+  OrderType,
   PurchaseOrderState,
   RequirementState,
 } from "../utils/Types";
@@ -15,6 +18,9 @@ import PurchaseOrderModel from "../models/purchaseOrder";
 import { number } from "joi";
 import mongoose from "mongoose";
 import { TypeUser, TypeEntity } from "../utils/Types";
+import { profile } from "node:console";
+import { countries } from "../utils/Countries";
+import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -374,11 +380,24 @@ export class RequerimentService {
   static getRequerimentsByEntity = async (
     uid: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    fieldName?: string,
+    orderType?: OrderType
   ) => {
     try {
       if (!page || page < 1) page = 1; // Valor por defecto para la página
       if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
+
+      if (!fieldName) {
+        fieldName = "publish_date"; // Valor por defecto para el campo de ordenación
+      }
+      let order: SortOrder;
+      if (!orderType || orderType === OrderType.DESC) {
+        order = -1;
+      } else {
+        order = 1;
+      }
+      /*
       const pipeline = [
         // Buscar el requerimiento por su uid
         {
@@ -438,13 +457,106 @@ export class RequerimentService {
             }, // Aquí incluimos todos los campos de la oferta ganadora
           },
         },
+      ];*/
+      const pipeline = [
+        // Buscar el requerimiento por su userID
+        {
+          $match: {
+            entityID: uid,
+            stateID: { $ne: 7 }, // Excluir documentos donde stateID = 7
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "offersproducts", // Nombre de la colección de ofertas
+            localField: "winOffer.uid", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "winOffer", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$winOffer", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "profiles", // Nombre de la colección de ofertas
+            localField: "userID", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "profile", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$profile", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Relacionar la colección 'OffersProducts' (ofertas) con la colección de requerimientos (Products)
+        {
+          $lookup: {
+            from: "companys", // Nombre de la colección de ofertas
+            localField: "userID", // El campo en los requerimientos (Products) que relacionamos (winOffer.uid)
+            foreignField: "uid", // El campo en las ofertas (Offers) con el que se relaciona (uid de la oferta)
+            as: "company", // El alias para la relación, esto almacenará la oferta ganadora relacionada
+          },
+        },
+        // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
+        {
+          $unwind: {
+            path: "$company", // Esto descompone el array de ofertas ganadoras
+            preserveNullAndEmptyArrays: true, // Mantiene el documento aún si no hay oferta ganadora
+          },
+        },
+        // Proyección de los campos que deseas devolver (todos los campos del requerimiento)
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            duration: 1,
+            allowed_bidersID: 1,
+            entityID: 1,
+            subUserEmail: 1,
+            userID: 1,
+            email: 1,
+            publish_date: 1,
+            stateID: 1,
+            uid: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            }, // Aquí incluimos todos los campos de la oferta ganadora
+            userName: { $ifNull: ["$profile.name", "$company.name"] },
+          },
+        },
       ];
 
       const result = await ProductModel.aggregate([
         ...pipeline,
         {
           $sort: {
-            publish_date: -1, // Orden descendente (más reciente primero)
+            [fieldName]: order, // Orden descendente (más reciente primero)
           },
         },
         {
@@ -453,7 +565,46 @@ export class RequerimentService {
         {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
-      ]);
+      ]).collation({ locale: "en", strength: 2 });
+      // Asociar la ciudad al resultado
+      const resultWithCities = result.map((item) => {
+        // Buscar el país que contiene la ciudad con el cityID
+        const country = countries.find((country) =>
+          country.cities.some((city) => city.id === item.cityID)
+        );
+
+        // Si se encuentra el país, buscar la ciudad
+        if (country) {
+          const city = country.cities.find((city) => city.id === item.cityID);
+          item.cityName = city ? city.value : null; // Agregar el nombre de la ciudad
+        } else {
+          item.cityName = null;
+        }
+
+        return item;
+      });
+
+      let resultData;
+      if (fieldName === "cityID") {
+        // Ordenamos el arreglo según 'cityName' basado en el valor de `order`
+        resultData = resultWithCities.sort((a, b) => {
+          // Normalizamos las cadenas para asegurarnos de que las comparaciones sean correctas
+          const cityA =
+            a.cityName?.normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""; // Normaliza y elimina tildes
+          const cityB =
+            b.cityName?.normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""; // Normaliza y elimina tildes
+
+          // Compara las ciudades con `localeCompare` para tratar los acentos correctamente
+          const comparison = cityA.localeCompare(cityB);
+
+          // Si `order` es 1 (ascendente), utilizamos la comparación tal cual, si es -1 (descendente) la invertimos
+          return order === 1 ? comparison : -comparison;
+        });
+      } else {
+        resultData = resultWithCities;
+      }
+
+      //  console.log(sortedResult);
 
       // Obtener el número total de documentos (sin paginación)
       const totalData = await ProductModel.aggregate(pipeline);
@@ -461,7 +612,7 @@ export class RequerimentService {
       return {
         success: true,
         code: 200,
-        data: result,
+        data: resultWithCities,
         res: {
           totalDocuments,
           totalPages: Math.ceil(totalDocuments / pageSize),
@@ -482,11 +633,23 @@ export class RequerimentService {
   static getRequerimentsbySubUser = async (
     uid: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    fieldName?: string,
+    orderType?: number
   ) => {
     try {
       if (!page || page < 1) page = 1; // Valor por defecto para la página
       if (!pageSize || pageSize < 1) pageSize = 10; // Valor por defecto para el tamaño de página
+
+      if (!fieldName) {
+        fieldName = "publish_date"; // Valor por defecto para el campo de ordenación
+      }
+      let order: SortOrder;
+      if (!orderType || orderType === OrderType.DESC) {
+        order = -1;
+      } else {
+        order = 1;
+      }
 
       const pipeline = [
         // Buscar el requerimiento por su userid
@@ -548,11 +711,12 @@ export class RequerimentService {
           },
         },
       ];
+
       const result = await ProductModel.aggregate([
         ...pipeline,
         {
           $sort: {
-            publish_date: -1, // Orden descendente (más reciente primero)
+            [fieldName]: order, // Orden descendente (más reciente primero)
           },
         },
         {
@@ -561,8 +725,44 @@ export class RequerimentService {
         {
           $limit: pageSize, // Limitar a la cantidad de documentos por página
         },
-      ]);
+      ]).collation({ locale: "en", strength: 2 });
 
+      const resultWithCities = result.map((item) => {
+        // Buscar el país que contiene la ciudad con el cityID
+        const country = countries.find((country) =>
+          country.cities.some((city) => city.id === item.cityID)
+        );
+
+        // Si se encuentra el país, buscar la ciudad
+        if (country) {
+          const city = country.cities.find((city) => city.id === item.cityID);
+          item.cityName = city ? city.value : null; // Agregar el nombre de la ciudad
+        } else {
+          item.cityName = null;
+        }
+
+        return item;
+      });
+
+      let resultData;
+      if (fieldName === "cityID") {
+        // Ordenamos el arreglo según 'cityName' basado en el valor de `order`
+        resultData = resultWithCities.sort((a, b) => {
+          // Normalizamos las cadenas para asegurarnos de que las comparaciones sean correctas
+          const cityA =
+            a.cityName?.normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""; // Normaliza y elimina tildes
+          const cityB =
+            b.cityName?.normalize("NFD").replace(/[\u0300-\u036f]/g, "") || ""; // Normaliza y elimina tildes
+
+          // Compara las ciudades con `localeCompare` para tratar los acentos correctamente
+          const comparison = cityA.localeCompare(cityB);
+
+          // Si `order` es 1 (ascendente), utilizamos la comparación tal cual, si es -1 (descendente) la invertimos
+          return order === 1 ? comparison : -comparison;
+        });
+      } else {
+        resultData = resultWithCities;
+      }
       // Obtener el número total de documentos (sin paginación)
       const totalData = await ProductModel.aggregate(pipeline);
       const totalDocuments = totalData.length;
@@ -570,7 +770,7 @@ export class RequerimentService {
       return {
         success: true,
         code: 200,
-        data: result,
+        data: resultData,
         res: {
           totalDocuments,
           totalPages: Math.ceil(totalDocuments / pageSize),
@@ -1550,8 +1750,11 @@ export class RequerimentService {
   static searchProductsByUser = async (
     keyWords: string,
     userId: string,
+    typeUser?: TypeEntity,
     page?: number,
-    pageSize?: number
+    pageSize?: number,
+    fieldName?: string,
+    orderType?: OrderType
   ) => {
     page = !page || page < 1 ? 1 : page;
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
@@ -1560,52 +1763,158 @@ export class RequerimentService {
       if (!keyWords) {
         keyWords = "";
       }
-      const searchConditions: any = {
-        $or: [{ name: { $regex: keyWords, $options: "i" } }],
-        userID: userId,
-      };
+
+      if (!fieldName) {
+        fieldName = "publish_date";
+      }
+      let userType;
+      if (typeUser === TypeEntity.COMPANY || typeUser === TypeEntity.USER) {
+        userType = "entityID";
+      } else {
+        userType = "userID";
+      }
+
+      if (fieldName === "cityName") {
+        fieldName = "cityID";
+      }
+
+      let order: SortOrder = orderType === OrderType.ASC ? 1 : -1;
+      const pipeline: PipelineStage[] = [
+        // Filtro inicial (searchConditions)
+        {
+          $match: {
+            $and: [
+              { [userType]: userId },
+              { stateID: { $ne: RequirementState.ELIMINATED } },
+              { $or: [{ name: { $regex: keyWords, $options: "i" } }] },
+            ],
+          },
+        },
+        // Relacionar con la colección 'profiles' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "profiles", // Nombre de la colección de perfiles
+            localField: "userID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Profiles'
+            as: "profile", // Alias del resultado
+          },
+        },
+        // Descomponer el array de perfiles (si existe)
+        { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+
+        // Relacionar con la colección 'companys' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "companys", // Nombre de la colección de compañías
+            localField: "userID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Companys'
+            as: "company", // Alias del resultado
+          },
+        },
+        // Descomponer el array de compañías (si existe)
+        { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
+
+        // Proyección de los campos que queremos devolver
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            description: 1,
+            categoryID: 1,
+            cityID: 1,
+            budget: 1,
+            currencyID: 1,
+            payment_methodID: 1,
+            completion_date: 1,
+            submission_dateID: 1,
+            warranty: 1,
+            duration: 1,
+            allowed_bidersID: 1,
+            entityID: 1,
+            subUserEmail: 1,
+            userID: 1,
+            email: 1,
+            publish_date: 1,
+            stateID: 1,
+            uid: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            number_offers: 1,
+            images: 1,
+            files: 1,
+            winOffer: {
+              uid: 1,
+              userID: 1,
+              entityID: 1,
+            }, // Aquí incluimos todos los campos de la oferta ganadora
+            userName: { $ifNull: ["$profile.name", "$company.name"] },
+          },
+        },
+      ];
 
       // Primero intentamos hacer la búsqueda en MongoDB
       const skip = (page - 1) * pageSize;
-
-      let results = await ProductModel.find(searchConditions)
+      let results = await ProductModel.aggregate(pipeline)
         .skip(skip)
         .limit(pageSize)
-        .sort({ publish_date: -1 });
+        .sort({ [fieldName]: order })
+        .collation({ locale: "en", strength: 2 });
 
       // Si no hay resultados en MongoDB, usamos Fuse.js para hacer una búsqueda difusa
       if (keyWords && results.length === 0) {
-        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
-        const searchConditionsWithoutKeyWords = { ...searchConditions };
-        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
+        // Crear un nuevo pipeline sin el filtro de palabras clave ($or)
+        const pipelineWithoutKeyWords = pipeline
+          .map((stage: any) => {
+            if (stage.$match && stage.$match.$and) {
+              // Filtrar las condiciones del $and eliminando únicamente las que contienen $or
+              const remainingMatchConditions = stage.$match.$and.filter(
+                (condition: any) => !condition.$or
+              );
 
-        // Obtener todos los registros sin aplicar el filtro de palabras clave
-        const allResults = await ProductModel.find(
-          searchConditionsWithoutKeyWords
+              // Si hay condiciones restantes, devolver el nuevo $match, si no, eliminar la etapa
+              return remainingMatchConditions.length > 0
+                ? { $match: { $and: remainingMatchConditions } }
+                : null;
+            }
+            return stage; // Conservar las demás etapas ($lookup, $unwind, $project)
+          })
+          .filter((stage) => stage !== null);
+
+        // Ejecutar el pipeline sin el filtro de palabras clave
+        const allResults = await ProductModel.aggregate(
+          pipelineWithoutKeyWords
         );
 
-        // Configurar Fuse.js
+        // Configurar Fuse.js para la búsqueda difusa
         const fuse = new Fuse(allResults, {
-          keys: ["name"], // Las claves por las que buscar (name y description)
-          threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
+          keys: ["name"], // Claves por las que buscar
+          threshold: 0.4, // Define qué tan "difusa" es la coincidencia
         });
 
         // Buscar usando Fuse.js
         results = fuse.search(keyWords).map((result) => result.item);
 
-        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
+        // Asegurar que fieldName tenga un valor predeterminado antes de ser usado
+        const sortField = fieldName ?? "publish_date"; // Si fieldName es undefined, usar "publish_date"
+        console.log(sortField);
+        // Ordenar los resultados por el campo dinámico sortField
         results.sort((a, b) => {
-          return b.publish_date.getTime() - a.publish_date.getTime(); // Convertimos las fechas a timestamps
-        });
-        // Total de resultados (count usando Fuse.js)
-        total = results.length;
+          const valueA = a[sortField];
+          const valueB = b[sortField];
 
+          if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
+          if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
+          return 0; // Si son iguales, no cambiar el orden
+        });
+        // Total de resultados encontrados
+        total = results.length;
         // Aplicar paginación sobre los resultados ordenados de Fuse.js
         const start = (page - 1) * pageSize;
         results = results.slice(start, start + pageSize);
       } else {
         // Si encontramos resultados en MongoDB, el total es la cantidad de documentos encontrados
-        total = await ProductModel.countDocuments(searchConditions);
+        const resultData = await ProductModel.aggregate(pipeline);
+        total = resultData.length;
       }
 
       return {
@@ -1613,9 +1922,10 @@ export class RequerimentService {
         code: 200,
         data: results,
         res: {
-          total,
+          totalDocuments: total,
           totalPages: Math.ceil(total / pageSize),
           currentPage: page,
+          pageSize: pageSize,
         },
       };
     } catch (error) {

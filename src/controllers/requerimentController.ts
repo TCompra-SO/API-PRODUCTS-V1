@@ -84,13 +84,16 @@ const getRequerimentsByEntityController = async (
   res: Response
 ) => {
   try {
-    const { uid, page, pageSize } = req.params;
+    const { uid, page, pageSize, fieldName, orderType } = req.params;
     const responseUser = await RequerimentService.getRequerimentsByEntity(
       uid,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
+      fieldName,
+      Number(orderType)
     );
     // Verifica si la respuesta es válida y contiene datos
+
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformData(responseUser));
@@ -121,11 +124,13 @@ const getRequerimentsBySubUserController = async (
   res: Response
 ) => {
   try {
-    const { uid, page, pageSize } = req.params;
+    const { uid, page, pageSize, fieldName, orderType } = req.params;
     const responseUser = await RequerimentService.getRequerimentsbySubUser(
       uid,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
+      fieldName,
+      Number(orderType)
     );
     // Verifica si la respuesta es válida y contiene datos
     if (responseUser && responseUser.success) {
@@ -344,12 +349,16 @@ const searchMainFiltersController = async (req: Request, res: Response) => {
 
 const searchProductsByUserController = async (req: Request, res: Response) => {
   try {
-    const { keyWords, userId, page, pageSize } = req.body;
+    const { keyWords, userId, typeUser, page, pageSize, fieldName, orderType } =
+      req.body;
     const responseUser = await RequerimentService.searchProductsByUser(
       keyWords,
       userId,
+      typeUser,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
+      fieldName,
+      orderType
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(transformData(responseUser));

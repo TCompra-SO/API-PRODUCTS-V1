@@ -34,11 +34,11 @@ export class RequerimentRouter {
     this.router.get("/expired", expiredController);
 
     this.router.get(
-      "/getRequerimentsByEntity/:uid/:page/:pageSize",
+      "/getRequerimentsByEntity/:uid/:page/:pageSize/:fieldName/:orderType",
       getRequerimentsByEntityController
     );
     this.router.get(
-      "/getRequerimentsBySubUser/:uid/:page/:pageSize",
+      "/getRequerimentsBySubUser/:uid/:page/:pageSize/:fieldName/:orderType",
       getRequerimentsBySubUserController
     );
 

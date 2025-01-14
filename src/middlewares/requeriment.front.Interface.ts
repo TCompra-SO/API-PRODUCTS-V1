@@ -1,4 +1,5 @@
 import { RequerimentI } from "../interfaces/requeriment.interface";
+import { profile } from "node:console";
 // Interfaz Frontend adaptada
 
 export interface RequerimentFrontI {
@@ -24,6 +25,10 @@ export interface RequerimentFrontI {
   email?: string;
 }
 
+interface ExtendedRequerimentI extends RequerimentI {
+  userName?: string;
+  cityName?: string;
+}
 // Interfaz para la respuesta
 interface ApiResponse {
   success: boolean;
@@ -37,31 +42,35 @@ function transformData(response: any): {
   data: any[];
   res?: any;
 } {
-  const transformedData: any[] = response.data.map((item: RequerimentI) => ({
-    key: item.uid, // Aquí 'uid' viene de RequerimentI y lo renombramos a 'key'
-    title: item.name, // 'name' renombrado a 'title'
-    description: item.description, // Sin cambios
-    category: item.categoryID, // 'categoryID' renombrado a 'category'
-    location: item.cityID, // 'cityID' renombrado a 'location'
-    email: item.email,
-    price: item.budget, // 'budget' renombrado a 'price'
-    coin: item.currencyID, // 'currencyID' renombrado a 'coin'
-    payment_methodID: item.payment_methodID,
-    publishDate: item.publish_date, // 'completion_date' convertido a 'publishDate'
-    completion_date: item.completion_date,
-    submission_date: item.submission_dateID,
-    numberOffers: item.number_offers, // 'allowed_bidersID' renombrado a 'numberOffers'
-    allowed_bidersID: item.allowed_bidersID,
-    user: item.entityID, // Sin cambios
-    subUser: item.userID,
-    subUserEmail: item.subUserEmail,
-    warranty: item?.warranty, // Mantener el campo 'warranty'
-    duration: item?.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
-    state: item.stateID, // Añadir un valor por defecto o según lógica
-    images: item.images,
-    files: item.files,
-    winOffer: item.winOffer,
-  }));
+  const transformedData: any[] = response.data.map(
+    (item: ExtendedRequerimentI) => ({
+      key: item.uid, // Aquí 'uid' viene de RequerimentI y lo renombramos a 'key'
+      title: item.name, // 'name' renombrado a 'title'
+      description: item.description, // Sin cambios
+      category: item.categoryID, // 'categoryID' renombrado a 'category'
+      location: item.cityID, // 'cityID' renombrado a 'location'
+      cityName: item.cityName,
+      email: item.email,
+      price: item.budget, // 'budget' renombrado a 'price'
+      coin: item.currencyID, // 'currencyID' renombrado a 'coin'
+      payment_methodID: item.payment_methodID,
+      publishDate: item.publish_date, // 'completion_date' convertido a 'publishDate'
+      completion_date: item.completion_date,
+      submission_date: item.submission_dateID,
+      numberOffers: item.number_offers, // 'allowed_bidersID' renombrado a 'numberOffers'
+      allowed_bidersID: item.allowed_bidersID,
+      user: item.entityID, // Sin cambios
+      subUser: item.userID,
+      subUserEmail: item.subUserEmail,
+      warranty: item?.warranty, // Mantener el campo 'warranty'
+      duration: item?.durationID, // Mantener el campo 'duration'// Convertir string de fecha a objeto Date
+      state: item.stateID, // Añadir un valor por defecto o según lógica
+      images: item.images,
+      files: item.files,
+      winOffer: item.winOffer,
+      userName: item.userName,
+    })
+  );
 
   return {
     success: response.success,

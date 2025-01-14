@@ -36,3 +36,7 @@ export enum TypeEntity {
   SUBUSER = "SubUser",
   MASTER = "Master",
 }
+export enum OrderType {
+  ASC = 1,
+  DESC = 2,
+}
