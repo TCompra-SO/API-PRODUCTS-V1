@@ -267,15 +267,19 @@ const canceledController = async (req: Request, res: Response) => {
 
 const searchOffersByUserController = async (req: Request, res: Response) => {
   try {
-    const { keyWords, userId, page, pageSize } = req.body;
+    const { keyWords, userId, typeUser, page, pageSize, fieldName, orderType } =
+      req.body;
     const responseUser = await OfferService.searchOffersByUser(
       keyWords,
       userId,
+      typeUser,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
+      fieldName,
+      Number(orderType)
     );
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      res.status(responseUser.code).send(transformOffersData(responseUser));
     } else {
       res.status(responseUser.code).send(responseUser.error);
     }

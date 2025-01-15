@@ -28,15 +28,17 @@ export interface OfferFrontI {
 
 interface OfferFrontE extends OfferI {
   requerimentTitle: string;
+  userName?: string;
+  cityName?: string;
 }
 
-function transformOffersData(response: {
+function transformOffersData(response: any): {
   success: boolean;
   code: number;
-  data: OfferFrontE[];
+  data: any[];
   res: any;
-}): { success: boolean; code: number; data: OfferFrontI[]; res: any } {
-  const transformedData: OfferFrontI[] = response.data.map((offer) => ({
+} {
+  const transformedData: any[] = response.data.map((offer: OfferFrontE) => ({
     key: offer.uid, // 'uid' renombrado a 'key'
     title: offer.name, // 'name' renombrado a 'title'
     user: offer.entityID, // 'userID' renombrado a 'user'
@@ -60,6 +62,7 @@ function transformOffersData(response: {
     canceledByCreator: offer.canceledByCreator, // Sin cambios
     includesDelivery: offer.includesDelivery,
     delivered: offer.delivered, // Sin cambios
+    userName: offer.userName,
   }));
 
   return {

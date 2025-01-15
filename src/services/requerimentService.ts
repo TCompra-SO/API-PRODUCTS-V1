@@ -1855,9 +1855,9 @@ export class RequerimentService {
       // Primero intentamos hacer la búsqueda en MongoDB
       const skip = (page - 1) * pageSize;
       let results = await ProductModel.aggregate(pipeline)
+        .sort({ [fieldName]: order })
         .skip(skip)
         .limit(pageSize)
-        .sort({ [fieldName]: order })
         .collation({ locale: "en", strength: 2 });
 
       // Si no hay resultados en MongoDB, usamos Fuse.js para hacer una búsqueda difusa
