@@ -9,14 +9,12 @@ import { OfferService } from "./offerService";
 import { igv } from "../initConfig";
 import { RequerimentService } from "./requerimentService";
 import { sendEmailPurchaseOrder } from "../utils/NodeMailer";
-import { number } from "joi";
 import puppeteer from "puppeteer";
 import { Buffer } from "node:buffer";
 import { OrderPurchaseTemplate } from "../utils/OrderPurchaseTemplate";
-import { launch } from "./../../node_modules/@puppeteer/browsers/lib/esm/launch";
-import { error } from "node:console";
-import { TypeUser } from "../utils/Types";
+import { OrderType, TypeEntity, TypeUser } from "../utils/Types";
 import Fuse from "fuse.js";
+import { PipelineStage, SortOrder } from "mongoose";
 
 let API_USER = process.env.API_USER;
 export class PurchaseOrderService {
@@ -469,10 +467,12 @@ export class PurchaseOrderService {
 
   static searchPurchaseOrderByProvider = async (
     keyWords: string,
-    typeUser: number,
+    typeUser: TypeEntity,
     userId: string,
     page?: number,
-    pageSize?: number
+    pageSize?: number,
+    fieldName?: string,
+    orderType?: number
   ) => {
     page = !page || page < 1 ? 1 : page;
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
@@ -481,52 +481,78 @@ export class PurchaseOrderService {
       if (!keyWords) {
         keyWords = "";
       }
-      let fieldName;
-      if (TypeUser.ADMIN === typeUser) {
-        fieldName = "userProviderID";
+      let fieldUserName;
+      if (TypeEntity.COMPANY === typeUser || TypeEntity.USER === typeUser) {
+        fieldUserName = "userProviderID";
       } else {
-        fieldName = "subUserProviderID";
+        fieldUserName = "subUserProviderID";
       }
-      console.log(fieldName);
+
+      if (!fieldName) {
+        fieldName = "createDate";
+      }
+      let order: SortOrder;
+      if (!orderType || orderType === OrderType.DESC) {
+        order = -1;
+      } else {
+        order = 1;
+      }
       const searchConditions: any = {
-        $or: [
-          { requirementTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
-          { userNameClient: { $regex: keyWords, $options: "i" } },
+        $and: [
+          {
+            $or: [
+              { requerimentTitle: { $regex: keyWords, $options: "i" } },
+              { offerTitle: { $regex: keyWords, $options: "i" } },
+              { userNameClient: { $regex: keyWords, $options: "i" } },
+            ],
+          },
+          { [fieldUserName]: userId },
+          { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
         ],
-        [fieldName]: userId,
       };
 
       // Primero intentamos hacer la búsqueda en MongoDB
       const skip = (page - 1) * pageSize;
 
       let results = await PurchaseOrderModel.find(searchConditions)
+        .sort({ [fieldName]: order })
         .skip(skip)
-        .limit(pageSize)
-        .sort({ createDate: -1 });
+        .limit(pageSize);
 
       // COREGIR
       if (keyWords && results.length === 0) {
-        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
-        const searchConditionsWithoutKeyWords = { ...searchConditions };
-        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
+        // Crear una copia del array $and sin la condición $or
+        const searchConditionsWithoutKeyWords = {
+          ...searchConditions,
+          $and: searchConditions.$and.filter(
+            (condition: any) => !condition.$or
+          ),
+        };
 
         // Obtener todos los registros sin aplicar el filtro de palabras clave
         const allResults = await PurchaseOrderModel.find(
           searchConditionsWithoutKeyWords
         );
-
+        PurchaseOrderState;
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
-          keys: ["requerimentTitle", "userNameClient"], // Las claves por las que buscar (name y description)
+          keys: ["requerimentTitle", "offerTitle", "userNameClient"], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 
         // Buscar usando Fuse.js
         results = fuse.search(keyWords).map((result) => result.item);
 
-        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
+        const sortField = fieldName ?? "createDate"; // Si fieldName es undefined, usar "publish_date"
+
+        // Ordenar los resultados por el campo dinámico sortField
         results.sort((a, b) => {
-          return b.createDate.getTime() - a.createDate.getTime(); // Convertimos las fechas a timestamps
+          const valueA = (a as any)[sortField];
+          const valueB = (b as any)[sortField];
+
+          if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
+          if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
+          return 0; // Si son iguales, no cambiar el orden
         });
         // Total de resultados (count usando Fuse.js)
         total = results.length;
@@ -563,10 +589,12 @@ export class PurchaseOrderService {
 
   static searchPurchaseOrderByClient = async (
     keyWords: string,
-    typeUser: number,
+    typeUser: TypeEntity,
     userId: string,
     page?: number,
-    pageSize?: number
+    pageSize?: number,
+    fieldName?: string,
+    orderType?: number
   ) => {
     page = !page || page < 1 ? 1 : page;
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
@@ -575,36 +603,53 @@ export class PurchaseOrderService {
       if (!keyWords) {
         keyWords = "";
       }
-      let fieldName;
-      if (TypeUser.ADMIN === typeUser) {
-        fieldName = "userClientID";
+      let fieldUserName;
+      if (TypeEntity.COMPANY === typeUser || TypeEntity.USER === typeUser) {
+        fieldUserName = "userClientID";
       } else {
-        fieldName = "subUserClientID";
+        fieldUserName = "subUserClientID";
       }
 
+      if (!fieldName) {
+        fieldName = "createDate";
+      }
+      let order: SortOrder;
+      if (!orderType || orderType === OrderType.DESC) {
+        order = -1;
+      } else {
+        order = 1;
+      }
       const searchConditions: any = {
-        $or: [
-          { requirementTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
-          { userNameClient: { $regex: keyWords, $options: "i" } },
+        $and: [
+          {
+            $or: [
+              { requerimentTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
+              { offerTitle: { $regex: keyWords, $options: "i" } },
+              { userNameClient: { $regex: keyWords, $options: "i" } },
+            ],
+          },
+          { [fieldUserName]: userId },
+          { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
         ],
-        [fieldName]: userId,
       };
 
       // Primero intentamos hacer la búsqueda en MongoDB
       const skip = (page - 1) * pageSize;
 
       let results = await PurchaseOrderModel.find(searchConditions)
+        .sort({ [fieldName]: order })
         .skip(skip)
-        .limit(pageSize)
-        .sort({ createDate: -1 });
+        .limit(pageSize);
 
-      console.log(results);
-      // COREGIR
       if (keyWords && results.length === 0) {
-        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
-        const searchConditionsWithoutKeyWords = { ...searchConditions };
-        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
-
+        // Crear una copia del array $and sin la condición $or
+        const searchConditionsWithoutKeyWords = {
+          ...searchConditions,
+          $and: searchConditions.$and.filter(
+            (condition: any) => !condition.$or
+          ),
+        };
+        console.log(searchConditionsWithoutKeyWords);
         // Obtener todos los registros sin aplicar el filtro de palabras clave
         const allResults = await PurchaseOrderModel.find(
           searchConditionsWithoutKeyWords
@@ -612,16 +657,23 @@ export class PurchaseOrderService {
 
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
-          keys: ["requerimentTitle", "userNameProvider"], // Las claves por las que buscar (name y description)
+          keys: ["requerimentTitle", "offerTitle", "userNameProvider"], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 
         // Buscar usando Fuse.js
         results = fuse.search(keyWords).map((result) => result.item);
 
-        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
+        const sortField = fieldName ?? "createDate"; // Si fieldName es undefined, usar "publish_date"
+
+        // Ordenar los resultados por el campo dinámico sortField
         results.sort((a, b) => {
-          return b.createDate.getTime() - a.createDate.getTime(); // Convertimos las fechas a timestamps
+          const valueA = (a as any)[sortField];
+          const valueB = (b as any)[sortField];
+
+          if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
+          if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
+          return 0; // Si son iguales, no cambiar el orden
         });
         // Total de resultados (count usando Fuse.js)
         total = results.length;
