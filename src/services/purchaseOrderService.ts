@@ -649,7 +649,7 @@ export class PurchaseOrderService {
             (condition: any) => !condition.$or
           ),
         };
-        console.log(searchConditionsWithoutKeyWords);
+
         // Obtener todos los registros sin aplicar el filtro de palabras clave
         const allResults = await PurchaseOrderModel.find(
           searchConditionsWithoutKeyWords
