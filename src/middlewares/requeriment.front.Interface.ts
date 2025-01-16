@@ -27,6 +27,7 @@ export interface RequerimentFrontI {
 
 interface ExtendedRequerimentI extends RequerimentI {
   userName?: string;
+  subUserName?: string;
   cityName?: string;
 }
 // Interfaz para la respuesta
@@ -69,6 +70,7 @@ function transformData(response: any): {
       files: item.files,
       winOffer: item.winOffer,
       userName: item.userName,
+      subUserName: item.subUserName,
     })
   );
 

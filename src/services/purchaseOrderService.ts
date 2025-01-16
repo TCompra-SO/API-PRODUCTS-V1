@@ -481,11 +481,13 @@ export class PurchaseOrderService {
       if (!keyWords) {
         keyWords = "";
       }
-      let fieldUserName;
+      let fieldUserName, fieldSubUserName;
       if (TypeEntity.COMPANY === typeUser || TypeEntity.USER === typeUser) {
         fieldUserName = "userProviderID";
+        fieldSubUserName = "nameSubUserProvider";
       } else {
         fieldUserName = "subUserProviderID";
+        fieldSubUserName = "";
       }
 
       if (!fieldName) {
@@ -504,6 +506,7 @@ export class PurchaseOrderService {
               { requerimentTitle: { $regex: keyWords, $options: "i" } },
               { offerTitle: { $regex: keyWords, $options: "i" } },
               { userNameClient: { $regex: keyWords, $options: "i" } },
+              { [fieldSubUserName]: { $regex: keyWords, $options: "i" } },
             ],
           },
           { [fieldUserName]: userId },
@@ -536,7 +539,12 @@ export class PurchaseOrderService {
         PurchaseOrderState;
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
-          keys: ["requerimentTitle", "offerTitle", "userNameClient"], // Las claves por las que buscar (name y description)
+          keys: [
+            "requerimentTitle",
+            "offerTitle",
+            "userNameClient",
+            fieldSubUserName,
+          ], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 
@@ -549,6 +557,15 @@ export class PurchaseOrderService {
         results.sort((a, b) => {
           const valueA = (a as any)[sortField];
           const valueB = (b as any)[sortField];
+
+          if (typeof valueA === "string" && typeof valueB === "string") {
+            // Usar localeCompare para comparar cadenas ignorando mayúsculas, minúsculas y acentos
+            return (
+              valueA.localeCompare(valueB, undefined, {
+                sensitivity: "base",
+              }) * (orderType === OrderType.ASC ? 1 : -1)
+            );
+          }
 
           if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
           if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
@@ -603,11 +620,13 @@ export class PurchaseOrderService {
       if (!keyWords) {
         keyWords = "";
       }
-      let fieldUserName;
+      let fieldUserName, fieldSubUserName;
       if (TypeEntity.COMPANY === typeUser || TypeEntity.USER === typeUser) {
         fieldUserName = "userClientID";
+        fieldSubUserName = "nameSubUserClient";
       } else {
         fieldUserName = "subUserClientID";
+        fieldSubUserName = "";
       }
 
       if (!fieldName) {
@@ -625,7 +644,8 @@ export class PurchaseOrderService {
             $or: [
               { requerimentTitle: { $regex: keyWords, $options: "i" } }, // Reemplazamos name por requirementTitle
               { offerTitle: { $regex: keyWords, $options: "i" } },
-              { userNameClient: { $regex: keyWords, $options: "i" } },
+              { nameUserProvider: { $regex: keyWords, $options: "i" } },
+              { [fieldSubUserName]: { $regex: keyWords, $options: "i" } },
             ],
           },
           { [fieldUserName]: userId },
@@ -657,7 +677,12 @@ export class PurchaseOrderService {
 
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
-          keys: ["requerimentTitle", "offerTitle", "userNameProvider"], // Las claves por las que buscar (name y description)
+          keys: [
+            "requerimentTitle",
+            "offerTitle",
+            "nameUserProvider",
+            fieldSubUserName,
+          ], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
         });
 
@@ -670,6 +695,15 @@ export class PurchaseOrderService {
         results.sort((a, b) => {
           const valueA = (a as any)[sortField];
           const valueB = (b as any)[sortField];
+
+          if (typeof valueA === "string" && typeof valueB === "string") {
+            // Usar localeCompare para comparar cadenas ignorando mayúsculas, minúsculas y acentos
+            return (
+              valueA.localeCompare(valueB, undefined, {
+                sensitivity: "base",
+              }) * (orderType === OrderType.ASC ? 1 : -1)
+            );
+          }
 
           if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
           if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;

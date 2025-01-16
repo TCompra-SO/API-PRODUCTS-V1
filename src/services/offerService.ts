@@ -1251,66 +1251,6 @@ export class OfferService {
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
     let total = 0;
     try {
-      /*    if (!keyWords) {
-        keyWords = "";
-      }
-      const searchConditions: any = {
-        $or: [{ name: { $regex: keyWords, $options: "i" } }],
-        userID: userId,
-      };
-
-      // Primero intentamos hacer la búsqueda en MongoDB
-      const skip = (page - 1) * pageSize;
-
-      let results = await OfferModel.find(searchConditions)
-        .skip(skip)
-        .limit(pageSize)
-        .sort({ publishDate: -1 });
-      // Si no hay resultados en MongoDB, usamos Fuse.js para hacer una búsqueda difusa
-      if (keyWords && results.length === 0) {
-        // Eliminar el filtro de keyWords del searchConditions para obtener todos los registros
-        const searchConditionsWithoutKeyWords = { ...searchConditions };
-        delete searchConditionsWithoutKeyWords.$or; // Quitamos la condición que filtra por palabras clave
-
-        // Obtener todos los registros sin aplicar el filtro de palabras clave
-        const allResults = await OfferModel.find(
-          searchConditionsWithoutKeyWords
-        );
-
-        // Configurar Fuse.js
-        const fuse = new Fuse(allResults, {
-          keys: ["name"], // Las claves por las que buscar (name y description)
-          threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia (0 es exacto, 1 es muy permisivo)
-        });
-
-        // Buscar usando Fuse.js
-        results = fuse.search(keyWords).map((result) => result.item);
-
-        // Ordenar los resultados obtenidos de Fuse.js por publish_date en orden descendente
-        results.sort((a, b) => {
-          return b.publishDate.getTime() - a.publishDate.getTime(); // Convertimos las fechas a timestamps
-        });
-        // Total de resultados (count usando Fuse.js)
-        total = results.length;
-
-        // Aplicar paginación sobre los resultados ordenados de Fuse.js
-        const start = (page - 1) * pageSize;
-        results = results.slice(start, start + pageSize);
-      } else {
-        // Si encontramos resultados en MongoDB, el total es la cantidad de documentos encontrados
-        total = await OfferModel.countDocuments(searchConditions);
-      }
-
-      return {
-        success: true,
-        code: 200,
-        data: results,
-        res: {
-          total,
-          totalPages: Math.ceil(total / pageSize),
-          currentPage: page,
-        },
-      };*/
       if (!keyWords) {
         keyWords = "";
       }
@@ -1318,11 +1258,27 @@ export class OfferService {
       // Parámetro fieldName con valor por defecto 'publishDate'
       fieldName = fieldName ?? "publishDate";
 
-      let userType;
+      let userType, subUserName;
       if (typeUser === TypeEntity.COMPANY || typeUser === TypeEntity.USER) {
         userType = "entityID";
+        subUserName = "subUserName";
       } else {
         userType = "userID";
+        subUserName = "";
+      }
+
+      let tableName;
+
+      switch (typeUser) {
+        case TypeEntity.COMPANY:
+          tableName = "companys";
+          break;
+        case TypeEntity.USER:
+          tableName = "users";
+          break;
+        default:
+          tableName = "companys";
+          break;
       }
 
       if (fieldName === "cityName") {
@@ -1356,8 +1312,8 @@ export class OfferService {
         // Relacionar con la colección 'companys' usando el campo 'userID'
         {
           $lookup: {
-            from: "companys", // Nombre de la colección de compañías
-            localField: "userID", // Campo en la colección 'Products'
+            from: tableName, // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
             foreignField: "uid", // Campo en la colección 'Companys'
             as: "company", // Alias del resultado
           },
@@ -1416,7 +1372,8 @@ export class OfferService {
             requerimentTitle: {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             },
-            userName: { $ifNull: ["$profile.name", "$company.name"] },
+            subUserName: { $ifNull: ["$profile.name", "$company.name"] },
+            userName: { $ifNull: ["$company.name", "$profile.name"] },
           },
         },
       ];
@@ -1452,7 +1409,7 @@ export class OfferService {
 
         // Configurar Fuse.js
         const fuse = new Fuse(allResults, {
-          keys: ["name", "requerimentTitle"], // Las claves por las que buscar (name y description)
+          keys: ["name", "requerimentTitle", subUserName], // Las claves por las que buscar (name y description)
           threshold: 0.4, // Define qué tan "difusa" puede ser la coincidencia
         });
 
@@ -1461,11 +1418,20 @@ export class OfferService {
 
         // Asegurar que fieldName tenga un valor predeterminado antes de ser usado
         const sortField = fieldName ?? "publishDate"; // Si fieldName es undefined, usar "publish_date"
-        console.log(sortField);
+
         // Ordenar los resultados por el campo dinámico sortField
         results.sort((a, b) => {
           const valueA = a[sortField];
           const valueB = b[sortField];
+
+          if (typeof valueA === "string" && typeof valueB === "string") {
+            // Usar localeCompare para comparar cadenas ignorando mayúsculas, minúsculas y acentos
+            return (
+              valueA.localeCompare(valueB, undefined, {
+                sensitivity: "base",
+              }) * (orderType === OrderType.ASC ? 1 : -1)
+            );
+          }
 
           if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
           if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
@@ -1474,7 +1440,7 @@ export class OfferService {
 
         // Total de resultados encontrados
         total = results.length;
-        console.log(total);
+
         // Aplicar paginación sobre los resultados ordenados de Fuse.js
         const start = (page - 1) * pageSize;
         results = results.slice(start, start + pageSize);

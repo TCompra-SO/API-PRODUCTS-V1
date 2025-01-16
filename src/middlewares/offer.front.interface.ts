@@ -29,6 +29,7 @@ export interface OfferFrontI {
 interface OfferFrontE extends OfferI {
   requerimentTitle: string;
   userName?: string;
+  subUserName?: string;
   cityName?: string;
 }
 
@@ -63,6 +64,7 @@ function transformOffersData(response: any): {
     includesDelivery: offer.includesDelivery,
     delivered: offer.delivered, // Sin cambios
     userName: offer.userName,
+    subUserName: offer.subUserName,
   }));
 
   return {

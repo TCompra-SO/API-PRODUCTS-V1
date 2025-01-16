@@ -1767,11 +1767,27 @@ export class RequerimentService {
       if (!fieldName) {
         fieldName = "publish_date";
       }
-      let userType;
+      let userType, userName, subUserName;
       if (typeUser === TypeEntity.COMPANY || typeUser === TypeEntity.USER) {
         userType = "entityID";
+        subUserName = "subUserName";
       } else {
         userType = "userID";
+        subUserName = "";
+      }
+
+      let tableName;
+
+      switch (typeUser) {
+        case TypeEntity.COMPANY:
+          tableName = "companys";
+          break;
+        case TypeEntity.USER:
+          tableName = "users";
+          break;
+        default:
+          tableName = "companys";
+          break;
       }
 
       if (fieldName === "cityName") {
@@ -1805,8 +1821,8 @@ export class RequerimentService {
         // Relacionar con la colección 'companys' usando el campo 'userID'
         {
           $lookup: {
-            from: "companys", // Nombre de la colección de compañías
-            localField: "userID", // Campo en la colección 'Products'
+            from: tableName, // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
             foreignField: "uid", // Campo en la colección 'Companys'
             as: "company", // Alias del resultado
           },
@@ -1847,7 +1863,8 @@ export class RequerimentService {
               userID: 1,
               entityID: 1,
             }, // Aquí incluimos todos los campos de la oferta ganadora
-            userName: { $ifNull: ["$profile.name", "$company.name"] },
+            subUserName: { $ifNull: ["$profile.name", "$company.name"] },
+            userName: { $ifNull: ["$company.name", "$profile.name"] },
           },
         },
       ];
@@ -1887,7 +1904,7 @@ export class RequerimentService {
 
         // Configurar Fuse.js para la búsqueda difusa
         const fuse = new Fuse(allResults, {
-          keys: ["name"], // Claves por las que buscar
+          keys: ["name", subUserName], // Claves por las que buscar
           threshold: 0.4, // Define qué tan "difusa" es la coincidencia
         });
 
@@ -1896,11 +1913,20 @@ export class RequerimentService {
 
         // Asegurar que fieldName tenga un valor predeterminado antes de ser usado
         const sortField = fieldName ?? "publish_date"; // Si fieldName es undefined, usar "publish_date"
-        console.log(sortField);
+
         // Ordenar los resultados por el campo dinámico sortField
         results.sort((a, b) => {
           const valueA = a[sortField];
           const valueB = b[sortField];
+
+          if (typeof valueA === "string" && typeof valueB === "string") {
+            // Usar localeCompare para comparar cadenas ignorando mayúsculas, minúsculas y acentos
+            return (
+              valueA.localeCompare(valueB, undefined, {
+                sensitivity: "base",
+              }) * (orderType === OrderType.ASC ? 1 : -1)
+            );
+          }
 
           if (valueA > valueB) return orderType === OrderType.ASC ? 1 : -1;
           if (valueA < valueB) return orderType === OrderType.ASC ? -1 : 1;
