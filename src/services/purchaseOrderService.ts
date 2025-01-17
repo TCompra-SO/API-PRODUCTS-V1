@@ -27,8 +27,8 @@ export class PurchaseOrderService {
     warranty_Filter: number
   ) => {
     try {
-      const offerBasicData = OfferService.BasicRateData(offerID);
-      const offerData = OfferService.GetDetailOffer(offerID);
+      const offerBasicData = await OfferService.BasicRateData(offerID);
+      const offerData = await OfferService.GetDetailOffer(offerID);
       const userProviderID = (await offerBasicData).data?.[0].userId;
       const subUserProviderID = (await offerBasicData).data?.[0].subUserId;
 
@@ -38,6 +38,9 @@ export class PurchaseOrderService {
         RequerimentService.getRequerimentById(requerimentID);
       const userClientID = (await requerimentBasicData).data?.[0].userId;
       const subUserClientID = (await requerimentBasicData).data?.[0].subUserId;
+
+      const emailUser = (await offerData).data?.[0].email;
+      const emailSubUser = (await offerData).data?.[0].subUserEmail;
 
       if (requerimentID !== (await offerData).data?.[0].requerimentID) {
         return {
@@ -145,7 +148,7 @@ export class PurchaseOrderService {
         nameUserProvider: (await offerBasicData).data?.[0].userName,
         subUserProviderID: subUserProviderID,
         nameSubUserProvider: (await offerBasicData).data?.[0].subUserName,
-        subUserEmailProvider: (await offerBasicData).data?.[0].subUserEmail,
+        subUserEmailProvider: (await offerData).data?.[0].subUserEmail,
         addressProvider: (await basicProviderData).data.data?.address,
         documentProvider: (await userProviderData).data.data?.[0].document,
         emailProvider: (await offerData).data?.[0].email,
@@ -186,17 +189,33 @@ export class PurchaseOrderService {
       }*/
 
       // Inicia el envío del correo en segundo plano
-      sendEmailPurchaseOrder(newPurchaseOrder)
-        .then((result) => {
-          if (result.success) {
-            responseEmail = "Orden de Compra enviada al Email correctamente";
-          } else {
-            responseEmail = "No se ha podido enviar la Orden al Correo";
-          }
-        })
-        .catch((error) => {
-          console.error("Error al enviar el correo:", error);
-        });
+
+      if (emailUser) {
+        sendEmailPurchaseOrder(newPurchaseOrder, emailUser)
+          .then((result) => {
+            if (result.success) {
+              responseEmail = "Orden de Compra enviada al Email correctamente";
+            } else {
+              responseEmail = "No se ha podido enviar la Orden al Correo";
+            }
+          })
+          .catch((error) => {
+            console.error("Error al enviar el correo:", error);
+          });
+      }
+      if (emailSubUser && emailSubUser !== emailUser) {
+        sendEmailPurchaseOrder(newPurchaseOrder, emailSubUser)
+          .then((result) => {
+            if (result.success) {
+              responseEmail = "Orden de Compra enviada al Email correctamente";
+            } else {
+              responseEmail = "No se ha podido enviar la Orden al Correo";
+            }
+          })
+          .catch((error) => {
+            console.error("Error al enviar el correo:", error);
+          });
+      }
 
       return {
         success: true,

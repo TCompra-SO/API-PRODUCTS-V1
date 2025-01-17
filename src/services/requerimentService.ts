@@ -1075,7 +1075,7 @@ export class RequerimentService {
 
   static expired = async () => {
     try {
-      const result = await ProductModel.updateMany(
+      await ProductModel.updateMany(
         { completion_date: { $lt: new Date() }, stateID: 1 }, // Filtra solo los documentos que cumplen la condición
         { $set: { stateID: 5 } } // Actualiza el campo `stateID`
       );

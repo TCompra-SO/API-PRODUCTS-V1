@@ -65,6 +65,8 @@ function transformOffersData(response: any): {
     delivered: offer.delivered, // Sin cambios
     userName: offer.userName,
     subUserName: offer.subUserName,
+    emailUser: offer?.email,
+    emailSubUser: offer?.subUserEmail,
   }));
 
   return {
