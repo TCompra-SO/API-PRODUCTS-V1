@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { OfferService } from "../services/offerService";
 import { transformOffersData } from "../middlewares/offer.front.interface";
+import { JwtPayload } from "jsonwebtoken";
+import { RequestExt } from "../interfaces/req-ext";
 
 const CreateOfferController = async ({ body }: Request, res: Response) => {
   try {
@@ -48,13 +50,15 @@ const GetDetailOfferController = async (req: Request, res: Response) => {
   }
 };
 
-const GetOffersController = async (req: Request, res: Response) => {
+const GetOffersController = async (req: RequestExt, res: Response) => {
   try {
     const { page, pageSize } = req.params;
     const responseUser = await OfferService.GetOffers(
       Number(page),
       Number(pageSize)
     );
+    const { uid } = req.user as JwtPayload;
+    console.log(req.user);
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));

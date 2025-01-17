@@ -520,7 +520,8 @@ export class PurchaseOrderService {
       let results = await PurchaseOrderModel.find(searchConditions)
         .sort({ [fieldName]: order })
         .skip(skip)
-        .limit(pageSize);
+        .limit(pageSize)
+        .collation({ locale: "en", strength: 2 });
 
       // COREGIR
       if (keyWords && results.length === 0) {
@@ -586,7 +587,7 @@ export class PurchaseOrderService {
         code: 200,
         data: results,
         res: {
-          total,
+          totalDocuments: total,
           totalPages: Math.ceil(total / pageSize),
           currentPage: page,
           pageSize,
@@ -659,7 +660,8 @@ export class PurchaseOrderService {
       let results = await PurchaseOrderModel.find(searchConditions)
         .sort({ [fieldName]: order })
         .skip(skip)
-        .limit(pageSize);
+        .limit(pageSize)
+        .collation({ locale: "en", strength: 2 });
 
       if (keyWords && results.length === 0) {
         // Crear una copia del array $and sin la condición $or
@@ -724,7 +726,7 @@ export class PurchaseOrderService {
         code: 200,
         data: results,
         res: {
-          total,
+          totalDocuments: total,
           totalPages: Math.ceil(total / pageSize),
           currentPage: page,
           pageSize,
