@@ -1754,7 +1754,9 @@ export class RequerimentService {
     page?: number,
     pageSize?: number,
     fieldName?: string,
-    orderType?: OrderType
+    orderType?: OrderType,
+    filterColumn?: string,
+    filterData?: [string]
   ) => {
     page = !page || page < 1 ? 1 : page;
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
@@ -1796,16 +1798,6 @@ export class RequerimentService {
 
       let order: SortOrder = orderType === OrderType.ASC ? 1 : -1;
       const pipeline: PipelineStage[] = [
-        // Filtro inicial (searchConditions)
-        {
-          $match: {
-            $and: [
-              { [userType]: userId },
-              { stateID: { $ne: RequirementState.ELIMINATED } },
-              { $or: [{ name: { $regex: keyWords, $options: "i" } }] },
-            ],
-          },
-        },
         // Relacionar con la colección 'profiles' usando el campo 'userID'
         {
           $lookup: {
@@ -1829,6 +1821,24 @@ export class RequerimentService {
         },
         // Descomponer el array de compañías (si existe)
         { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
+        // Filtro inicial (searchConditions)
+        {
+          $match: {
+            $and: [
+              { [userType]: userId },
+              { stateID: { $ne: RequirementState.ELIMINATED } },
+              {
+                $or: [
+                  { name: { $regex: keyWords, $options: "i" } },
+                  { subUserName: { $regex: keyWords, $options: "i" } },
+                ],
+              },
+              ...(filterColumn && filterData && filterData.length > 0
+                ? [{ [filterColumn]: { $in: filterData } }] // Campo dinámico con valores de filterData
+                : []), // Si no hay filterColumn o filterData, no añade esta condición
+            ],
+          },
+        },
 
         // Proyección de los campos que queremos devolver
         {

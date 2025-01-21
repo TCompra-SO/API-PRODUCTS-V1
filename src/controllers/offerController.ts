@@ -58,7 +58,7 @@ const GetOffersController = async (req: RequestExt, res: Response) => {
       Number(pageSize)
     );
     const { uid } = req.user as JwtPayload;
-    console.log(req.user);
+    console.log(uid);
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));
@@ -271,8 +271,17 @@ const canceledController = async (req: Request, res: Response) => {
 
 const searchOffersByUserController = async (req: Request, res: Response) => {
   try {
-    const { keyWords, userId, typeUser, page, pageSize, fieldName, orderType } =
-      req.body;
+    const {
+      keyWords,
+      userId,
+      typeUser,
+      page,
+      pageSize,
+      fieldName,
+      orderType,
+      filterColumn,
+      filterData,
+    } = req.body;
     const responseUser = await OfferService.searchOffersByUser(
       keyWords,
       userId,
@@ -280,7 +289,9 @@ const searchOffersByUserController = async (req: Request, res: Response) => {
       Number(page),
       Number(pageSize),
       fieldName,
-      Number(orderType)
+      Number(orderType),
+      filterColumn,
+      filterData
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(transformOffersData(responseUser));

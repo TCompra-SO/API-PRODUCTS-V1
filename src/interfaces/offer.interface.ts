@@ -24,4 +24,5 @@ export interface OfferI {
   canceledByCreator: boolean;
   selectionDate?: Date;
   delivered?: boolean;
+  cancelRated?: boolean;
 }

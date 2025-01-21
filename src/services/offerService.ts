@@ -1245,7 +1245,9 @@ export class OfferService {
     page?: number,
     pageSize?: number,
     fieldName?: string,
-    orderType?: OrderType
+    orderType?: OrderType,
+    filterColumn?: string,
+    filterData?: [string]
   ) => {
     page = !page || page < 1 ? 1 : page;
     pageSize = !pageSize || pageSize < 1 ? 10 : pageSize;
@@ -1336,6 +1338,9 @@ export class OfferService {
                   }, // Búsqueda por requerimentTitle
                 ],
               },
+              ...(filterColumn && filterData && filterData.length > 0
+                ? [{ [filterColumn]: { $in: filterData } }] // Campo dinámico con valores de filterData
+                : []), // Si no hay filterColumn o filterData, no añade esta condición
             ],
           },
         },

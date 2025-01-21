@@ -213,8 +213,17 @@ const searchPurchaseOrdersByProviderController = async (
   req: Request,
   res: Response
 ) => {
-  const { keyWords, typeUser, userId, page, pageSize, fieldName, orderType } =
-    req.body;
+  const {
+    keyWords,
+    typeUser,
+    userId,
+    page,
+    pageSize,
+    fieldName,
+    orderType,
+    filterColumn,
+    filterData,
+  } = req.body;
   try {
     const responseUser =
       await PurchaseOrderService.searchPurchaseOrderByProvider(
@@ -224,7 +233,9 @@ const searchPurchaseOrdersByProviderController = async (
         Number(page),
         Number(pageSize),
         fieldName,
-        Number(orderType)
+        Number(orderType),
+        filterColumn,
+        filterData
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -244,8 +255,17 @@ const searchPurchaseOrdersByClientController = async (
   req: Request,
   res: Response
 ) => {
-  const { keyWords, typeUser, userId, page, pageSize, fieldName, orderType } =
-    req.body;
+  const {
+    keyWords,
+    typeUser,
+    userId,
+    page,
+    pageSize,
+    fieldName,
+    orderType,
+    filterColumn,
+    filterData,
+  } = req.body;
   try {
     const responseUser = await PurchaseOrderService.searchPurchaseOrderByClient(
       keyWords,
@@ -254,7 +274,9 @@ const searchPurchaseOrdersByClientController = async (
       Number(page),
       Number(pageSize),
       fieldName,
-      Number(orderType)
+      Number(orderType),
+      filterColumn,
+      filterData
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);

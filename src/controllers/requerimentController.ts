@@ -349,8 +349,17 @@ const searchMainFiltersController = async (req: Request, res: Response) => {
 
 const searchProductsByUserController = async (req: Request, res: Response) => {
   try {
-    const { keyWords, userId, typeUser, page, pageSize, fieldName, orderType } =
-      req.body;
+    const {
+      keyWords,
+      userId,
+      typeUser,
+      page,
+      pageSize,
+      fieldName,
+      orderType,
+      filterColumn,
+      filterData,
+    } = req.body;
     const responseUser = await RequerimentService.searchProductsByUser(
       keyWords,
       userId,
@@ -358,7 +367,9 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
       Number(page),
       Number(pageSize),
       fieldName,
-      orderType
+      orderType,
+      filterColumn,
+      filterData
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(transformData(responseUser));
