@@ -14,8 +14,8 @@ export class RootRouter {
     this.router = Router();
     this.router.use("/v1/requeriments/", RequerimentRouter.getRouter());
     this.router.use("/v1/offers/", checkJwt, OfferRouter.getRouter());
-    this.router.use("/v1/images/", checkJwt, ImageRouter.getRouter());
-    this.router.use("/v1/documents/", checkJwt, FileRouter.getRouter());
+    this.router.use("/v1/images/", ImageRouter.getRouter());
+    this.router.use("/v1/documents/", FileRouter.getRouter());
     this.router.use("/v1/purchaseOrder/", PurchaseOrderRouter.getRouter());
   }
 

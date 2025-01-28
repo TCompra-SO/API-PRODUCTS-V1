@@ -58,7 +58,7 @@ const GetOffersController = async (req: RequestExt, res: Response) => {
       Number(pageSize)
     );
     const { uid } = req.user as JwtPayload;
-    console.log(uid);
+    console.log(req.user);
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));

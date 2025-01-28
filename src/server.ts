@@ -4,6 +4,7 @@ import { Server as SocketIOServer } from "socket.io";
 import db from "./database/mongo";
 import "./initConfig";
 import "./utils/cronJobs";
+import { join } from "path";
 // Declarar `io` en un alcance más amplio
 let io: SocketIOServer;
 
@@ -22,12 +23,38 @@ const startApp = async () => {
 
   db().then(() => console.log("Conectado a la BD"));
 
-  // Manejar conexiones de Socket.IO
+  // Cuando un usuario se conecta, se une a la sala 'home'
   io.on("connection", (socket) => {
-    console.log(`Cliente conectado: ${socket.id}`);
+    console.log("Nuevo usuario conectado", socket.id);
+    // Escuchar evento de unión a la sala 'home'
+    socket.on("joinRoom", (room) => {
+      if (room === "homeRequeriment") {
+        socket.join("homeRequeriment"); // Unir al cliente a la sala 'home'
+        console.log(
+          `Usuario con ID ${socket.id} se ha unido a la sala ${room}`
+        );
+      } //AQUI PROGRMAR LAS SALAS
+    });
+    // El cliente se une a la sala 'home' (puedes hacer esto basado en la autenticación si lo deseas)
+    socket.join("homeRequeriment"); // Esto hará que el cliente esté en la sala 'home'
+    // Escuchar evento para recibir el ID del usuario
+    socket.on("registerUser", (userId) => {
+      if (!userId) {
+        socket.emit("error", "Se requiere un ID de usuario válido");
+        return;
+      }
+      console.log("idUsuario: " + userId);
+      // Crear una sala con el nombre del ID del usuario
+      socket.join("myRequeriment" + userId);
+      console.log(`Usuario ${socket.id} se unió a su sala: ${userId}`);
 
+      // Confirmar al cliente que se unió a la sala
+      socket.emit("joinedRoom", `Te has unido a tu sala privada: ${userId}`);
+    });
+
+    // Cuando un usuario se desconecta
     socket.on("disconnect", () => {
-      console.log(`Cliente desconectado: ${socket.id}`);
+      console.log("Usuario desconectado", socket.id);
     });
   });
 
