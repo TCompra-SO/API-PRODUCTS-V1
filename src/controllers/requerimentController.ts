@@ -247,6 +247,8 @@ const deleteController = async (req: Request, res: Response) => {
       io.to(roomName).emit("updateRoom", {
         dataPack: transformData(responseUser.res?.socketData), // Información relevante
         typeSocket: TypeSocket.UPDATE,
+        key: responseUser.res?.socketData.data?.uid,
+        userId: responseUser.res?.socketData.data?.userID,
       });
       res.status(responseUser.code).send(responseUser);
     } else {
