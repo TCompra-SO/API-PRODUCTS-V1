@@ -1122,6 +1122,7 @@ export class RequerimentService {
           );
           if (offers.success && offers.data && offers.data.length > 0) {
             // eliminar todas las ofertas del requerimiento
+
             await Promise.all(
               offers.data.map(async (offer) => {
                 await OfferService.deleteOffer(offer.uid);
@@ -1130,7 +1131,7 @@ export class RequerimentService {
           }
         }
 
-        await ProductModel.findOneAndUpdate(
+        const updatedRequirement = await ProductModel.findOneAndUpdate(
           { uid: requirementID },
           {
             $set: {
@@ -1146,6 +1147,9 @@ export class RequerimentService {
           data: requirementID,
           res: {
             msg: "Se ha eliminado el requerimiento",
+            socketData: {
+              data: updatedRequirement,
+            },
           },
         };
       } else
@@ -1471,7 +1475,6 @@ export class RequerimentService {
             },
           };
         } else {
-          console.log("entramos");
           await PurchaseOrderModel.findOneAndUpdate(
             { uid: purchaseOrderData[0].uid }, // Filtro para buscar por uid
             {
@@ -1626,7 +1629,7 @@ export class RequerimentService {
             msg: "No se ha encontrado el requerimiento",
           },
         };
-      } 
+      }
     } catch (error) {
       console.log(error);
       return {

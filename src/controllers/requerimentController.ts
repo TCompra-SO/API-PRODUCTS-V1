@@ -243,6 +243,11 @@ const deleteController = async (req: Request, res: Response) => {
     const { uid } = req.params;
     const responseUser = await RequerimentService.delete(uid);
     if (responseUser && responseUser.success) {
+      const roomName = `roomRequeriment${responseUser.res?.socketData.data?.entityID}`;
+      io.to(roomName).emit("updateRoom", {
+        dataPack: transformData(responseUser.res?.socketData), // Información relevante
+        typeSocket: TypeSocket.UPDATE,
+      });
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -382,7 +387,6 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
       filterData
     );
 
-    console.log(typeUser);
     if (responseUser && responseUser.success) {
       // Si el tipo de usuario es "Company", crear una sala de Socket.IO
       if (typeUser === TypeEntity.COMPANY || typeUser === TypeEntity.USER) {
@@ -390,11 +394,13 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
 
         // Unir al socket a la sala (si es aplicable en este contexto)
         // Puedes enviar un evento o mensaje a todos los sockets en la sala
-        io.to(roomName).emit("requeriment", {
-          message: `Sala ${roomName} creada exitosamente para el usuario con ID ${userId}`,
+        // Emitir un mensaje a la sala
+        io.to(roomName).emit(roomName, {
+          message: `Sala ${roomName} actualizada`,
+          dataPack: responseUser.data, // Información relevante
         });
 
-        console.log(`Sala ${roomName} creada para el usuario con ID ${userId}`);
+        console.log(`Evento emitido a la sala ${roomName}`);
       }
       res.status(responseUser.code).send(transformData(responseUser));
     } else {

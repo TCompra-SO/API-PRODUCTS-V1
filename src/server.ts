@@ -27,29 +27,28 @@ const startApp = async () => {
   io.on("connection", (socket) => {
     console.log("Nuevo usuario conectado", socket.id);
     // Escuchar evento de unión a la sala 'home'
-    socket.on("joinRoom", (room) => {
+    /*socket.on("joinRoom", (room) => {
       if (room === "homeRequeriment") {
         socket.join("homeRequeriment"); // Unir al cliente a la sala 'home'
         console.log(
           `Usuario con ID ${socket.id} se ha unido a la sala ${room}`
         );
-      } //AQUI PROGRMAR LAS SALAS
-    });
-    // El cliente se une a la sala 'home' (puedes hacer esto basado en la autenticación si lo deseas)
-    socket.join("homeRequeriment"); // Esto hará que el cliente esté en la sala 'home'
-    // Escuchar evento para recibir el ID del usuario
-    socket.on("registerUser", (userId) => {
-      if (!userId) {
-        socket.emit("error", "Se requiere un ID de usuario válido");
-        return;
+      } // Verificar si es una sala 'myRequeriment<userId>'
+      else if (room.startsWith("roomRequeriment")) {
+        socket.join(room); // Unir al cliente a la sala específica
+        console.log(
+          `Usuario con ID ${socket.id} se ha unido a la sala ${room}`
+        );
       }
-      console.log("idUsuario: " + userId);
-      // Crear una sala con el nombre del ID del usuario
-      socket.join("myRequeriment" + userId);
-      console.log(`Usuario ${socket.id} se unió a su sala: ${userId}`);
-
-      // Confirmar al cliente que se unió a la sala
-      socket.emit("joinedRoom", `Te has unido a tu sala privada: ${userId}`);
+      // Otras salas (opcional)
+      else {
+        console.log(`Sala desconocida: ${room}`);
+      }
+    });*/
+    socket.on("joinRoom", (room) => {
+      socket.join(room);
+      console.log(`Usuario ${socket.id} se unió a la sala ${room}`);
+      socket.emit("joinedRoom", `Te has unido a la sala ${room}`);
     });
 
     // Cuando un usuario se desconecta
