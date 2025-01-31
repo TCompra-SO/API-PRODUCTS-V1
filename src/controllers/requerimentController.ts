@@ -20,12 +20,24 @@ const createRequerimentController = async (
       //  io.to("home").emit("getRequeriments", transformData(responseUser));
       const dataPack = transformData(responseUser);
       const typeSocket = TypeSocket.CREATE;
-      io.to("homeRequeriment").emit("requeriment", {
+      const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+      io.to(roomNameHome).emit("updateRoom", {
         dataPack,
         typeSocket: typeSocket,
         key: dataPack.data[0].key,
       });
-
+      console.log("sala creada: " + roomNameHome);
+      // enviamos a la sala de usuarios
+      const roomName = `roomRequeriment${
+        NameAPI.NAME + responseUser.data?.entityID
+      }`;
+      console.log("sala creada: " + roomName);
+      io.to(roomName).emit("updateRoom", {
+        dataPack: dataPack,
+        typeSocket: typeSocket,
+        key: dataPack.data[0].key,
+        userId: dataPack.data[0].user,
+      });
       res.status(responseUser.code).send(transformData(responseUser));
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -195,7 +207,7 @@ const selectOfferController = async (req: Request, res: Response) => {
       const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
       io.to(roomNameHome).emit("updateRoom", {
         dataPack: transformData(responseUser),
-        TypeSocket: TypeSocket.UPDATE,
+        typeSocket: TypeSocket.UPDATE,
       });
 
       // socket sala de requerimientos
@@ -205,12 +217,11 @@ const selectOfferController = async (req: Request, res: Response) => {
 
       io.to(roomName).emit("updateRoom", {
         dataPack: transformData(responseUser),
-        TypeSocket: TypeSocket.UPDATE,
+        typeSocket: TypeSocket.UPDATE,
         key: responseUser.data?.uid,
         userId: responseUser.data?.userID,
       });
 
-      //CONTINUAR AQUI FALTA MANDAR LOS DATOS POR SOCKET
       //socket sala de ofertas
       const uidOffer = responseUser.res?.offerData.uid;
 
@@ -227,7 +238,7 @@ const selectOfferController = async (req: Request, res: Response) => {
       console.log("nombre de sala:" + roomName);
       io.to(roomNameOffer).emit("updateRoom", {
         dataPack: offerTransform,
-        TypeSocket: TypeSocket.UPDATE,
+        typeSocket: TypeSocket.UPDATE,
         key: responseUser.res?.offerData.uid,
         userId: responseUser.res?.offerData.userID,
       });
@@ -273,7 +284,7 @@ const expiredController = async (req: Request, res: Response) => {
       const roonNameHome = `homeRequeriment${NameAPI.NAME}`;
       io.to(roonNameHome).emit("updateRoom", {
         dataPack: requerimentTransform,
-        TypeSocket: TypeSocket.UPDATE,
+        typeSocket: TypeSocket.UPDATE,
       });
 
       if (requerimentData) {
@@ -283,7 +294,7 @@ const expiredController = async (req: Request, res: Response) => {
           }`;
           io.to(roomName).emit("updateRoom", {
             dataPack: requerimentTransform.data[i],
-            TypeSocket: TypeSocket.UPDATE,
+            typeSocket: TypeSocket.UPDATE,
             key: requerimentData[i].uid,
             userId: requerimentData[i].userID,
           });
@@ -311,7 +322,7 @@ const deleteController = async (req: Request, res: Response) => {
       const roonNameHome = `homeRequeriment${NameAPI.NAME}`;
       io.to(roonNameHome).emit("updateRoom", {
         dataPack: transformData(responseUser.res?.socketData),
-        TypeSocket: TypeSocket.UPDATE,
+        typeSocket: TypeSocket.UPDATE,
       });
 
       const roomName = `roomRequeriment${
@@ -332,7 +343,7 @@ const deleteController = async (req: Request, res: Response) => {
           }`;
           io.to(roomName).emit("updateRoom", {
             dataPack: transformOffersData(offerData),
-            TypeSocket: TypeSocket.UPDATE,
+            typeSocket: TypeSocket.UPDATE,
             key: offerUIDs[i],
             userId: offerData.data?.[0].userID,
           });
