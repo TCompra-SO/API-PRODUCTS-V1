@@ -954,6 +954,7 @@ export class RequerimentService {
               data: updatedProduct,
               res: {
                 msg: "La oferta ganadora ha sido seleccionada y guardada exitosamente",
+                offerData: updatedOffer,
               },
             };
           } else {
@@ -1075,16 +1076,24 @@ export class RequerimentService {
 
   static expired = async () => {
     try {
-      await ProductModel.updateMany(
-        { completion_date: { $lt: new Date() }, stateID: 1 }, // Filtra solo los documentos que cumplen la condición
-        { $set: { stateID: 5 } } // Actualiza el campo `stateID`
-      );
+      const products = await ProductModel.find({
+        completion_date: { $lt: new Date() },
+        stateID: 1,
+      });
+
+      for (const product of products) {
+        product.stateID = 5;
+        await product.save(); // Guardar cada documento actualizado
+      }
 
       return {
         success: true,
         code: 200,
         res: {
           msg: "Se han actualizado los productos expirados",
+          socketData: {
+            data: products,
+          },
         },
       };
     } catch (error) {
@@ -1110,7 +1119,7 @@ export class RequerimentService {
           ],
         }, // oferta seleccionada ya debe estar cancelada o no hay oferta seleccionada
       });
-
+      let offerUIDs;
       if (requirementData) {
         if (
           requirementData.stateID != RequirementState.CANCELED ||
@@ -1120,9 +1129,10 @@ export class RequerimentService {
           const offers = await OfferService.getOffersByRequeriment(
             requirementID
           );
+
           if (offers.success && offers.data && offers.data.length > 0) {
             // eliminar todas las ofertas del requerimiento
-
+            offerUIDs = offers.data.map((offer) => offer.uid);
             await Promise.all(
               offers.data.map(async (offer) => {
                 await OfferService.deleteOffer(offer.uid);
@@ -1149,6 +1159,7 @@ export class RequerimentService {
             msg: "Se ha eliminado el requerimiento",
             socketData: {
               data: updatedRequirement,
+              offerUIDs: offerUIDs,
             },
           },
         };

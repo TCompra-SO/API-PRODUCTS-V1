@@ -2,7 +2,9 @@ import { Request, Response } from "express";
 import { RequerimentService } from "../services/requerimentService";
 import { io } from "../server"; // Importamos el objeto `io` de Socket.IO
 import { transformData } from "../middlewares/requeriment.front.Interface";
-import { TypeEntity, TypeSocket } from "../utils/Types";
+import { NameAPI, TypeEntity, TypeSocket } from "../utils/Types";
+import { OfferService } from "../services/offerService";
+import { transformOffersData } from "../middlewares/offer.front.interface";
 
 const createRequerimentController = async (
   { body }: Request,
@@ -189,6 +191,47 @@ const selectOfferController = async (req: Request, res: Response) => {
       warranty_Filter
     );
     if (responseUser && responseUser.success) {
+      //socket sala principal
+      const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+      io.to(roomNameHome).emit("updateRoom", {
+        dataPack: transformData(responseUser),
+        TypeSocket: TypeSocket.UPDATE,
+      });
+
+      // socket sala de requerimientos
+      const roomName = `roomRequeriment${
+        NameAPI.NAME + responseUser.data?.entityID
+      }`;
+
+      io.to(roomName).emit("updateRoom", {
+        dataPack: transformData(responseUser),
+        TypeSocket: TypeSocket.UPDATE,
+        key: responseUser.data?.uid,
+        userId: responseUser.data?.userID,
+      });
+
+      //CONTINUAR AQUI FALTA MANDAR LOS DATOS POR SOCKET
+      //socket sala de ofertas
+      const uidOffer = responseUser.res?.offerData.uid;
+
+      let offerData;
+      if (uidOffer) {
+        offerData = await OfferService.GetDetailOffer(uidOffer);
+      }
+      const offerTransform = transformOffersData(offerData);
+      console.log("dato trasnformado: " + offerTransform);
+
+      const roomNameOffer = `roomOffer${
+        NameAPI.NAME + responseUser.res?.offerData?.entityID
+      }`;
+      console.log("nombre de sala:" + roomName);
+      io.to(roomNameOffer).emit("updateRoom", {
+        dataPack: offerTransform,
+        TypeSocket: TypeSocket.UPDATE,
+        key: responseUser.res?.offerData.uid,
+        userId: responseUser.res?.offerData.userID,
+      });
+
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -225,7 +268,28 @@ const expiredController = async (req: Request, res: Response) => {
   try {
     const responseUser = await RequerimentService.expired();
     if (responseUser && responseUser.success) {
-      res.status(responseUser.code).send(responseUser);
+      const requerimentData = responseUser.res?.socketData.data;
+      const requerimentTransform = transformData(responseUser.res?.socketData);
+      const roonNameHome = `homeRequeriment${NameAPI.NAME}`;
+      io.to(roonNameHome).emit("updateRoom", {
+        dataPack: requerimentTransform,
+        TypeSocket: TypeSocket.UPDATE,
+      });
+
+      if (requerimentData) {
+        for (let i = 0; i < requerimentData.length; i++) {
+          const roomName = `roomRequeriment${
+            NameAPI.NAME + responseUser.res?.socketData.data?.[i].entityID
+          }`;
+          io.to(roomName).emit("updateRoom", {
+            dataPack: requerimentTransform.data[i],
+            TypeSocket: TypeSocket.UPDATE,
+            key: requerimentData[i].uid,
+            userId: requerimentData[i].userID,
+          });
+        }
+      }
+      res.status(responseUser.code).send(responseUser.res?.msg);
     } else {
       res.status(responseUser.code).send(responseUser.error);
     }
@@ -243,13 +307,38 @@ const deleteController = async (req: Request, res: Response) => {
     const { uid } = req.params;
     const responseUser = await RequerimentService.delete(uid);
     if (responseUser && responseUser.success) {
-      const roomName = `roomRequeriment${responseUser.res?.socketData.data?.entityID}`;
+      //logica del Socket
+      const roonNameHome = `homeRequeriment${NameAPI.NAME}`;
+      io.to(roonNameHome).emit("updateRoom", {
+        dataPack: transformData(responseUser.res?.socketData),
+        TypeSocket: TypeSocket.UPDATE,
+      });
+
+      const roomName = `roomRequeriment${
+        NameAPI.NAME + responseUser.res?.socketData.data?.entityID
+      }`;
+      const offerUIDs = responseUser.res?.socketData.offerUIDs;
       io.to(roomName).emit("updateRoom", {
         dataPack: transformData(responseUser.res?.socketData), // Información relevante
         typeSocket: TypeSocket.UPDATE,
         key: responseUser.res?.socketData.data?.uid,
         userId: responseUser.res?.socketData.data?.userID,
       });
+      if (offerUIDs) {
+        for (let i = 0; i < offerUIDs.length; i++) {
+          const offerData = await OfferService.GetDetailOffer(offerUIDs[i]);
+          const roomName = `roomOffer${
+            NameAPI.NAME + offerData.data?.[0].entityID
+          }`;
+          io.to(roomName).emit("updateRoom", {
+            dataPack: transformOffersData(offerData),
+            TypeSocket: TypeSocket.UPDATE,
+            key: offerUIDs[i],
+            userId: offerData.data?.[0].userID,
+          });
+        }
+      }
+      //fin logica del socket
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -271,6 +360,26 @@ const republishController = async (req: Request, res: Response) => {
       completion_date
     );
     if (responseUser && responseUser.success) {
+      const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+
+      io.to(roomNameHome).emit("updateRoom", {
+        dataPack: transformData(responseUser), // Información relevante
+        typeSocket: TypeSocket.UPDATE,
+        key: responseUser.data?.uid,
+        userId: responseUser.data?.userID,
+      });
+
+      const roomName = `roomRequeriment${
+        NameAPI.NAME + responseUser.data?.entityID
+      }`;
+
+      io.to(roomName).emit("updateRoom", {
+        dataPack: transformData(responseUser), // Información relevante
+        typeSocket: TypeSocket.UPDATE,
+        key: responseUser.data?.uid,
+        userId: responseUser.data?.userID,
+      });
+
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
