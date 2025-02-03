@@ -1590,30 +1590,25 @@ export class RequerimentService {
     uid: string,
     increase: boolean
   ) => {
-    console.log(uid);
     try {
       // Buscar y actualizar el requerimiento por su UID
       const product = await ProductModel.findOne({ uid }); // Encuentra el producto
 
       if (product) {
-        // Calcula el nuevo valor de number_offers
-        const newNumberOffers = Math.max(
-          0,
-          product.number_offers + (increase ? 1 : -1)
-        );
-
         // Actualiza el documento
-        const updatedRequeriment = await ProductModel.findOneAndUpdate(
+        const updatedProduct = await ProductModel.findOneAndUpdate(
           { uid }, // Busca por uid
           {
-            number_offers: newNumberOffers, // Establece el nuevo valor calculado
+            $inc: { number_offers: increase ? 1 : -1 }, // Suma o resta 1
             updated_at: new Date(), // Actualiza la fecha
           },
-          { new: true } // Retorna el documento actualizado
-        );
+          { new: true, runValidators: true } // Devuelve el documento actualizado y valida restricciones
+        )
+          .where("number_offers")
+          .gt(0); // Asegura que solo reste si es mayor a 0
 
         // Si no se encuentra el requerimiento o no se puede actualizar
-        if (!updatedRequeriment) {
+        if (!updatedProduct) {
           return {
             success: false,
             code: 404,
@@ -1629,7 +1624,7 @@ export class RequerimentService {
           code: 200,
           res: {
             msg: "El requerimiento ha sido actualizado correctamente",
-            data: updatedRequeriment,
+            data: updatedProduct,
           },
         };
       } else {
@@ -1675,6 +1670,9 @@ export class RequerimentService {
           { name: { $regex: keyWords, $options: "i" } },
           { description: { $regex: keyWords, $options: "i" } },
         ],
+        $and: [
+          { stateID: 1 }, // Filtra solo los documentos con stateID igual a 1
+        ],
       };
 
       // Definimos la proyección para excluir campos específicos
@@ -1697,20 +1695,32 @@ export class RequerimentService {
         searchConditions.entityID = companyId;
       }
 
-      if (startDate) {
-        searchConditions.publish_date = {
-          ...searchConditions.publish_date,
-          $gte: new Date(startDate),
-        };
-      }
+      if (startDate || endDate) {
+        // Si ambos startDate y endDate están presentes
+        if (startDate && endDate) {
+          searchConditions.publish_date = {
+            $gte: new Date(startDate), // startDate se aplica a publish_date (inicio)
+          };
+          searchConditions.completion_date = {
+            $lte: new Date(endDate), // endDate se aplica a completion_date (fin)
+          };
+        } else {
+          // Si solo startDate está presente, se aplica solo a publish_date
+          if (startDate) {
+            searchConditions.publish_date = {
+              $gte: new Date(startDate), // Aplicar startDate solo a publish_date
+            };
+          }
 
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setUTCHours(23, 59, 59, 999); // Ajustar a las 23:59:59.999 en UTC
-        searchConditions.publish_date = {
-          ...searchConditions.publish_date,
-          $lte: end,
-        };
+          // Si solo endDate está presente, se aplica solo a completion_date
+          if (endDate) {
+            const end = new Date(endDate);
+            end.setUTCHours(23, 59, 59, 999); // Ajuste de horas para que incluya todo el día
+            searchConditions.completion_date = {
+              $lte: end, // Aplicar endDate solo a completion_date
+            };
+          }
+        }
       }
 
       // Primero intentamos hacer la búsqueda en MongoDB
@@ -1859,7 +1869,7 @@ export class RequerimentService {
           $match: {
             $and: [
               { [userType]: userId },
-              { stateID: { $ne: RequirementState.ELIMINATED } },
+              //  { stateID: { $ne: RequirementState.ELIMINATED } },
               {
                 $or: [
                   { name: { $regex: keyWords, $options: "i" } },

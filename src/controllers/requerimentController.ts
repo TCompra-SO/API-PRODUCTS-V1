@@ -36,7 +36,7 @@ const createRequerimentController = async (
         dataPack: dataPack,
         typeSocket: typeSocket,
         key: dataPack.data[0].key,
-        userId: dataPack.data[0].user,
+        userId: dataPack.data[0].subUser,
       });
       res.status(responseUser.code).send(transformData(responseUser));
     } else {
@@ -230,12 +230,11 @@ const selectOfferController = async (req: Request, res: Response) => {
         offerData = await OfferService.GetDetailOffer(uidOffer);
       }
       const offerTransform = transformOffersData(offerData);
-      console.log("dato trasnformado: " + offerTransform);
 
       const roomNameOffer = `roomOffer${
         NameAPI.NAME + responseUser.res?.offerData?.entityID
       }`;
-      console.log("nombre de sala:" + roomName);
+
       io.to(roomNameOffer).emit("updateRoom", {
         dataPack: offerTransform,
         typeSocket: TypeSocket.UPDATE,
@@ -341,6 +340,7 @@ const deleteController = async (req: Request, res: Response) => {
           const roomName = `roomOffer${
             NameAPI.NAME + offerData.data?.[0].entityID
           }`;
+          console.log(offerData);
           io.to(roomName).emit("updateRoom", {
             dataPack: transformOffersData(offerData),
             typeSocket: TypeSocket.UPDATE,

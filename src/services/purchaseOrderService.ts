@@ -531,7 +531,7 @@ export class PurchaseOrderService {
             ],
           },
           { [fieldUserName]: userId },
-          { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
+          //   { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
           ...(filterColumn && filterData && filterData.length > 0
             ? [{ [filterColumn]: { $in: filterData } }] // Campo dinámico con valores de filterData
             : []), // Si no hay filterColumn o filterData, no añade esta condición
@@ -676,8 +676,8 @@ export class PurchaseOrderService {
             ],
           },
           { [fieldUserName]: userId },
-          { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
-          { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
+          //   { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
+          // { stateID: { $ne: PurchaseOrderState.ELIMINATED } }, // Excluye los documentos con stateID igual a 7
           ...(filterColumn && filterData && filterData.length > 0
             ? [{ [filterColumn]: { $in: filterData } }] // Campo dinámico con valores de filterData
             : []), // Si no hay filterColumn o filterData, no añade esta condición
