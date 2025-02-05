@@ -242,6 +242,29 @@ export class OfferService {
             as: "requerimentDetails", // Nombre del campo que contendrá los detalles del requerimiento
           },
         },
+        // Relacionar con la colección 'profiles' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "profiles", // Nombre de la colección de perfiles
+            localField: "userID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Profiles'
+            as: "profile", // Alias del resultado
+          },
+        },
+        // Descomponer el array de perfiles (si existe)
+        { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+
+        // Relacionar con la colección 'companys' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "companys", // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Companys'
+            as: "company", // Alias del resultado
+          },
+        },
+        // Descomponer el array de compañías (si existe)
+        { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
         // Fase de proyección para obtener solo los campos deseados
         {
           $project: {
@@ -273,6 +296,8 @@ export class OfferService {
             requerimentTitle: {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             }, // Extrae el campo 'name' del primer requerimiento encontrado
+            subUserName: { $ifNull: ["$profile.name", "$company.name"] },
+            userName: { $ifNull: ["$company.name", "$profile.name"] },
           },
         },
       ]);
@@ -1326,7 +1351,7 @@ export class OfferService {
           $match: {
             $and: [
               { [userType]: userId },
-              { stateID: { $ne: OfferState.ELIMINATED } },
+              // { stateID: { $ne: OfferState.ELIMINATED } },
               {
                 $or: [
                   { name: { $regex: keyWords, $options: "i" } }, // Búsqueda por el nombre

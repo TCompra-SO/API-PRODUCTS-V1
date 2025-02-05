@@ -1185,6 +1185,7 @@ export class RequerimentService {
 
   static republish = async (requirementID: string, completionDate: string) => {
     try {
+      const offerUids: string[] = [];
       const requirementData = await ProductModel.findOne({
         uid: requirementID,
       });
@@ -1205,6 +1206,8 @@ export class RequerimentService {
                   offer.uid,
                   OfferState.ACTIVE
                 );
+                // Guardar la offer.uid en el array
+                offerUids.push(offer.uid);
               })
             );
           }
@@ -1227,6 +1230,7 @@ export class RequerimentService {
             data: updatedRequirement,
             res: {
               msg: "Se ha republicado el requerimiento",
+              offerUids: offerUids,
             },
           };
         } else {
@@ -1264,6 +1268,9 @@ export class RequerimentService {
     score: number,
     comments?: string
   ) => {
+    let purchaseOrderDataSocket;
+    let requerimentDataSocket;
+    let offerDataSocket;
     try {
       const requerimentData = await ProductModel.findOne({
         uid: requerimentID,
@@ -1327,15 +1334,23 @@ export class RequerimentService {
         purchaseOrderData?.[0].scoreState?.scoreProvider &&
         purchaseOrderData?.[0].scoreState?.deliveredProvider !== delivered
       ) {
-        this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
-        this.inDispute(requerimentID, ProductModel);
-        this.inDispute(offerID, OfferModel);
+        purchaseOrderDataSocket = (
+          await this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel)
+        ).res?.updatedDocument;
+        requerimentDataSocket = (
+          await this.inDispute(requerimentID, ProductModel)
+        ).res?.updatedDocument;
+        offerDataSocket = (await this.inDispute(offerID, OfferModel)).res
+          ?.updatedDocument;
 
         return {
           success: true,
           code: 200,
           res: {
             msg: "El proveedor ha reportado una discrepancia, por lo que el estado del proceso se ha marcado como EN DISPUTA.",
+            purchaseOrderDataSocket,
+            requerimentDataSocket,
+            offerDataSocket,
           },
         };
       } else {
@@ -1343,7 +1358,7 @@ export class RequerimentService {
           purchaseOrderData?.[0].scoreState?.scoreProvider &&
           purchaseOrderData?.[0].scoreState?.deliveredProvider === delivered
         ) {
-          await PurchaseOrderModel.updateOne(
+          purchaseOrderDataSocket = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -1354,10 +1369,11 @@ export class RequerimentService {
                 "scoreState.deliveredClient": delivered,
                 stateID: PurchaseOrderState.FINISHED,
               },
-            }
+            },
+            { new: true } // Devuelve el documento actualizado
           );
         } else {
-          await PurchaseOrderModel.updateOne(
+          purchaseOrderDataSocket = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -1368,11 +1384,12 @@ export class RequerimentService {
                 "scoreState.deliveredClient": delivered,
                 stateID: PurchaseOrderState.PENDING,
               },
-            }
+            },
+            { new: true } // Devuelve el documento actualizado
           );
         }
 
-        await ProductModel.updateOne(
+        requerimentDataSocket = await ProductModel.findOneAndUpdate(
           {
             uid: requerimentID,
           },
@@ -1380,7 +1397,8 @@ export class RequerimentService {
             $set: {
               stateID: RequirementState.FINISHED,
             },
-          }
+          },
+          { new: true } // Devuelve el documento actualizado
         );
 
         return {
@@ -1388,6 +1406,9 @@ export class RequerimentService {
           code: 200,
           res: {
             msg: "Se ha culminado correctamente el Requerimiento",
+            purchaseOrderDataSocket: purchaseOrderDataSocket,
+            requerimentDataSocket: requerimentDataSocket,
+            offerDataSocket: offerDataSocket,
           },
         };
       }
@@ -1405,13 +1426,14 @@ export class RequerimentService {
 
   static inDispute = async (uid: string, Model: any) => {
     try {
-      const updateResult = await Model.updateOne(
+      const updatedDocument = await Model.findOneAndUpdate(
         { uid },
-        { $set: { stateID: PurchaseOrderState.DISPUTE } }
+        { $set: { stateID: PurchaseOrderState.DISPUTE } },
+        { new: true } // Devuelve el documento actualizado
       );
 
-      // Verificar si se actualizó algún documento
-      if (updateResult.matchedCount === 0) {
+      // Verificar si se encontró y actualizó el documento
+      if (!updatedDocument) {
         return {
           success: false,
           code: 404,
@@ -1426,6 +1448,7 @@ export class RequerimentService {
         code: 200,
         res: {
           msg: "El estado se actualizó correctamente.",
+          updatedDocument, // Devolvemos el documento actualizado
         },
       };
     } catch (error) {
