@@ -307,6 +307,40 @@ export class RequerimentService {
             as: "winOffer", // El alias para la relación, esto almacenará la oferta ganadora relacionada
           },
         },
+        {
+          $lookup: {
+            from: "profiles", // Nombre de la colección de perfiles
+            localField: "userID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Profiles'
+            as: "profile", // Alias del resultado
+          },
+        },
+        // Descomponer el array de perfiles (si existe)
+        { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+
+        // Relacionar con la colección 'companys' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "companys", // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Companys'
+            as: "company", // Alias del resultado
+          },
+        },
+        // Descomponer el array de compañías (si existe)
+        { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
+
+        // Relacionar con la colección 'companys' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "users", // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Companys'
+            as: "user", // Alias del resultado
+          },
+        },
+        // Descomponer el array de usuarios (si existe)
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         // Opcionalmente, puedes agregar un paso $unwind si solo quieres una única oferta ganadora
         {
           $unwind: {
@@ -347,6 +381,12 @@ export class RequerimentService {
               userID: 1,
               entityID: 1,
             }, // Aquí incluimos todos los campos de la oferta ganadora
+            subUserName: {
+              $ifNull: ["$profile.name", "$company.name", "$user.name"],
+            },
+            userName: {
+              $ifNull: ["$company.name", "$user.name", "$profile.name"],
+            },
           },
         },
       ]);
@@ -954,7 +994,8 @@ export class RequerimentService {
               data: updatedProduct,
               res: {
                 msg: "La oferta ganadora ha sido seleccionada y guardada exitosamente",
-                offerData: updatedOffer,
+                offerUID: updatedOffer.uid,
+                purchaseOrderUID: purchaseOrder.res?.uidPurchaseOrder,
               },
             };
           } else {
@@ -1158,7 +1199,6 @@ export class RequerimentService {
           res: {
             msg: "Se ha eliminado el requerimiento",
             socketData: {
-              data: updatedRequirement,
               offerUIDs: offerUIDs,
             },
           },
@@ -1268,9 +1308,9 @@ export class RequerimentService {
     score: number,
     comments?: string
   ) => {
-    let purchaseOrderDataSocket;
-    let requerimentDataSocket;
-    let offerDataSocket;
+    let purchaseOrderUID;
+    let requerimentUID;
+    let offerUID;
     try {
       const requerimentData = await ProductModel.findOne({
         uid: requerimentID,
@@ -1334,23 +1374,21 @@ export class RequerimentService {
         purchaseOrderData?.[0].scoreState?.scoreProvider &&
         purchaseOrderData?.[0].scoreState?.deliveredProvider !== delivered
       ) {
-        purchaseOrderDataSocket = (
+        purchaseOrderUID = (
           await this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel)
-        ).res?.updatedDocument;
-        requerimentDataSocket = (
-          await this.inDispute(requerimentID, ProductModel)
-        ).res?.updatedDocument;
-        offerDataSocket = (await this.inDispute(offerID, OfferModel)).res
-          ?.updatedDocument;
+        ).res?.uid;
+        requerimentUID = (await this.inDispute(requerimentID, ProductModel)).res
+          ?.uid;
+        offerUID = (await this.inDispute(offerID, OfferModel)).res?.uid;
 
         return {
           success: true,
           code: 200,
           res: {
             msg: "El proveedor ha reportado una discrepancia, por lo que el estado del proceso se ha marcado como EN DISPUTA.",
-            purchaseOrderDataSocket,
-            requerimentDataSocket,
-            offerDataSocket,
+            purchaseOrderUID,
+            requerimentUID,
+            offerUID,
           },
         };
       } else {
@@ -1358,7 +1396,7 @@ export class RequerimentService {
           purchaseOrderData?.[0].scoreState?.scoreProvider &&
           purchaseOrderData?.[0].scoreState?.deliveredProvider === delivered
         ) {
-          purchaseOrderDataSocket = await PurchaseOrderModel.findOneAndUpdate(
+          purchaseOrderUID = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -1372,8 +1410,9 @@ export class RequerimentService {
             },
             { new: true } // Devuelve el documento actualizado
           );
+          purchaseOrderUID = purchaseOrderUID?.uid;
         } else {
-          purchaseOrderDataSocket = await PurchaseOrderModel.findOneAndUpdate(
+          purchaseOrderUID = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -1387,9 +1426,10 @@ export class RequerimentService {
             },
             { new: true } // Devuelve el documento actualizado
           );
+          purchaseOrderUID = purchaseOrderUID?.uid;
         }
 
-        requerimentDataSocket = await ProductModel.findOneAndUpdate(
+        requerimentUID = await ProductModel.findOneAndUpdate(
           {
             uid: requerimentID,
           },
@@ -1400,15 +1440,16 @@ export class RequerimentService {
           },
           { new: true } // Devuelve el documento actualizado
         );
+        requerimentUID = requerimentUID?.uid;
 
         return {
           success: true,
           code: 200,
           res: {
             msg: "Se ha culminado correctamente el Requerimiento",
-            purchaseOrderDataSocket: purchaseOrderDataSocket,
-            requerimentDataSocket: requerimentDataSocket,
-            offerDataSocket: offerDataSocket,
+            purchaseOrderUID: purchaseOrderUID,
+            requerimentUID: requerimentUID,
+            offerUID: offerUID,
           },
         };
       }
@@ -1448,7 +1489,7 @@ export class RequerimentService {
         code: 200,
         res: {
           msg: "El estado se actualizó correctamente.",
-          updatedDocument, // Devolvemos el documento actualizado
+          uid: updatedDocument.uid, // Devolvemos el documento actualizado
         },
       };
     } catch (error) {
@@ -1465,6 +1506,10 @@ export class RequerimentService {
 
   static canceled = async (uid: string, reason?: string) => {
     try {
+      let offerUids;
+      let purchaseOrderUid;
+      let requerimentUid;
+      let selectOfferUid;
       const resultData = await ProductModel.find({ uid: uid });
       if (resultData[0]?.stateID === RequirementState.CANCELED) {
         return {
@@ -1484,8 +1529,12 @@ export class RequerimentService {
         });
 
         if (purchaseOrderData[0].stateID === PurchaseOrderState.CANCELED) {
-          await this.changeStateOffer(uid, OfferState.CANCELED, true);
-          await this.changeStateID(
+          offerUids = await this.changeStateOffer(
+            uid,
+            OfferState.CANCELED,
+            true
+          );
+          requerimentUid = await this.changeStateID(
             ProductModel,
             uid,
             RequirementState.CANCELED
@@ -1493,8 +1542,9 @@ export class RequerimentService {
           return {
             success: true,
             code: 200,
-            error: {
+            res: {
               msg: "Se ha cancelado el Requerimiento exitosamente",
+              requerimentUid: requerimentUid,
             },
           };
         } else if (
@@ -1520,26 +1570,43 @@ export class RequerimentService {
             { new: true } // Devuelve el documento actualizado
           );
         }
-        await this.changeStateOffer(uid, OfferState.CANCELED, true); // cancelo todas las Ofertas del requerimiento
-        await this.changeStateID(OfferModel, OfferID, OfferState.CANCELED); // cancelo la oferta asociada
-        await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
+        offerUids = await this.changeStateOffer(uid, OfferState.CANCELED, true); // cancelo todas las Ofertas del requerimiento
+        selectOfferUid = await this.changeStateID(
+          OfferModel,
+          OfferID,
+          OfferState.CANCELED
+        ); // cancelo la oferta asociada
+        requerimentUid = await this.changeStateID(
+          ProductModel,
+          uid,
+          RequirementState.CANCELED
+        );
 
         return {
           success: true,
           code: 200,
-          error: {
+          res: {
             msg: "Se ha cancelado el Requerimiento exitosamente",
+            offerUids: offerUids,
+            requerimentUid: requerimentUid,
+            selectOfferUid: selectOfferUid,
           },
         };
       } else {
-        await this.changeStateOffer(uid, OfferState.CANCELED, true);
-        await this.changeStateID(ProductModel, uid, RequirementState.CANCELED);
+        offerUids = await this.changeStateOffer(uid, OfferState.CANCELED, true);
+        requerimentUid = await this.changeStateID(
+          ProductModel,
+          uid,
+          RequirementState.CANCELED
+        );
 
         return {
           success: true,
           code: 200,
-          error: {
+          res: {
             msg: "Se ha cancelado el Requerimiento exitosamente",
+            offerUids: offerUids,
+            requerimentUid: requerimentUid,
           },
         };
       }
@@ -1569,14 +1636,10 @@ export class RequerimentService {
           },
         }
       );
+      return uid;
     } catch (error) {
-      return {
-        success: false,
-        code: 500,
-        error: {
-          msg: "Error interno del servidor.",
-        },
-      };
+      const msg = "Error interno del servidor.";
+      return msg;
     }
   };
 
@@ -1586,6 +1649,18 @@ export class RequerimentService {
     canceledByCreator: boolean
   ) => {
     try {
+      // 1. Encuentra los documentos que coinciden con los criterios
+      const offersToUpdate = await OfferModel.find(
+        {
+          requerimentID: uid,
+          stateID: { $nin: [5, 7] },
+        },
+        { uid: 1 } // Solo selecciona el campo `uid`
+      );
+
+      // Extrae las `uids` de los documentos encontrados
+      const offerUids = offersToUpdate.map((offer) => offer.uid);
+
       await OfferModel.updateMany(
         {
           requerimentID: uid,
@@ -1598,14 +1673,10 @@ export class RequerimentService {
           },
         }
       );
+      return offerUids;
     } catch (error) {
-      return {
-        success: false,
-        code: 500,
-        error: {
-          msg: "Error interno en el Servidor",
-        },
-      };
+      const msg = "Error interno del servidor.";
+      return msg;
     }
   };
 

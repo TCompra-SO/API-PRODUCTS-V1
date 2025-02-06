@@ -265,6 +265,18 @@ export class OfferService {
         },
         // Descomponer el array de compañías (si existe)
         { $unwind: { path: "$company", preserveNullAndEmptyArrays: true } },
+
+        // Relacionar con la colección 'companys' usando el campo 'userID'
+        {
+          $lookup: {
+            from: "users", // Nombre de la colección de compañías
+            localField: "entityID", // Campo en la colección 'Products'
+            foreignField: "uid", // Campo en la colección 'Companys'
+            as: "user", // Alias del resultado
+          },
+        },
+        // Descomponer el array de usuarios (si existe)
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         // Fase de proyección para obtener solo los campos deseados
         {
           $project: {
@@ -296,8 +308,12 @@ export class OfferService {
             requerimentTitle: {
               $arrayElemAt: ["$requerimentDetails.name", 0],
             }, // Extrae el campo 'name' del primer requerimiento encontrado
-            subUserName: { $ifNull: ["$profile.name", "$company.name"] },
-            userName: { $ifNull: ["$company.name", "$profile.name"] },
+            subUserName: {
+              $ifNull: ["$profile.name", "$company.name", "$user.name"],
+            },
+            userName: {
+              $ifNull: ["$company.name", "$user.name", "$profile.name"],
+            },
           },
         },
       ]);

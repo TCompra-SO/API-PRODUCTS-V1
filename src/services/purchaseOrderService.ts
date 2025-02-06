@@ -168,7 +168,7 @@ export class PurchaseOrderService {
       };
 
       const CreateOrder = new PurchaseOrderModel(newPurchaseOrder);
-      await CreateOrder.save();
+      const uidPurchaseOrder = await CreateOrder.save();
       await RequerimentService.manageCount(
         userProviderID,
         subUserProviderID,
@@ -222,6 +222,7 @@ export class PurchaseOrderService {
         code: 200,
         res: {
           msg: "Se ha creaqdo correctamente la orden de Compra",
+          uidPurchaseOrder: uidPurchaseOrder.uid,
           responseEmail: responseEmail,
         },
       };
