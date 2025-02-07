@@ -788,7 +788,7 @@ export class OfferService {
       const userBase = await axios.get(
         `${API_USER}auth/getBaseDataUser/${result[0].subUserId}`
       );
-      console.log(userBase.data.data?.[0]);
+
       result[0].userImage = userBase.data.data?.[0].image;
       if (result[0].userId === result[0].subUserId) {
         result[0].userName = userBase.data.data?.[0].name;
@@ -1114,7 +1114,7 @@ export class OfferService {
           },
         },
       ]);
-      console.log(requerimentData.length);
+
       const resultData = await OfferModel.aggregate([
         {
           $match: {
@@ -1137,8 +1137,6 @@ export class OfferService {
       const requerimentEntityID = requerimentData[0]?.entityID;
       const requerimentState = requerimentData[0]?.stateID;
 
-      console.log("Longitud: " + resultFilterData.length);
-      console.log("OfferUser: " + offerUserID + " UserID: " + userID);
       if (resultFilterData.length > 0 || requerimentData.length > 0) {
         if (resultData.length > 0) {
           if (typeUser === TypeEntity.SUBUSER) {
@@ -1184,11 +1182,6 @@ export class OfferService {
       } else {
         codeResponse = 4;
       }
-      console.log(
-        offerState,
-        " " + requerimentUserID + " Requeriment: " + requerimentEntityID
-      );
-      /*     console.log(requerimentUserID, " " + userID + " Codigo: " + codeResponse);*/
 
       return {
         success: true,

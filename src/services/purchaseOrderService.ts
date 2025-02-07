@@ -348,8 +348,12 @@ export class PurchaseOrderService {
 
   static getPurchaseOrderID = async (uid: string) => {
     try {
-      const result = await PurchaseOrderModel.findOne({ uid });
-      if (!result) {
+      const result = await PurchaseOrderModel.aggregate([
+        { $match: { uid } }, // Filtra por UID
+        { $limit: 1 }, // Asegura que solo se devuelva un resultado (opcional)
+      ]);
+
+      if (result.length === 0) {
         return {
           success: false,
           code: 403,
@@ -810,7 +814,7 @@ export class PurchaseOrderService {
     try {
       const data = await this.getPurchaseOrderID(uid);
       if (data && data.success && data.data) {
-        const html = await OrderPurchaseTemplate(data.data);
+        const html = await OrderPurchaseTemplate(data.data[0]);
 
         // Genera el PDF a partir de la plantilla HTML
         const pdfBuffer: Buffer = await this.createPDF(html);
@@ -847,8 +851,8 @@ export class PurchaseOrderService {
   static canceled = async (purchaseOrderID: string) => {
     try {
       const purchaseOrderData = await this.getPurchaseOrderID(purchaseOrderID);
-      if (purchaseOrderData.data?.stateID === PurchaseOrderState.PENDING) {
-        console.log(purchaseOrderData.data?.stateID);
+      if (purchaseOrderData.data?.[0].stateID === PurchaseOrderState.PENDING) {
+        console.log(purchaseOrderData.data?.[0].stateID);
       }
       return {
         success: true,
