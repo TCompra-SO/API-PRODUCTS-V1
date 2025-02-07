@@ -9,8 +9,21 @@ import { RequerimentService } from "../services/requerimentService";
 import { transformData } from "../middlewares/requeriment.front.Interface";
 import { PurchaseOrderService } from "../services/purchaseOrderService";
 
-const CreateOfferController = async ({ body }: Request, res: Response) => {
+const CreateOfferController = async (req: RequestExt, res: Response) => {
   try {
+    const { body, user } = req; // Extraemos `body` y `user` de `req`
+    const { uid } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+    console.log(uid);
+    console.log(body.userID);
+    if (uid !== body.userID) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
     const responseUser = await OfferService.CreateOffer(body);
     if (responseUser.success) {
       const uid = responseUser.data?.uid;
@@ -104,8 +117,7 @@ const GetOffersController = async (req: RequestExt, res: Response) => {
       Number(page),
       Number(pageSize)
     );
-    const { uid } = req.user as JwtPayload;
-    console.log(req.user);
+
     if (responseUser && responseUser.success) {
       if (responseUser.data) {
         res.status(responseUser.code).send(transformOffersData(responseUser));
@@ -232,14 +244,31 @@ const getbasicRateDataController = async (req: Request, res: Response) => {
   }
 };
 
-const deleteController = async (req: Request, res: Response) => {
+const deleteController = async (req: RequestExt, res: Response) => {
   try {
-    const { uid } = req.params;
-    const responseUser = await OfferService.deleteOffer(uid);
+    const { uid: offerID } = req.params;
+    let offerData = await OfferService.GetDetailOffer(offerID);
+    const { user } = req; // Extraemos `user` y `body` de la request
+    const { uid: userUID } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+
+    if (
+      userUID !== offerData.data?.[0].userID &&
+      userUID !== offerData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+    //LOGICA DE LOS SOCKETS
+    const responseUser = await OfferService.deleteOffer(offerID);
     if (responseUser && responseUser.success) {
       const offerUid = responseUser.res?.offerID;
       if (offerUid) {
-        const offerData = await OfferService.GetDetailOffer(offerUid);
+        offerData = await OfferService.GetDetailOffer(offerUid);
         const typeSocket = TypeSocket.UPDATE;
         const roomNameHome = `roomOffer${
           NameAPI.NAME + offerData.data?.[0].entityID
@@ -266,6 +295,15 @@ const deleteController = async (req: Request, res: Response) => {
             key: requerimenData.data?.[0].uid,
             userId: requerimenData.data?.[0].userID,
           });
+          //home
+          const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+
+          io.to(roomNameHome).emit("updateRoom", {
+            dataPack: transformData(requerimenData),
+            typeSocket: typeSocket,
+            key: requerimenData.data?.[0].uid,
+            userId: requerimenData.data?.[0].userID,
+          });
         }
       }
       res.status(responseUser.code).send(responseUser);
@@ -281,9 +319,26 @@ const deleteController = async (req: Request, res: Response) => {
   }
 };
 
-const culminateController = async (req: Request, res: Response) => {
+const culminateController = async (req: RequestExt, res: Response) => {
   try {
     const { offerID, delivered, score, comments } = req.body;
+
+    let offerData = await OfferService.GetDetailOffer(offerID);
+    const { user } = req; // Extraemos `user` y `body` de la request
+    const { uid: userUID } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+    if (
+      userUID !== offerData.data?.[0].userID &&
+      userUID !== offerData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+
     const responseUser = await OfferService.culminate(
       offerID,
       delivered,
@@ -385,9 +440,26 @@ const getValidationController = async (req: Request, res: Response) => {
   }
 };
 
-const canceledController = async (req: Request, res: Response) => {
+const canceledController = async (req: RequestExt, res: Response) => {
   try {
     const { offerID, reason, canceledByCreator } = req.body;
+    let offerData = await OfferService.GetDetailOffer(offerID);
+    const { user } = req; // Extraemos `user` y `body` de la request
+    const { uid: userUID } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+
+    if (
+      userUID !== offerData.data?.[0].userID &&
+      userUID !== offerData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+
     const responseUser = await OfferService.canceled(
       offerID,
       reason,
@@ -421,6 +493,15 @@ const canceledController = async (req: Request, res: Response) => {
         }`;
 
         io.to(roomName).emit("updateRoom", {
+          dataPack: transformData(requerimenData),
+          typeSocket: typeSocket,
+          key: requerimenData.data?.[0].uid,
+          userId: requerimenData.data?.[0].userID,
+        });
+        //home
+        const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+
+        io.to(roomNameHome).emit("updateRoom", {
           dataPack: transformData(requerimenData),
           typeSocket: typeSocket,
           key: requerimenData.data?.[0].uid,

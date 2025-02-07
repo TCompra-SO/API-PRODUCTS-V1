@@ -1576,6 +1576,15 @@ export class RequerimentService {
           OfferID,
           OfferState.CANCELED
         ); // cancelo la oferta asociada
+        await OfferModel.updateOne(
+          { uid: OfferID }, // Encuentra el documento por UID
+          {
+            $set: {
+              canceledByCreator: false, // Si no existe, lo agrega automáticamente
+            },
+          }
+        );
+
         requerimentUid = await this.changeStateID(
           ProductModel,
           uid,
@@ -1594,7 +1603,11 @@ export class RequerimentService {
           },
         };
       } else {
-        offerUids = await this.changeStateOffer(uid, OfferState.CANCELED, true);
+        offerUids = await this.changeStateOffer(
+          uid,
+          OfferState.CANCELED,
+          false
+        );
         requerimentUid = await this.changeStateID(
           ProductModel,
           uid,

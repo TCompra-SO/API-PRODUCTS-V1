@@ -6,12 +6,23 @@ import { NameAPI, TypeEntity, TypeSocket } from "../utils/Types";
 import { OfferService } from "../services/offerService";
 import { transformOffersData } from "../middlewares/offer.front.interface";
 import { PurchaseOrderService } from "../services/purchaseOrderService";
+import { JwtPayload } from "jsonwebtoken";
+import { RequestExt } from "../interfaces/req-ext";
 
-const createRequerimentController = async (
-  { body }: Request,
-  res: Response
-) => {
+const createRequerimentController = async (req: RequestExt, res: Response) => {
   try {
+    const { body, user } = req; // Extraemos `body` y `user` de `req`
+    const { uid } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+    if (uid !== body.userID) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+
     const responseUser = await RequerimentService.CreateRequeriment(body);
     if (responseUser.success) {
       const uid = responseUser.data?.uid;
@@ -266,7 +277,7 @@ const selectOfferController = async (req: Request, res: Response) => {
           dataPack: purchaseOrderData,
           typeSocket: TypeSocket.CREATE,
           key: purchaseOrderData.data?.[0].uid,
-          userId: purchaseOrderData.data?.[0].userProviderID,
+          userId: purchaseOrderData.data?.[0].subUserProviderID,
         });
 
         //SOCKET PURCHASEORDERCLIENT
@@ -278,7 +289,7 @@ const selectOfferController = async (req: Request, res: Response) => {
           dataPack: purchaseOrderData,
           typeSocket: TypeSocket.CREATE,
           key: purchaseOrderData.data?.[0].uid,
-          userId: purchaseOrderData.data?.[0].userProviderID,
+          userId: purchaseOrderData.data?.[0].subUserClientID,
         });
       }
 

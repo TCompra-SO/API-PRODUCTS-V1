@@ -15,15 +15,15 @@ import {
   searchMainFiltersController,
   searchProductsByUserController,
 } from "../controllers/requerimentController";
-
+import { checkJwt } from "../middlewares/session";
 export class RequerimentRouter {
   private static instance: RequerimentRouter;
   private router: Router;
 
   private constructor() {
     this.router = Router();
-    this.router.post("/create", createRequerimentController);
-    this.router.post("/selectOffer", selectOfferController);
+    this.router.post("/create", checkJwt, createRequerimentController);
+    this.router.post("/selectOffer", checkJwt, selectOfferController);
 
     this.router.get(
       "/getRequeriments/:page/:pageSize",
@@ -42,10 +42,10 @@ export class RequerimentRouter {
       getRequerimentsBySubUserController
     );
 
-    this.router.get("/delete/:uid", deleteController);
-    this.router.post("/canceled", canceledController);
-    this.router.post("/republish", republishController);
-    this.router.post("/culminate", culminateController);
+    this.router.get("/delete/:uid", checkJwt, deleteController);
+    this.router.post("/canceled", checkJwt, canceledController);
+    this.router.post("/republish", checkJwt, republishController);
+    this.router.post("/culminate", checkJwt, culminateController);
     this.router.post("/searchMainFilters", searchMainFiltersController);
     this.router.post("/searchProductsByUser", searchProductsByUserController);
   }
