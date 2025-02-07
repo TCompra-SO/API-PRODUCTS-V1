@@ -24,7 +24,7 @@ const CreateOfferController = async ({ body }: Request, res: Response) => {
           dataPack: transformOffersData(offerData),
           typeSocket: typeSocket,
           key: offerData.data?.[0].uid,
-          userId: offerData.data?.[0].subUser,
+          userId: offerData.data?.[0].userID,
         });
 
         // enviamos a la sala de usuarios
@@ -39,9 +39,19 @@ const CreateOfferController = async ({ body }: Request, res: Response) => {
 
           io.to(roomName).emit("updateRoom", {
             dataPack: transformData(requerimentData),
-            typeSocket: typeSocket,
+            typeSocket: TypeSocket.UPDATE,
             key: requerimentData.data?.[0].uid,
-            userId: requerimentData.data?.[0].subUser,
+            userId: requerimentData.data?.[0].userID,
+          });
+
+          //enviamos al home
+          const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
+
+          io.to(roomNameHome).emit("updateRoom", {
+            dataPack: transformData(requerimentData),
+            typeSocket: TypeSocket.UPDATE,
+            key: requerimentData.data?.[0].uid,
+            userId: requerimentData.data?.[0].userID,
           });
         }
       }
