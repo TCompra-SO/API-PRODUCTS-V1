@@ -14,14 +14,6 @@ const createRequerimentController = async (
   try {
     const responseUser = await RequerimentService.CreateRequeriment(body);
     if (responseUser.success) {
-      // Emitimos un evento 'requerimentCreated' a todos los usuarios conectados
-      //io.emit("requerimentCreated", responseUser);  // Emitir el nuevo requerimiento
-      //io.emit("getRequeriments"); // Emitir el evento
-      // Emitimos el evento 'getRequeriments' junto con los datos de responseUser
-      //  io.to("home").emit("getRequeriments", transformData(responseUser));
-
-      // const dataPack = transformData(responseUser);
-
       const uid = responseUser.data?.uid;
       if (uid) {
         const dataPack = transformData(
@@ -35,12 +27,12 @@ const createRequerimentController = async (
           key: dataPack.data[0].key,
           userId: dataPack.data[0].subUser,
         });
-        console.log("sala creada: " + roomNameHome);
+
         // enviamos a la sala de usuarios
         const roomName = `roomRequeriment${
           NameAPI.NAME + responseUser.data?.entityID
         }`;
-        console.log("sala creada: " + roomName);
+
         io.to(roomName).emit("updateRoom", {
           dataPack: dataPack,
           typeSocket: typeSocket,
@@ -610,6 +602,34 @@ const canceledController = async (req: Request, res: Response) => {
         });
       }
 
+      const purchaseOrderUID = responseUser.res?.purchaseOrderUid;
+      if (purchaseOrderUID) {
+        // PROVEEDOR
+        const purchaseOrderData = await PurchaseOrderService.getPurchaseOrderID(
+          purchaseOrderUID
+        );
+        const roomNameProvider = `roomPurchaseOrderProvider${
+          NameAPI.NAME + purchaseOrderData.data?.userProviderID
+        }`;
+        io.to(roomNameProvider).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserProviderID,
+        });
+
+        //CLIENT
+        const roomNameClient = `roomPurchaseOrderClient${
+          NameAPI.NAME + purchaseOrderData.data?.userClientID
+        }`;
+        io.to(roomNameClient).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserClientID,
+        });
+      }
+
       const offerUids = responseUser.res?.offerUids;
       if (offerUids) {
         for (let i = 0; i < offerUids.length; i++) {
@@ -623,7 +643,6 @@ const canceledController = async (req: Request, res: Response) => {
             key: offerUids[i],
             userId: offerData.data?.[i].userID,
           });
-          console.log(transformOffersData(offerData));
         }
       }
       res.status(responseUser.code).send(responseUser);

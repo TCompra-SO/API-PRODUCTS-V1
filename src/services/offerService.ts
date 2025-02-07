@@ -102,17 +102,12 @@ export class OfferService {
       const codeResponse = (await this.getValidation(userID, requerimentID))
         .data?.codeResponse;
 
-      console.log("tines" + Object.keys(resultOfferEntity?.data ?? {}).length);
-
       const validStates = [
         OfferState.ACTIVE,
         OfferState.WINNER,
         OfferState.DISPUTE,
         OfferState.FINISHED,
       ];
-
-      console.log("stateID:", resultOfferEntity.data?.stateID);
-      console.log("OfferState.ELIMINATED:", OfferState.ELIMINATED);
 
       if (codeResponse === 1) {
         return {
@@ -185,6 +180,7 @@ export class OfferService {
         data: newOffer,
         res: {
           msg: "Se ha creado correctamente la Oferta",
+          requerimentID: requerimentID,
         },
       };
     } catch (error) {
@@ -867,6 +863,8 @@ export class OfferService {
         code: 200,
         res: {
           msg: "Se eliminó la oferta exitosamente",
+          offerID: offerId,
+          requerimentID: updatedOffer.requerimentID,
         },
       };
     } catch (error) {
@@ -887,6 +885,9 @@ export class OfferService {
     comments?: string
   ) => {
     try {
+      let offerUid;
+      let requerimentUid;
+      let purchaseOrderUid;
       const offerData = await OfferModel.findOne({
         uid: offerID,
       });
@@ -946,9 +947,12 @@ export class OfferService {
         purchaseOrderData?.[0].scoreState?.scoreClient &&
         purchaseOrderData?.[0].scoreState?.deliveredClient !== delivered
       ) {
-        this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel);
-        this.inDispute(requerimentID, ProductModel);
-        this.inDispute(offerID, OfferModel);
+        purchaseOrderUid = (
+          await this.inDispute(purchaseOrderData?.[0].uid, PurchaseOrderModel)
+        ).uid;
+        requerimentUid = (await this.inDispute(requerimentID, ProductModel))
+          .uid;
+        offerUid = (await this.inDispute(offerID, OfferModel)).uid;
 
         await OfferModel.updateOne(
           {
@@ -966,6 +970,9 @@ export class OfferService {
           code: 200,
           res: {
             msg: "El cliente ha reportado una discrepancia, por lo tanto el estado del proceso se ha marcado como EN DISPUTA.",
+            offerUid,
+            requerimentUid,
+            purchaseOrderUid,
           },
         };
       } else {
@@ -973,7 +980,7 @@ export class OfferService {
           purchaseOrderData?.[0].scoreState?.scoreClient &&
           purchaseOrderData?.[0].scoreState?.deliveredClient === delivered
         ) {
-          await PurchaseOrderModel.updateOne(
+          purchaseOrderUid = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -984,10 +991,12 @@ export class OfferService {
                 "scoreState.deliveredProvider": delivered,
                 stateID: PurchaseOrderState.FINISHED,
               },
-            }
+            },
+            { new: true } // Devuelve el documento actualizado
           );
+          purchaseOrderUid = purchaseOrderUid?.uid;
         } else {
-          await PurchaseOrderModel.updateOne(
+          purchaseOrderUid = await PurchaseOrderModel.findOneAndUpdate(
             {
               requerimentID: requerimentID,
               offerID: offerID,
@@ -998,11 +1007,13 @@ export class OfferService {
                 "scoreState.deliveredProvider": delivered,
                 stateID: PurchaseOrderState.PENDING,
               },
-            }
+            },
+            { new: true } // Devuelve el documento actualizado
           );
+          purchaseOrderUid = purchaseOrderUid?.uid;
         }
 
-        await OfferModel.updateOne(
+        offerUid = await OfferModel.findOneAndUpdate(
           {
             uid: offerID,
           },
@@ -1011,14 +1022,18 @@ export class OfferService {
               stateID: OfferState.FINISHED,
               delivered: delivered,
             },
-          }
+          },
+          { new: true } // Retorna el documento después de la actualización
         );
-
+        offerUid = offerUid?.uid;
         return {
           success: true,
           code: 200,
           res: {
             msg: "Se ha culminado correctamente la Oferta",
+            offerUid,
+            requerimentUid,
+            purchaseOrderUid,
           },
         };
       }
@@ -1055,6 +1070,7 @@ export class OfferService {
       return {
         success: true,
         code: 200,
+        uid,
         res: {
           msg: "El estado se actualizó correctamente.",
         },
@@ -1256,6 +1272,9 @@ export class OfferService {
           code: 200,
           res: {
             msg: "La oferta fue cancelada con éxito",
+            offerUid: offerID,
+            requerimentUid: requerimentID,
+            purchaseOrderUid: purchaseOrderData?.uid,
           },
         };
       } else {

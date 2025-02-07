@@ -3,11 +3,48 @@ import { OfferService } from "../services/offerService";
 import { transformOffersData } from "../middlewares/offer.front.interface";
 import { JwtPayload } from "jsonwebtoken";
 import { RequestExt } from "../interfaces/req-ext";
+import { io } from "../server";
+import { NameAPI, TypeSocket } from "../utils/Types";
+import { RequerimentService } from "../services/requerimentService";
+import { transformData } from "../middlewares/requeriment.front.Interface";
+import { PurchaseOrderService } from "../services/purchaseOrderService";
 
 const CreateOfferController = async ({ body }: Request, res: Response) => {
   try {
     const responseUser = await OfferService.CreateOffer(body);
     if (responseUser.success) {
+      const uid = responseUser.data?.uid;
+      if (uid) {
+        const offerData = await OfferService.GetDetailOffer(uid);
+        const typeSocket = TypeSocket.CREATE;
+        const roomNameHome = `roomOffer${
+          NameAPI.NAME + offerData.data?.[0].entityID
+        }`;
+        io.to(roomNameHome).emit("updateRoom", {
+          dataPack: transformOffersData(offerData),
+          typeSocket: typeSocket,
+          key: offerData.data?.[0].uid,
+          userId: offerData.data?.[0].subUser,
+        });
+
+        // enviamos a la sala de usuarios
+        const requerimentUid = responseUser.res?.requerimentID;
+        if (requerimentUid) {
+          const requerimentData = await RequerimentService.getRequerimentById(
+            requerimentUid
+          );
+          const roomName = `roomRequeriment${
+            NameAPI.NAME + requerimentData.data?.[0].entityID
+          }`;
+          console.log("sala creada: " + roomName);
+          io.to(roomName).emit("updateRoom", {
+            dataPack: transformData(requerimentData),
+            typeSocket: typeSocket,
+            key: requerimentData.data?.[0].uid,
+            userId: requerimentData.data?.[0].subUser,
+          });
+        }
+      }
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -190,6 +227,37 @@ const deleteController = async (req: Request, res: Response) => {
     const { uid } = req.params;
     const responseUser = await OfferService.deleteOffer(uid);
     if (responseUser && responseUser.success) {
+      const offerUid = responseUser.res?.offerID;
+      if (offerUid) {
+        const offerData = await OfferService.GetDetailOffer(offerUid);
+        const typeSocket = TypeSocket.UPDATE;
+        const roomNameHome = `roomOffer${
+          NameAPI.NAME + offerData.data?.[0].entityID
+        }`;
+        io.to(roomNameHome).emit("updateRoom", {
+          dataPack: transformOffersData(offerData),
+          typeSocket: typeSocket,
+          key: offerData.data?.[0].uid,
+          userId: offerData.data?.[0].userID,
+        });
+        const requerimentUid = responseUser.res?.requerimentID;
+        if (requerimentUid) {
+          // enviamos a la sala de usuarios
+          const requerimenData = await RequerimentService.getRequerimentById(
+            requerimentUid
+          );
+          const roomName = `roomRequeriment${
+            NameAPI.NAME + requerimenData.data?.[0].entityID
+          }`;
+
+          io.to(roomName).emit("updateRoom", {
+            dataPack: transformData(requerimenData),
+            typeSocket: typeSocket,
+            key: requerimenData.data?.[0].uid,
+            userId: requerimenData.data?.[0].userID,
+          });
+        }
+      }
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -213,6 +281,66 @@ const culminateController = async (req: Request, res: Response) => {
       comments
     );
     if (responseUser && responseUser.success) {
+      const typeSocket = TypeSocket.UPDATE;
+      const offerUid = responseUser.res?.offerUid;
+      // socket ofertas
+      if (offerUid) {
+        const offerData = await OfferService.GetDetailOffer(offerUid);
+        const roomNameHome = `roomOffer${
+          NameAPI.NAME + offerData.data?.[0].entityID
+        }`;
+        io.to(roomNameHome).emit("updateRoom", {
+          dataPack: transformOffersData(offerData),
+          typeSocket: typeSocket,
+          key: offerData.data?.[0].uid,
+          userId: offerData.data?.[0].userID,
+        });
+      }
+      //socket requerimientos
+      const requerimentUid = responseUser.res?.requerimentUid;
+      if (requerimentUid) {
+        const requerimenData = await RequerimentService.getRequerimentById(
+          requerimentUid
+        );
+        const roomName = `roomRequeriment${
+          NameAPI.NAME + requerimenData.data?.[0].entityID
+        }`;
+
+        io.to(roomName).emit("updateRoom", {
+          dataPack: transformData(requerimenData),
+          typeSocket: typeSocket,
+          key: requerimenData.data?.[0].uid,
+          userId: requerimenData.data?.[0].userID,
+        });
+      }
+      //socket Ordenes de Compra
+      const purchaseOderUid = responseUser.res?.purchaseOrderUid;
+      if (purchaseOderUid) {
+        const purchaseOrderData = await PurchaseOrderService.getPurchaseOrderID(
+          purchaseOderUid
+        );
+        //Proveedor
+        const roomNameProvider = `roomPurchaseOrderProvider${
+          NameAPI.NAME + purchaseOrderData.data?.userProviderID
+        }`;
+        io.to(roomNameProvider).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserProviderID,
+        });
+
+        //CLIENT
+        const roomNameClient = `roomPurchaseOrderClient${
+          NameAPI.NAME + purchaseOrderData.data?.userClientID
+        }`;
+        io.to(roomNameClient).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserClientID,
+        });
+      }
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);
@@ -255,7 +383,68 @@ const canceledController = async (req: Request, res: Response) => {
       reason,
       canceledByCreator
     );
+    const typeSocket = TypeSocket.UPDATE;
     if (responseUser && responseUser.success) {
+      const offerUid = responseUser.res?.offerUid;
+      //Socket Offer
+      if (offerUid) {
+        const offerData = await OfferService.GetDetailOffer(offerUid);
+        const roomNameHome = `roomOffer${
+          NameAPI.NAME + offerData.data?.[0].entityID
+        }`;
+        io.to(roomNameHome).emit("updateRoom", {
+          dataPack: transformOffersData(offerData),
+          typeSocket: typeSocket,
+          key: offerData.data?.[0].uid,
+          userId: offerData.data?.[0].userID,
+        });
+      }
+
+      //socket requerimientos
+      const requerimentUid = responseUser.res?.requerimentUid;
+      if (requerimentUid) {
+        const requerimenData = await RequerimentService.getRequerimentById(
+          requerimentUid
+        );
+        const roomName = `roomRequeriment${
+          NameAPI.NAME + requerimenData.data?.[0].entityID
+        }`;
+
+        io.to(roomName).emit("updateRoom", {
+          dataPack: transformData(requerimenData),
+          typeSocket: typeSocket,
+          key: requerimenData.data?.[0].uid,
+          userId: requerimenData.data?.[0].userID,
+        });
+      }
+      //socket Ordenes de Compra
+      const purchaseOderUid = responseUser.res?.purchaseOrderUid;
+      if (purchaseOderUid) {
+        const purchaseOrderData = await PurchaseOrderService.getPurchaseOrderID(
+          purchaseOderUid
+        );
+        //Proveedor
+        const roomNameProvider = `roomPurchaseOrderProvider${
+          NameAPI.NAME + purchaseOrderData.data?.userProviderID
+        }`;
+        io.to(roomNameProvider).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserProviderID,
+        });
+
+        //CLIENT
+        const roomNameClient = `roomPurchaseOrderClient${
+          NameAPI.NAME + purchaseOrderData.data?.userClientID
+        }`;
+        io.to(roomNameClient).emit("updateRoom", {
+          dataPack: purchaseOrderData, // Información relevante
+          typeSocket: TypeSocket.UPDATE,
+          key: purchaseOrderData.data?.uid,
+          userId: purchaseOrderData.data?.subUserClientID,
+        });
+      }
       res.status(responseUser.code).send(responseUser);
     } else {
       res.status(responseUser.code).send(responseUser.error);

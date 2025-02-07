@@ -1590,6 +1590,7 @@ export class RequerimentService {
             offerUids: offerUids,
             requerimentUid: requerimentUid,
             selectOfferUid: selectOfferUid,
+            purchaseOrderUid: purchaseOrderData[0].uid,
           },
         };
       } else {
