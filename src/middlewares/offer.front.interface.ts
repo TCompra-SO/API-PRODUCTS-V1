@@ -24,6 +24,7 @@ export interface OfferFrontI {
   delivered?: boolean;
   canceledByCreator?: boolean;
   includesDelivery?: boolean;
+  cancelRated?: boolean;
 }
 
 interface OfferFrontE extends OfferI {
@@ -67,6 +68,7 @@ function transformOffersData(response: any): {
     subUserName: offer.subUserName,
     emailUser: offer?.email,
     emailSubUser: offer?.subUserEmail,
+    cancelRated: offer?.cancelRated,
   }));
 
   return {

@@ -196,7 +196,7 @@ const getRequerimentsBySubUserController = async (
   }
 };
 
-const selectOfferController = async (req: Request, res: Response) => {
+const selectOfferController = async (req: RequestExt, res: Response) => {
   try {
     const {
       requerimentID,
@@ -207,6 +207,24 @@ const selectOfferController = async (req: Request, res: Response) => {
       location_Filter,
       warranty_Filter,
     } = req.body;
+    let requerimentData = await RequerimentService.getRequerimentById(
+      requerimentID
+    );
+    //ESTA PENDIENTE
+    const { user } = req; // Extraemos `user` y `body` de la request
+    const { uid } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
+    if (
+      uid !== requerimentData.data?.[0].userID &&
+      uid !== requerimentData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
     const responseUser = await RequerimentService.selectOffer(
       requerimentID,
       offerID,
@@ -221,7 +239,7 @@ const selectOfferController = async (req: Request, res: Response) => {
       const requerimentUID = responseUser.data?.uid;
       if (requerimentUID) {
         //socket sala principal
-        const requerimentData = await RequerimentService.getRequerimentById(
+        requerimentData = await RequerimentService.getRequerimentById(
           requerimentUID
         );
         io.to(roomNameHome).emit("updateRoom", {
@@ -368,15 +386,30 @@ const expiredController = async (req: Request, res: Response) => {
   }
 };
 
-const deleteController = async (req: Request, res: Response) => {
+const deleteController = async (req: RequestExt, res: Response) => {
   try {
     const { uid } = req.params;
+    const { user } = req;
+    const { uid: userID } = user as JwtPayload;
+    let requerimentData = await RequerimentService.getRequerimentById(uid);
+    if (
+      userID !== requerimentData.data?.[0].userID &&
+      userID !== requerimentData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
     const responseUser = await RequerimentService.delete(uid);
     if (responseUser && responseUser.success) {
       //logica del Socket
       const requerimentID = responseUser.data;
       if (requerimentID) {
-        const requerimentData = await RequerimentService.getRequerimentById(
+        requerimentData = await RequerimentService.getRequerimentById(
           responseUser.data
         );
         const roonNameHome = `homeRequeriment${NameAPI.NAME}`;
@@ -429,9 +462,24 @@ const deleteController = async (req: Request, res: Response) => {
   }
 };
 
-const republishController = async (req: Request, res: Response) => {
+const republishController = async (req: RequestExt, res: Response) => {
   try {
     const { completion_date, uid } = req.body;
+    const { user } = req;
+    const { uid: userID } = user as JwtPayload;
+    let requerimentData = await RequerimentService.getRequerimentById(uid);
+    if (
+      userID !== requerimentData.data?.[0].userID &&
+      userID !== requerimentData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
     const responseUser = await RequerimentService.republish(
       uid,
       completion_date
@@ -492,9 +540,28 @@ const republishController = async (req: Request, res: Response) => {
   }
 };
 
-const culminateController = async (req: Request, res: Response) => {
+const culminateController = async (req: RequestExt, res: Response) => {
   try {
     const { requerimentID, delivered, score, comments } = req.body;
+
+    const { user } = req;
+    const { uid: userID } = user as JwtPayload;
+    let requerimentData = await RequerimentService.getRequerimentById(
+      requerimentID
+    );
+    if (
+      userID !== requerimentData.data?.[0].userID &&
+      userID !== requerimentData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+
     const responseUser = await RequerimentService.culminate(
       requerimentID,
       delivered,
@@ -505,7 +572,7 @@ const culminateController = async (req: Request, res: Response) => {
       // Requeriment
       const requerimentUID = responseUser.res?.requerimentUID;
       if (requerimentUID) {
-        const requerimentData = await RequerimentService.getRequerimentById(
+        requerimentData = await RequerimentService.getRequerimentById(
           requerimentUID
         );
         const roomNameRequeriment = `roomRequeriment${
@@ -576,9 +643,27 @@ const culminateController = async (req: Request, res: Response) => {
   }
 };
 
-const canceledController = async (req: Request, res: Response) => {
+const canceledController = async (req: RequestExt, res: Response) => {
   try {
     const { requerimentID, reason } = req.body;
+    const { user } = req;
+    const { uid: userID } = user as JwtPayload;
+    let requerimentData = await RequerimentService.getRequerimentById(
+      requerimentID
+    );
+    if (
+      userID !== requerimentData.data?.[0].userID &&
+      userID !== requerimentData.data?.[0].entityID
+    ) {
+      return res.status(403).json({
+        success: false,
+        code: 403,
+        error: {
+          msg: "El usuario no tiene acceso",
+        },
+      });
+    }
+
     const responseUser = await RequerimentService.canceled(
       requerimentID,
       reason
@@ -586,7 +671,7 @@ const canceledController = async (req: Request, res: Response) => {
     if (responseUser && responseUser.success) {
       const requerimentUid = responseUser.res?.requerimentUid;
       if (requerimentUid) {
-        const requerimentData = await RequerimentService.getRequerimentById(
+        requerimentData = await RequerimentService.getRequerimentById(
           requerimentUid
         );
         //HOME

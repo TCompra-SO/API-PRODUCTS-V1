@@ -446,10 +446,14 @@ const canceledController = async (req: RequestExt, res: Response) => {
     let offerData = await OfferService.GetDetailOffer(offerID);
     const { user } = req; // Extraemos `user` y `body` de la request
     const { uid: userUID } = user as JwtPayload; // Obtenemos `uid` del usuario autenticado
-
+    let requerimentData = await RequerimentService.getRequerimentById(
+      offerData.data?.[0].requerimentID
+    );
     if (
       userUID !== offerData.data?.[0].userID &&
-      userUID !== offerData.data?.[0].entityID
+      userUID !== offerData.data?.[0].entityID &&
+      userUID !== requerimentData.data?.[0].userID &&
+      userUID !== requerimentData.data?.[0].entityID
     ) {
       return res.status(403).json({
         success: false,
@@ -485,7 +489,7 @@ const canceledController = async (req: RequestExt, res: Response) => {
       //socket requerimientos
       const requerimentUid = responseUser.res?.requerimentUid;
       if (requerimentUid) {
-        const requerimenData = await RequerimentService.getRequerimentById(
+        requerimenData = await RequerimentService.getRequerimentById(
           requerimentUid
         );
         const roomName = `roomRequeriment${
