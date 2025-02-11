@@ -73,7 +73,7 @@ export const OrderPurchaseTemplate = async (
                                   ? `
                               <br><br><b style="color:#510839">Comprador</b><br>
                               <span style="color:#000000"> ${data.nameSubUserClient}</span><br>
-                               <a href="mailto:mariano071892@gmail.com" target="_blank">${data.subUserClientEmail}</a>
+                               <a href="mailto:${data.subUserClientEmail}" target="_blank">${data.subUserClientEmail}</a>
                                `
                                   : ""
                               }
@@ -139,6 +139,22 @@ export const OrderPurchaseTemplate = async (
                                 data.emailProvider
                               }</a>
                               
+                               ${
+                                 data.nameSubUserProvider !==
+                                 data.nameUserProvider
+                                   ? `
+        <br>
+        <br>
+        <b style="color:#510839">Información del Usuario Proveedor</b><br>
+        <b style="color:#510839">Usuario: </b>
+        <span style="color:#000000">${data.nameSubUserProvider}</span><br>
+
+        <b style="color:#510839">Correo:</b> 
+        <a href="mailto:${data.subUserEmailProvider}" target="_blank">${data.subUserEmailProvider}</a>
+      `
+                                   : ""
+                               }
+                                   
                           </td>
                           <td style="text-align:right">
                               <b style="color:#510839">Sub Total:</b><br>
@@ -189,12 +205,26 @@ export const OrderPurchaseTemplate = async (
                       </tr>
                   </tbody></table>
                   <table style="width:100%" cellpadding="0" cellspacing="0">
-                      <tbody><tr>
-                          <td style="width:33.33%"><img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/copyright_vdex1e.png" height="16" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:WzAsMl0."> <b style="font-weight:600">2024 Tcompra.com</b></td>
-                          <td style="width:33.33%" align="center"><a href="https://tcompra.com/" style="color:#fff;text-decoration:none" target="_blank" data-saferedirecturl="https://www.google.com/url?q=https://tcompra.com/&amp;source=gmail&amp;ust=1731553330892000&amp;usg=AOvVaw1K5Yy5yrz69hTv5uUAzXK2"><img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/earth_dqzho0.png" height="16" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:WzAsMl0."> <b style="font-weight:600">tcompra.com</b></a></td>
-                          <td style="width:33.33%" align="right"><a style="text-decoration:none"><img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/correo_ltrwmr.png" height="16" class="CToWUd" data-bit="iit" jslog="138226; u014N:xr6bB; 53:WzAsMl0."> <b style="font-weight:600; color:white;">info@tcompra.com</b></a></td>
-                      </tr>
-                  </tbody></table>
+                     <tbody>
+    <tr>
+        <td style="width:33.33%; align-items: center;">
+            <img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/copyright_vdex1e.png" height="16" style="vertical-align: middle; margin-right: 5px;">
+            <b style="font-weight:600;">2024 Tcompra.com</b>
+        </td>
+        <td style="width:33.33%; text-align: center;">
+            <a href="https://tcompra.com/" style="color:#fff; text-decoration:none; align-items: center; justify-content: center;" target="_blank">
+                <img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/earth_dqzho0.png" height="16" style="vertical-align: middle; margin-right: 5px;">
+                <b style="font-weight:600;">tcompra.com</b>
+            </a>
+        </td>
+        <td style="width:33.33%; text-align: right;">
+            <a style="text-decoration:none; align-items: center; justify-content: right;">
+                <img src="https://res.cloudinary.com/dlxlveta2/image/upload/v1732549503/correo_ltrwmr.png" height="16" style="vertical-align: middle; margin-right: 5px;">
+                <b style="font-weight:600; color:white;">info@tcompra.com</b>
+            </a>
+        </td>
+    </tr>
+</tbody></table>
               </td>
           </tr>
       </tbody>

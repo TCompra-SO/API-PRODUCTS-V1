@@ -489,27 +489,27 @@ const canceledController = async (req: RequestExt, res: Response) => {
       //socket requerimientos
       const requerimentUid = responseUser.res?.requerimentUid;
       if (requerimentUid) {
-        requerimenData = await RequerimentService.getRequerimentById(
+        requerimentData = await RequerimentService.getRequerimentById(
           requerimentUid
         );
         const roomName = `roomRequeriment${
-          NameAPI.NAME + requerimenData.data?.[0].entityID
+          NameAPI.NAME + requerimentData.data?.[0].entityID
         }`;
 
         io.to(roomName).emit("updateRoom", {
-          dataPack: transformData(requerimenData),
+          dataPack: transformData(requerimentData),
           typeSocket: typeSocket,
-          key: requerimenData.data?.[0].uid,
-          userId: requerimenData.data?.[0].userID,
+          key: requerimentData.data?.[0].uid,
+          userId: requerimentData.data?.[0].userID,
         });
         //home
         const roomNameHome = `homeRequeriment${NameAPI.NAME}`;
 
         io.to(roomNameHome).emit("updateRoom", {
-          dataPack: transformData(requerimenData),
+          dataPack: transformData(requerimentData),
           typeSocket: typeSocket,
-          key: requerimenData.data?.[0].uid,
-          userId: requerimenData.data?.[0].userID,
+          key: requerimentData.data?.[0].uid,
+          userId: requerimentData.data?.[0].userID,
         });
       }
       //socket Ordenes de Compra

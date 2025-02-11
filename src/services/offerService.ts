@@ -42,6 +42,7 @@ export class OfferService {
       const API_USER = process.env.API_USER;
       let entityID;
       let subUserEmail = "";
+      let emailEntity;
       const resultData = await axios.get(
         `${API_USER}auth/getBaseDataUser/${userID}`
       );
@@ -56,7 +57,9 @@ export class OfferService {
         };
       } else {
         entityID = resultData.data.data[0]?.uid;
-        subUserEmail = resultData.data.data[0]?.auth_users?.email;
+        // subUserEmail = resultData.data.data[0]?.auth_users?.email;
+        subUserEmail = email;
+        emailEntity = resultData.data.data[0]?.email;
       }
 
       if (entityID === (await result).data?.[0].entityID) {
@@ -71,7 +74,7 @@ export class OfferService {
 
       const newOffer = new OfferModel({
         name,
-        email,
+        email: emailEntity,
         subUserEmail,
         description,
         cityID,
