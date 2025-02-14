@@ -6,6 +6,7 @@ import ProductModel from "../models/productModel";
 import Fuse from "fuse.js";
 import { PipelineStage, SortOrder } from "mongoose";
 import {
+  NameAPI,
   OfferState,
   OrderType,
   PurchaseOrderState,
@@ -147,7 +148,8 @@ export class OfferService {
             RequerimentService.manageCount(
               entityID,
               userID,
-              "numOffersProducts"
+              "numOffers" + NameAPI.NAME + "s",
+              true
             );
           } else {
             return {
@@ -860,7 +862,20 @@ export class OfferService {
         updatedOffer.requerimentID,
         false
       );
-
+      //actualizamos contador
+      await RequerimentService.manageCount(
+        updatedOffer.entityID,
+        updatedOffer.userID,
+        "numDeleteOffers" + NameAPI.NAME + "s",
+        true
+      );
+      //restamos
+      await RequerimentService.manageCount(
+        updatedOffer.entityID,
+        updatedOffer.userID,
+        "numOffers" + NameAPI.NAME + "s",
+        false
+      );
       return {
         success: true,
         code: 200,

@@ -22,6 +22,7 @@ export interface RequerimentI {
   images: string[];
   files: string[];
   winOffer: WinOfferI;
+  
 }
 
 export interface WinOfferI {

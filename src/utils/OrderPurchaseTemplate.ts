@@ -135,9 +135,9 @@ export const OrderPurchaseTemplate = async (
                               }: </b><span style="color:#000000">${
     data.documentProvider
   }</span><br>
-                              <b style="color:#510839">Correo:</b> <a href="mailto:tcompraperu@gmail.com" target="_blank">${
+                              <b style="color:#510839">Correo:</b> <a href="mailto:${
                                 data.emailProvider
-                              }</a>
+                              }" target="_blank">${data.emailProvider}</a>
                               
                                ${
                                  data.nameSubUserProvider !==

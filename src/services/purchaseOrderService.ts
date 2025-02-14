@@ -172,13 +172,15 @@ export class PurchaseOrderService {
       await RequerimentService.manageCount(
         userProviderID,
         subUserProviderID,
-        "numPurchaseOrdersProvider"
+        "numPurchaseOrdersProvider",
+        true
       );
 
       await RequerimentService.manageCount(
         userClientID,
         subUserClientID,
-        "numPurchaseOrdersClient"
+        "numPurchaseOrdersClient",
+        true
       );
       // const sendMail = sendEmailPurchaseOrder(newPurchaseOrder);
       let responseEmail = "";

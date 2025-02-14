@@ -9,6 +9,7 @@ import { PurchaseOrderService } from "./purchaseOrderService";
 import Fuse from "fuse.js";
 import { PipelineStage } from "mongoose";
 import {
+  NameAPI,
   OfferState,
   OrderType,
   PurchaseOrderState,
@@ -96,7 +97,12 @@ export class RequerimentService {
         };
       }
 
-      await this.manageCount(entityID, userID, "numProducts");
+      await this.manageCount(
+        entityID,
+        userID,
+        "num" + NameAPI.NAME + "s",
+        true
+      );
 
       return {
         success: true,
@@ -121,7 +127,8 @@ export class RequerimentService {
   static manageCount = async (
     entityID: string,
     userID: string,
-    field: string
+    field: string,
+    increase: boolean
   ) => {
     const ResourceCountersCollection =
       mongoose.connection.collection("resourcecounters");
@@ -131,51 +138,35 @@ export class RequerimentService {
 
     try {
       const CompanyData = await CompanyModel.findOne({ uid: userID });
-
-      let typeEntity;
       const userMasterData = await UserMasterCollection.findOne({
         role: TypeEntity.MASTER,
       });
 
+      // Define si incrementa (+1) o decrementa (-1)
+      const value = increase ? 1 : -1;
+
+      // Función para actualizar el contador
+      const updateCounter = async (uid: string, typeEntity: string) => {
+        await ResourceCountersCollection.updateOne(
+          { uid, typeEntity },
+          { $inc: { [field]: value }, $set: { updateDate: new Date() } },
+          { upsert: true }
+        );
+      };
+
       if (entityID !== userID) {
-        typeEntity = TypeEntity.COMPANY;
-
-        // Crear o actualizar el contador del campo (por ejemplo, numProducts) para el usuario (subusuario)
-        await ResourceCountersCollection.updateOne(
-          { uid: userID, typeEntity: TypeEntity.SUBUSER },
-          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
-          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
-        );
-        // Crear o actualizar el contador del campo para la compañía
-        await ResourceCountersCollection.updateOne(
-          { uid: entityID, typeEntity: TypeEntity.COMPANY },
-          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
-          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
-        );
+        await updateCounter(userID, TypeEntity.SUBUSER); // Subusuario
+        await updateCounter(entityID, TypeEntity.COMPANY); // Compañía
       } else if (CompanyData) {
-        typeEntity = TypeEntity.COMPANY;
-        // Crear o actualizar el contador del campo para la compañía
-        await ResourceCountersCollection.updateOne(
-          { uid: entityID, typeEntity: TypeEntity.COMPANY },
-          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
-          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
-        );
+        await updateCounter(entityID, TypeEntity.COMPANY); // Compañía
       } else {
-        typeEntity = TypeEntity.USER;
-
-        // Crear o actualizar el contador del campo para el usuario
-        await ResourceCountersCollection.updateOne(
-          { uid: entityID, typeEntity: TypeEntity.USER },
-          { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
-          { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
-        );
+        await updateCounter(entityID, TypeEntity.USER); // Usuario
       }
 
-      await ResourceCountersCollection.updateOne(
-        { uid: userMasterData?.uid, typeEntity: TypeEntity.MASTER },
-        { $inc: { [field]: 1 }, $set: { updateDate: new Date() } }, // Usar el campo dinámico pasado como parámetro
-        { upsert: true } // No usamos 'new' ni 'setDefaultsOnInsert' aquí
-      );
+      // Actualiza el contador del usuario MASTER si existe
+      if (userMasterData?.uid) {
+        await updateCounter(userMasterData.uid, TypeEntity.MASTER);
+      }
     } catch (error: any) {
       console.error("Error en manageCount:", error.message);
       return {
@@ -390,7 +381,7 @@ export class RequerimentService {
           },
         },
       ]);
-      if (!requeriment) {
+      if (requeriment.length === 0) {
         return {
           success: false,
           code: 404,
@@ -1190,6 +1181,21 @@ export class RequerimentService {
             },
           },
           { new: true }
+        );
+        //Eliminamos
+        await this.manageCount(
+          requirementData.entityID,
+          requirementData.userID,
+          "numDelete" + NameAPI.NAME + "s",
+          true
+        );
+
+        //Eliminamos
+        await this.manageCount(
+          requirementData.entityID,
+          requirementData.userID,
+          "num" + NameAPI.NAME + "s",
+          false
         );
 
         return {
