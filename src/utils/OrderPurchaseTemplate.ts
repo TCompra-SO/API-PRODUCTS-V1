@@ -54,7 +54,7 @@ export const OrderPurchaseTemplate = async (
                   <table cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;border:2px solid #ebe5eb;border-radius:0.6rem;padding:15px;margin-bottom:10px">
                       <tbody><tr style="vertical-align:top">
                           <td style="text-align:justify">
-                              <b style="color:#510839">Comprador principal</b><br>
+                              <b style="color:#510839">Información del Cliente</b><br>
                               <b style="color:#510839">${
                                 data.userNameClient
                               }</b><br>
@@ -145,7 +145,7 @@ export const OrderPurchaseTemplate = async (
                                    ? `
         <br>
         <br>
-        <b style="color:#510839">Información del Usuario Proveedor</b><br>
+        <b style="color:#510839">Vendedor</b><br>
         <b style="color:#510839">Usuario: </b>
         <span style="color:#000000">${data.nameSubUserProvider}</span><br>
 

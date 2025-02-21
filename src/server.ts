@@ -26,25 +26,7 @@ const startApp = async () => {
   // Cuando un usuario se conecta, se une a la sala 'home'
   io.on("connection", (socket) => {
     console.log("Nuevo usuario conectado", socket.id);
-    // Escuchar evento de unión a la sala 'home'
-    /*socket.on("joinRoom", (room) => {
-      if (room === "homeRequeriment") {
-        socket.join("homeRequeriment"); // Unir al cliente a la sala 'home'
-        console.log(
-          `Usuario con ID ${socket.id} se ha unido a la sala ${room}`
-        );
-      } // Verificar si es una sala 'myRequeriment<userId>'
-      else if (room.startsWith("roomRequeriment")) {
-        socket.join(room); // Unir al cliente a la sala específica
-        console.log(
-          `Usuario con ID ${socket.id} se ha unido a la sala ${room}`
-        );
-      }
-      // Otras salas (opcional)
-      else {
-        console.log(`Sala desconocida: ${room}`);
-      }
-    });*/
+
     socket.on("joinRoom", (room) => {
       socket.join(room);
       console.log(`Usuario ${socket.id} se unió a la sala ${room}`);
