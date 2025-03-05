@@ -22,6 +22,7 @@ import { TypeUser, TypeEntity } from "../utils/Types";
 import { profile } from "node:console";
 import { countries } from "../utils/Countries";
 import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface";
+import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 
 let API_USER = process.env.API_USER;
 export class RequerimentService {
@@ -1318,6 +1319,7 @@ export class RequerimentService {
     let purchaseOrderUID;
     let requerimentUID;
     let offerUID;
+
     try {
       const requerimentData = await ProductModel.findOne({
         uid: requerimentID,
@@ -1358,22 +1360,29 @@ export class RequerimentService {
         uidEntity: purchaseOrderData?.[0].userProviderID, // ID de la empresa a ser evaluada
         uidUser: purchaseOrderData?.[0].userClientID, // ID del usuario que evalua
         score: score, // Puntaje
+        offerId: offerID,
         comments: comments, // Comentarios
+        type: TypeRequeriment.PRODUCTS,
       };
+      //CORREGIR ANALIZAR EL TOKEN CON OFFERS
 
-      const resultData = await axios.post(
-        `${API_USER}score/registerScore/`,
-        requestBody
-      );
-
-      if (!resultData.data.success) {
-        return {
-          success: false,
-          code: 401,
-          error: {
-            msg: "No se ha podido calificar al usuario",
-          },
-        };
+      try {
+        const resultData = await axios.post(
+          `${API_USER}score/registerScore/`,
+          requestBody
+        );
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          return {
+            success: false,
+            code: 401,
+            error: {
+              msg: error.response?.data.msg,
+            },
+          };
+        } else {
+          console.error("Error desconocido:", error);
+        }
       }
 
       // AQUI USAR LA FUNCION EN DISPUTA //

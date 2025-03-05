@@ -467,6 +467,7 @@ const republishController = async (req: RequestExt, res: Response) => {
     const { completion_date, uid } = req.body;
     const { user } = req;
     const { uid: userID } = user as JwtPayload;
+
     let requerimentData = await RequerimentService.getRequerimentById(uid);
     if (
       userID !== requerimentData.data?.[0].userID &&
@@ -523,7 +524,6 @@ const republishController = async (req: RequestExt, res: Response) => {
             key: offerUIDs[i],
             userId: offerData.data?.[i].userID,
           });
-          
         }
       }
 
@@ -546,9 +546,11 @@ const culminateController = async (req: RequestExt, res: Response) => {
 
     const { user } = req;
     const { uid: userID } = user as JwtPayload;
+
     let requerimentData = await RequerimentService.getRequerimentById(
       requerimentID
     );
+
     if (
       userID !== requerimentData.data?.[0].userID &&
       userID !== requerimentData.data?.[0].entityID
