@@ -1294,6 +1294,8 @@ export class OfferService {
             offerUid: offerID,
             requerimentUid: requerimentID,
             purchaseOrderUid: purchaseOrderData?.uid,
+            requirementUserUid: purchaseOrderData?.userProviderID,
+            requirementSubUserUid: purchaseOrderData?.subUserProviderID,
           },
         };
       } else {

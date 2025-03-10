@@ -16,6 +16,7 @@ import {
   searchProductsByUserController,
 } from "../controllers/requerimentController";
 import { checkJwt } from "../middlewares/session";
+import { saveNotificationMiddleware } from "../middlewares/notification";
 export class RequerimentRouter {
   private static instance: RequerimentRouter;
   private router: Router;
@@ -23,7 +24,12 @@ export class RequerimentRouter {
   private constructor() {
     this.router = Router();
     this.router.post("/create", checkJwt, createRequerimentController);
-    this.router.post("/selectOffer", checkJwt, selectOfferController);
+    this.router.post(
+      "/selectOffer",
+      checkJwt,
+      saveNotificationMiddleware,
+      selectOfferController
+    );
 
     this.router.get(
       "/getRequeriments/:page/:pageSize",
@@ -43,9 +49,19 @@ export class RequerimentRouter {
     );
 
     this.router.get("/delete/:uid", checkJwt, deleteController);
-    this.router.post("/canceled", checkJwt, canceledController);
+    this.router.post(
+      "/canceled",
+      checkJwt,
+      saveNotificationMiddleware,
+      canceledController
+    );
     this.router.post("/republish", checkJwt, republishController);
-    this.router.post("/culminate", checkJwt, culminateController);
+    this.router.post(
+      "/culminate",
+      checkJwt,
+      saveNotificationMiddleware,
+      culminateController
+    );
     this.router.post("/searchMainFilters", searchMainFiltersController);
     this.router.post("/searchProductsByUser", searchProductsByUserController);
   }

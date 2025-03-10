@@ -49,3 +49,11 @@ export enum TypeSocket {
 export enum NameAPI {
   NAME = "Product",
 }
+
+export enum NotificationAction {
+  VIEW_REQUIREMENT = 25,
+  VIEW_CERTIFICATION = 40,
+  VIEW_HISTORY = 15,
+  VIEW_OFFER = 26,
+  DOWNLOAD_PURCHASE_ORDER = 12,
+}
