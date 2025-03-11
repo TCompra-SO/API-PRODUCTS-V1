@@ -20,23 +20,38 @@ export const saveNotificationMiddleware = (
         req.body.notification
       ) {
         notificationSaved = true;
-        const notification: NotificationI = req.body.notification;
-        // Descargar orden de oferta seleccionada
-        if (
-          notification.action == NotificationAction.DOWNLOAD_PURCHASE_ORDER &&
-          !notification.targetId
-        ) {
-          notification.targetId = body.res?.purchaseOrderUID;
+        let notification: NotificationI | undefined = req.body.notification;
+        const extraNotification: NotificationI | undefined =
+          req.body.extraNotification;
+        if (notification) {
+          // Descargar orden de oferta seleccionada
+          if (
+            notification.action == NotificationAction.DOWNLOAD_PURCHASE_ORDER &&
+            !notification.targetId
+          ) {
+            notification.targetId = body.res?.purchaseOrderUID;
+          }
+          // Cancelar 'mi' oferta seleccionada
+          else if (
+            notification.action == NotificationAction.VIEW_REQUIREMENT &&
+            !notification.receiverId
+          ) {
+            notification.receiverId = body.res?.requirementSubUserUid; // creador del requerimiento
+            // Se produjo una disputa al culminar
+          } else if (
+            (notification.action == NotificationAction.VIEW_OFFER ||
+              notification.action == NotificationAction.VIEW_REQUIREMENT) &&
+            body.res?.dispute
+          ) {
+            if (extraNotification) notification = extraNotification;
+            else notification = undefined;
+          }
+          if (notification?.targetId && notification?.receiverId)
+            axios.post(
+              `${process.env.API_USER}notification/send`,
+              notification
+            );
         }
-        // Cancelar 'mi' oferta seleccionada
-        else if (
-          notification.action == NotificationAction.VIEW_REQUIREMENT &&
-          !notification.receiverId
-        ) {
-          notification.receiverId = body.res?.requirementSubUserUid; // creador del requerimiento
-        }
-        if (notification.targetId && notification.receiverId)
-          axios.post(`${process.env.API_USER}notification/send`, notification);
       }
     } catch (e) {
       console.log("Error al enviar notificación", e);

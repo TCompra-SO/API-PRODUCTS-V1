@@ -1405,6 +1405,7 @@ export class RequerimentService {
             purchaseOrderUID,
             requerimentUID,
             offerUID,
+            dispute: true,
           },
         };
       } else {
@@ -1466,6 +1467,7 @@ export class RequerimentService {
             purchaseOrderUID: purchaseOrderUID,
             requerimentUID: requerimentUID,
             offerUID: offerUID,
+            dispute: false,
           },
         };
       }
