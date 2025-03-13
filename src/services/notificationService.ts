@@ -2,7 +2,7 @@ import axios from "axios";
 import { timeNotificationNewRequirements } from "../globals";
 import { RequerimentI } from "../interfaces/requeriment.interface";
 import ProductModel from "../models/productModel";
-import { RequirementState } from "../utils/Types";
+import { RequirementState, RequirementType } from "../utils/Types";
 
 export const getNotificationForLastCreatedRequirements = async () => {
   const xMinutesAgo = new Date(
@@ -25,8 +25,8 @@ export const getNotificationForLastCreatedRequirements = async () => {
     return;
   }
 
-  axios.post(
-    `${process.env.API_USER}notification/sendLastRequirementsNotification`,
+  await axios.post(
+    `${process.env.API_USER}notification/sendLastRequirementsNotification/${RequirementType.GOOD}`,
     groupedRecords
   );
 };

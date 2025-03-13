@@ -57,3 +57,9 @@ export enum NotificationAction {
   VIEW_OFFER = 26,
   DOWNLOAD_PURCHASE_ORDER = 12,
 }
+
+export enum RequirementType {
+  GOOD = 1,
+  SERVICE = 2,
+  SALE = 3,
+}
