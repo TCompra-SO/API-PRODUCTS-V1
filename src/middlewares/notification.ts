@@ -3,6 +3,15 @@ import axios from "axios";
 import { NotificationI } from "../interfaces/notification.interface";
 import { NotificationAction } from "../utils/Types";
 
+function sendNotification(notification: NotificationI | undefined) {
+  if (notification?.targetId && notification?.receiverId)
+    axios
+      .post(`${process.env.API_USER}notification/send`, notification)
+      .catch((error) => {
+        console.error("Error al enviar notificación:", error);
+      });
+}
+
 export const saveNotificationMiddleware = (
   req: Request,
   res: Response,
@@ -21,8 +30,8 @@ export const saveNotificationMiddleware = (
       ) {
         notificationSaved = true;
         let notification: NotificationI | undefined = req.body.notification;
-        const extraNotification: NotificationI | undefined =
-          req.body.extraNotification;
+        const extraNotifications: NotificationI[] | undefined =
+          req.body.extraNotifications;
         if (notification) {
           // Descargar orden de oferta seleccionada
           if (
@@ -37,24 +46,28 @@ export const saveNotificationMiddleware = (
             !notification.receiverId
           ) {
             notification.receiverId = body.res?.requirementSubUserUid; // creador del requerimiento
-            // Se produjo una disputa al culminar
-          } else if (
+          }
+          // Se produjo una disputa al culminar
+          else if (
             (notification.action == NotificationAction.VIEW_OFFER ||
               notification.action == NotificationAction.VIEW_REQUIREMENT) &&
             body.res?.dispute
           ) {
-            if (extraNotification) notification = extraNotification;
-            else notification = undefined;
+            notification = undefined;
+            if (Array.isArray(extraNotifications)) {
+              // Enviar notificaciones de disputa
+              extraNotifications.forEach((notification) => {
+                sendNotification(notification);
+              });
+            }
           }
-          if (notification?.targetId && notification?.receiverId)
-            axios.post(
-              `${process.env.API_USER}notification/send`,
-              notification
-            );
+
+          // Enviar notificación si existe
+          sendNotification(notification);
         }
       }
     } catch (e) {
-      console.log("Error al enviar notificación", e);
+      console.log("Error en saveNotificationMiddleware", e);
     }
 
     return originalSend(body);
