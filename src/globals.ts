@@ -1,1 +1,1 @@
-export const timeNotificationNewRequirements = 10; // minutos
+export const timeNotificationNewRequirements = 45; // minutos
