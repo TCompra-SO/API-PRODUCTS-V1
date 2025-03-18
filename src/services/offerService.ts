@@ -950,7 +950,7 @@ export class OfferService {
         comments: comments, // Comentarios
         type: TypeRequeriment.PRODUCTS,
       };
-
+      //SE VE
       try {
         const resultData = await axios.post(
           `${API_USER}score/registerScore/`,
