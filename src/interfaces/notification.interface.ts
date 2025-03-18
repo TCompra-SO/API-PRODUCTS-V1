@@ -10,4 +10,5 @@ export interface NotificationI {
   receiverId: string;
   targetId: string;
   targetType: number;
+  extraTargetType?: number;
 }
