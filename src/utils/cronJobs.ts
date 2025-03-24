@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { RequerimentService } from "../services/requerimentService";
 import { timeNotificationNewRequirements } from "../globals";
 import { getNotificationForLastCreatedRequirements } from "../services/notificationService";
+import { sendBatchUpdate } from "./CounterManager";
 
 // Configura el cron job para ejecutar la función 'expired' cada hora (en el minuto 0 de cada hora)
 cron.schedule("0 */12 * * *", async () => {
@@ -26,3 +27,6 @@ cron.schedule(`*/${timeNotificationNewRequirements} * * * *`, async () => {
     );
   }
 });
+
+// Enviar actualización de contadores de subsusuarios
+cron.schedule("*/5 * * * *", sendBatchUpdate);
