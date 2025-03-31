@@ -1350,7 +1350,7 @@ export class OfferService {
       if (!keyWords) {
         keyWords = "";
       }
-
+//AQUI TENGO
       // Parámetro fieldName con valor por defecto 'publishDate'
       fieldName = fieldName ?? "publishDate";
 
