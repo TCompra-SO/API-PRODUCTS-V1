@@ -15,6 +15,7 @@ import {
 import { deleteController } from "../controllers/offerController";
 import { saveNotificationMiddleware } from "../middlewares/notification";
 import { checkJwt } from "../middlewares/session";
+
 export class OfferRouter {
   private static instance: OfferRouter;
   private router: Router;
@@ -29,7 +30,11 @@ export class OfferRouter {
     );
 
     this.router.get("/getDetailOffer/:uid", GetDetailOfferController);
-    this.router.get("/getOffers/:page/:pageSize", GetOffersController);
+    this.router.get(
+      "/getOffers/:page/:pageSize",
+      checkJwt,
+      GetOffersController
+    );
     this.router.get(
       "/getOffersByRequeriment/:requerimentID/:page/:pageSize",
       checkJwt,
@@ -61,6 +66,7 @@ export class OfferRouter {
     );
     this.router.post(
       "/canceled",
+      checkJwt,
       saveNotificationMiddleware,
       canceledController
     );
