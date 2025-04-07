@@ -1372,7 +1372,6 @@ export class RequerimentService {
           `${API_USER}score/registerScore/`,
           requestBody
         );
-        console.log(resultData);
       } catch (error) {
         console.error(error);
         if (axios.isAxiosError(error)) {

@@ -14,6 +14,7 @@ import {
 } from "../controllers/offerController";
 import { deleteController } from "../controllers/offerController";
 import { saveNotificationMiddleware } from "../middlewares/notification";
+import { checkJwt } from "../middlewares/session";
 export class OfferRouter {
   private static instance: OfferRouter;
   private router: Router;
@@ -22,6 +23,7 @@ export class OfferRouter {
     this.router = Router();
     this.router.post(
       "/create",
+      checkJwt,
       saveNotificationMiddleware,
       CreateOfferController
     );
@@ -30,25 +32,30 @@ export class OfferRouter {
     this.router.get("/getOffers/:page/:pageSize", GetOffersController);
     this.router.get(
       "/getOffersByRequeriment/:requerimentID/:page/:pageSize",
+      checkJwt,
       GetOffersByRequerimentController
     );
     this.router.get("/getBasicRateData/:uid", getbasicRateDataController);
     this.router.get(
       "/getOffersByEntity/:uid/:page/:pageSize",
+      checkJwt,
       GetOffersByEntityController
     );
     this.router.get(
       "/getOffersBySubUser/:uid/:page/:pageSize",
+      checkJwt,
       GetOffersBySubUserController
     );
     this.router.get(
       "/getValidation/:userID/:requerimentID",
+      checkJwt,
       getValidationController
     );
 
-    this.router.get("/delete/:uid", deleteController);
+    this.router.get("/delete/:uid", checkJwt, deleteController);
     this.router.post(
       "/culminate",
+      checkJwt,
       saveNotificationMiddleware,
       culminateController
     );
@@ -57,7 +64,11 @@ export class OfferRouter {
       saveNotificationMiddleware,
       canceledController
     );
-    this.router.post("/searchOffersByUser", searchOffersByUserController);
+    this.router.post(
+      "/searchOffersByUser",
+      checkJwt,
+      searchOffersByUserController
+    );
   }
 
   static getRouter(): Router {
