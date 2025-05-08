@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
-    "target": "es2016", // El objetivo del código compilado
-    "module": "commonjs", // El sistema de módulos utilizado
-    "esModuleInterop": true, // Compatibilidad con módulos CommonJS
-    "outDir": "./dist", // Directorio de salida para los archivos .js
-    "rootDir": "./src", // El directorio raíz donde están los archivos .ts
-    "strict": true, // Habilitar las reglas estrictas de TypeScript
-    "skipLibCheck": true, // Omitir la verificación de los archivos de las librerías
-    "noImplicitAny": true // Prevenir que TypeScript asuma `any`
+    "target": "es2016",  /* Especifica la versión de JavaScript de salida */
+    "module": "commonjs", /* Especifica el sistema de módulos */
+    "esModuleInterop": true, /* Habilita la interoperabilidad con módulos CommonJS */
+    "forceConsistentCasingInFileNames": true, /* Asegura que los nombres de archivo respeten la mayúsculas/minúsculas */
+    "strict": true, /* Activa todas las opciones de chequeo estricto */
+    "skipLibCheck": true, /* Omite la comprobación de tipos en archivos de librerías */
+    "types": ["node"], /* Incluir tipos de Node.js */
+    "noImplicitAny": true, /* Prevenir el uso implícito de `any` */
+    "outDir": "./dist", /* Directorio de salida de los archivos JavaScript */
+    "rootDir": "./src", /* Directorio raíz de los archivos TypeScript */
+    "sourceMap": true /* Generar archivos `.map` para depuración */
   },
-  "include": ["src/**/*"], // Incluir todos los archivos .ts dentro de `src`
-  "exclude": ["node_modules"] // Excluir `node_modules` para evitar compilación innecesaria
+  "include": [
+    "src/**/*" /* Incluir todos los archivos TypeScript en la carpeta src */
+  ],
+  "exclude": [
+    "node_modules" /* Excluir la carpeta node_modules */
+  ]
 }
