@@ -2051,6 +2051,7 @@ export class RequerimentService {
             createdAt: 1,
             updatedAt: 1,
             number_offers: 1,
+            durationID: 1,
             images: 1,
             files: 1,
             winOffer: {
