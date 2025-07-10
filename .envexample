@@ -4,6 +4,7 @@ DB_URI=mongodb+srv://tcompraperu:2YFaNqTymGcKH5ZF@clustertest.oiyhs.mongodb.net/
 JWT_SECRET=X8d7!qLz1#P@k&2^R9nV4tG$W6oB+uM7J%Yv3xKz8F
  // API USER 
  API_USER=http://3.15.21.184:3001/v1/
+ URL_FRONTEND = https://tcompra.com
 
  // CLOUDINARY
  CLOUDINARY_CLOUD_NAME=dlxlveta2

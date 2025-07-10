@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../utils/jwt.handle";
 import { RequestExt } from "./../interfaces/req-ext";
+import { accessTokenName } from "../globals";
 
 const checkJwt = async (req: RequestExt, res: Response, next: NextFunction) => {
   try {
-    const jwtByUser = req.headers.authorization || null;
+    // const jwtByUser = req.headers.authorization || null;
+    const jwtByUser = req.cookies || null;
     if (!jwtByUser) {
       return res.status(401).send({
         success: false,
@@ -15,7 +17,8 @@ const checkJwt = async (req: RequestExt, res: Response, next: NextFunction) => {
       }); // Sin token en los headers
     }
 
-    const jwt = jwtByUser.split(" ")[1]; // Usar el índice 1 para obtener el token después de "Bearer"
+    // const jwt = jwtByUser.split(" ")[1]; // Usar el índice 1 para obtener el token después de "Bearer"
+    const jwt = req.cookies[accessTokenName];
     if (!jwt) {
       return res.status(401).send({
         success: false,
