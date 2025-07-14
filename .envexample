@@ -11,6 +11,9 @@ CLOUDINARY_API_KEY=498896384715854
 CLOUDINARY_API_SECRET=D5YQeZzI0s2PrxsY-XcayJ233ck
 
 URL_FRONTEND = https://tcompra.com
+API_PRODUCTS=https://apiproducts.tcompra.com
+API_SERVICES=https://apiservices.tcompra.com
+API_LIQUIDATIONS=https://apiliquidations.tcompra.com
 # Para requests a rutas protegidas de otros servidores de TCompra, incluir en header como [secretInternalName]: process.env.INTERNAL_SECRET 
 INTERNAL_SECRET=vY1g8tF5S7CZyLZPbEIxv3TZh0KfKfRM0cHdHzvGOW0 
 */
