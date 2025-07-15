@@ -23,12 +23,16 @@ export class App {
       App.instance.use(cookieParser());
       App.instance.use(bodyParser.urlencoded({ extended: false }));
       App.instance.use(bodyParser.json());
+
+      console.log("Allowed origins:", allowedOrigins);
       App.instance.use(
         cors({
           origin: (origin, callback) => {
-            if (allowedOrigins.includes(origin)) {
+            console.log("Request origin:", origin);
+            if (!origin || allowedOrigins.includes(origin)) {
               callback(null, true);
             } else {
+              console.error("Blocked by CORS:", origin);
               callback(new Error("Not allowed by CORS"));
             }
           },
