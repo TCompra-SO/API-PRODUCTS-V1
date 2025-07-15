@@ -6,7 +6,7 @@ import { NotificationAction } from "../utils/Types";
 function sendNotification(notification: NotificationI | undefined) {
   if (notification?.targetId && notification?.receiverId)
     axios
-      .post(`${process.env.API_USER}notification/send`, notification)
+      .post(`${process.env.API_USER}/v1/notification/send`, notification)
       .catch((error) => {
         console.error("Error al enviar notificación:", error);
       });
