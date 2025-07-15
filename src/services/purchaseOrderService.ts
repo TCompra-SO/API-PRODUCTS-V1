@@ -16,7 +16,7 @@ import { OrderType, TypeEntity, TypeUser } from "../utils/Types";
 import Fuse from "fuse.js";
 import { PipelineStage, SortOrder } from "mongoose";
 
-let API_USER = process.env.API_USER;
+let API_USER = process.env.API_USER + "/v1/";
 export class PurchaseOrderService {
   static CreatePurchaseOrder = async (
     requerimentID: string,

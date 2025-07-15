@@ -24,7 +24,7 @@ import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface"
 import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 import { queueUpdate } from "../utils/CounterManager";
 
-let API_USER = process.env.API_USER;
+let API_USER = process.env.API_USER + "/v1/";
 export class RequerimentService {
   static CreateRequeriment = async (data: RequerimentI) => {
     const {
