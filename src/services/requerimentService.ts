@@ -45,7 +45,6 @@ export class RequerimentService {
     try {
       let entityID = "";
       let email = "";
-      const API_USER = process.env.API_USER;
       const resultData = await axios.get(
         `${API_USER}auth/getBaseDataUser/${userID}`
       );
