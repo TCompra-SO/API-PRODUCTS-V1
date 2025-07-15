@@ -2,7 +2,7 @@
 PORT=3002
 DB_URI=mongodb+srv://tcompraperu:2YFaNqTymGcKH5ZF@clustertest.oiyhs.mongodb.net/BDTestTCompra?retryWrites=true&w=majority&appName=ClusterTest
 JWT_SECRET=X8d7!qLz1#P@k&2^R9nV4tG$W6oB+uM7J%Yv3xKz8F
- // API USER 
+ // API USER
  API_USER=http://3.15.21.184:3001/v1/
 
  // CLOUDINARY
@@ -10,10 +10,11 @@ JWT_SECRET=X8d7!qLz1#P@k&2^R9nV4tG$W6oB+uM7J%Yv3xKz8F
 CLOUDINARY_API_KEY=498896384715854
 CLOUDINARY_API_SECRET=D5YQeZzI0s2PrxsY-XcayJ233ck
 
+URL_FRONTEND_WWW = https://www.tcompra.com
 URL_FRONTEND = https://tcompra.com
 API_PRODUCTS=https://apiproducts.tcompra.com
 API_SERVICES=https://apiservices.tcompra.com
 API_LIQUIDATIONS=https://apiliquidations.tcompra.com
-# Para requests a rutas protegidas de otros servidores de TCompra, incluir en header como [secretInternalName]: process.env.INTERNAL_SECRET 
-INTERNAL_SECRET=vY1g8tF5S7CZyLZPbEIxv3TZh0KfKfRM0cHdHzvGOW0 
+# Para requests a rutas protegidas de otros servidores de TCompra, incluir en header como [secretInternalName]: process.env.INTERNAL_SECRET
+INTERNAL_SECRET=vY1g8tF5S7CZyLZPbEIxv3TZh0KfKfRM0cHdHzvGOW0
 */
