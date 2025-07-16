@@ -29,20 +29,22 @@ export class PurchaseOrderService {
     try {
       const offerBasicData = await OfferService.BasicRateData(offerID);
       const offerData = await OfferService.GetDetailOffer(offerID);
-      const userProviderID = (await offerBasicData).data?.[0].userId;
-      const subUserProviderID = (await offerBasicData).data?.[0].subUserId;
+      const userProviderID = offerBasicData.data?.[0].userId;
+      const subUserProviderID = offerBasicData.data?.[0].subUserId;
 
-      const requerimentBasicData =
-        RequerimentService.BasicRateData(requerimentID);
-      const requerimentData =
-        RequerimentService.getRequerimentById(requerimentID);
-      const userClientID = (await requerimentBasicData).data?.[0].userId;
-      const subUserClientID = (await requerimentBasicData).data?.[0].subUserId;
+      const requerimentBasicData = await RequerimentService.BasicRateData(
+        requerimentID
+      );
+      const requerimentData = await RequerimentService.getRequerimentById(
+        requerimentID
+      );
+      const userClientID = requerimentBasicData.data?.[0].userId;
+      const subUserClientID = requerimentBasicData.data?.[0].subUserId;
 
-      const emailUser = (await offerData).data?.[0].email;
-      const emailSubUser = (await offerData).data?.[0].subUserEmail;
+      const emailUser = offerData.data?.[0].email;
+      const emailSubUser = offerData.data?.[0].subUserEmail;
 
-      if (requerimentID !== (await offerData).data?.[0].requerimentID) {
+      if (requerimentID !== offerData.data?.[0].requerimentID) {
         return {
           success: false,
           code: 404,
@@ -52,7 +54,7 @@ export class PurchaseOrderService {
         };
       }
 
-      if ((await offerData).data?.[0].stateID !== 1) {
+      if (offerData.data?.[0].stateID !== 1) {
         return {
           success: false,
           code: 401,
@@ -75,7 +77,7 @@ export class PurchaseOrderService {
 
       const currencyData = await axios.get(`${API_USER}util/utilData/currency`);
 
-      const currencyId = (await requerimentData).data?.[0].currencyID; // Cambia este valor al ID que deseas buscar
+      const currencyId = requerimentData.data?.[0].currencyID; // Cambia este valor al ID que deseas buscar
       const currencyValue = currencyData.data.currencies.find(
         (currency: { id: number; value: string; alias: string }) =>
           currency.id === currencyId
@@ -85,7 +87,7 @@ export class PurchaseOrderService {
         `${API_USER}util/utilData/delivery_time`
       );
 
-      const deliveryTimeID = (await offerData).data?.[0].deliveryTimeID;
+      const deliveryTimeID = offerData.data?.[0].deliveryTimeID;
       let days = 0;
       let deliveryDate;
       if (deliveryTimeID !== 6) {
@@ -100,7 +102,7 @@ export class PurchaseOrderService {
         deliveryDate = null;
       }
 
-      if (!(await offerBasicData).success) {
+      if (!offerBasicData.success) {
         return {
           success: false,
           code: 403,
@@ -110,11 +112,11 @@ export class PurchaseOrderService {
         };
       }
 
-      let price = (await offerData).data?.[0].budget;
+      let price = offerData.data?.[0].budget;
       let subTotal = price;
       let total, totalIgv;
-      if (!(await offerData).data?.[0].includesIGV) {
-        totalIgv = ((await offerData).data?.[0].budget * igv) / 100;
+      if (!offerData.data?.[0].includesIGV) {
+        totalIgv = (offerData.data?.[0].budget * igv) / 100;
         totalIgv = parseFloat(totalIgv.toFixed(2));
         total = subTotal + totalIgv;
       } else {
@@ -127,17 +129,17 @@ export class PurchaseOrderService {
       const newPurchaseOrder: Omit<PurchaseOrderI, "uid"> = {
         type: TypeRequeriment.PRODUCTS,
         userClientID: userClientID,
-        userNameClient: (await requerimentBasicData).data?.[0].userName,
-        addressClient: (await baseClientData).data.data?.address,
-        documentClient: (await baseClientData).data.data?.document,
-        emailClient: (await requerimentData).data?.[0].email,
+        userNameClient: requerimentBasicData.data?.[0].userName,
+        addressClient: baseClientData.data.data?.address,
+        documentClient: baseClientData.data.data?.document,
+        emailClient: requerimentData.data?.[0].email,
         subUserClientID: subUserClientID,
-        subUserClientEmail: (await requerimentData).data?.[0].subUserEmail,
-        nameSubUserClient: (await requerimentBasicData).data?.[0].subUserName,
+        subUserClientEmail: requerimentData.data?.[0].subUserEmail,
+        nameSubUserClient: requerimentBasicData.data?.[0].subUserName,
         createDate: new Date(),
         deliveryDate: deliveryDate,
         requerimentID: requerimentID,
-        requerimentTitle: (await offerData).data?.[0].requerimentTitle,
+        requerimentTitle: offerData.data?.[0].requerimentTitle,
         currency: currencyValue,
         price: price,
         subtotal: subTotal,
@@ -145,16 +147,16 @@ export class PurchaseOrderService {
         total: total,
         igv: igv,
         userProviderID: userProviderID,
-        nameUserProvider: (await offerBasicData).data?.[0].userName,
+        nameUserProvider: offerBasicData.data?.[0].userName,
         subUserProviderID: subUserProviderID,
-        nameSubUserProvider: (await offerBasicData).data?.[0].subUserName,
-        subUserEmailProvider: (await offerData).data?.[0].subUserEmail,
-        addressProvider: (await basicProviderData).data.data?.address,
-        documentProvider: (await userProviderData).data.data?.[0].document,
-        emailProvider: (await offerData).data?.[0].email,
+        nameSubUserProvider: offerBasicData.data?.[0].subUserName,
+        subUserEmailProvider: offerData.data?.[0].subUserEmail,
+        addressProvider: basicProviderData.data.data?.address,
+        documentProvider: userProviderData.data.data?.[0].document,
+        emailProvider: offerData.data?.[0].email,
         stateID: PurchaseOrderState.PENDING,
-        offerID: (await offerData).data?.[0].uid,
-        offerTitle: (await offerData).data?.[0].name,
+        offerID: offerData.data?.[0].uid,
+        offerTitle: offerData.data?.[0].name,
         price_Filter,
         deliveryTime_Filter,
         location_Filter,
