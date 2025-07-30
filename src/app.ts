@@ -25,11 +25,10 @@ export class App {
       App.instance.use(bodyParser.urlencoded({ extended: false }));
       App.instance.use(bodyParser.json());
 
-      console.log("Allowed origins:", allowedOrigins);
       App.instance.use(
         cors({
           origin: (origin, callback) => {
-            console.log("Request origin:", origin);
+            //console.log("Request origin:", origin);
             if (!origin || allowedOrigins.includes(origin)) {
               callback(null, true);
             } else {

@@ -23,6 +23,7 @@ import { countries } from "../utils/Countries";
 import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface";
 import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 import { queueUpdate } from "../utils/CounterManager";
+import { NotificationI } from "../interfaces/notification.interface";
 
 let API_USER = process.env.API_USER + "/v1/";
 export class RequerimentService {
@@ -2146,6 +2147,140 @@ export class RequerimentService {
           currentPage: page,
           pageSize: pageSize,
         },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static hasCustomerReceived = async (userId: string) => {
+    try {
+      const now = new Date();
+
+      // Opcional: redondear `now` a las 00:00 para comparar solo días
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const pipeline = [
+        {
+          $match: {
+            userClientID: userId,
+            $or: [
+              { "scoreState.deliveredClient": false },
+              { "scoreState.deliveredClient": { $exists: false } },
+            ],
+            deliveryDate: {
+              $lt: new Date(today.getTime() - 24 * 60 * 60 * 1000), // fecha < (hoy - 1 día)
+            },
+          },
+        },
+        {
+          $project: {
+            userClientID: 1,
+            requerimentID: 1,
+          },
+        },
+      ];
+
+      const results = await PurchaseOrderModel.aggregate(pipeline);
+      console.log("=====================================");
+      await this.sendNotifyCalificate();
+      return {
+        success: true,
+        code: 200,
+        data: results,
+        res: {
+          message: "Consulta exitosa",
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static getUsersClients = async () => {
+    const now = new Date();
+
+    // Opcional: redondear `now` a las 00:00 para comparar solo días
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    try {
+      const pipeline = [
+        {
+          $match: {
+            stateID: PurchaseOrderState.PENDING,
+            $or: [
+              { "scoreState.deliveredClient": false },
+              { "scoreState.deliveredClient": { $exists: false } },
+            ],
+            deliveryDate: {
+              $lt: new Date(today.getTime() - 24 * 60 * 60 * 1000), // fecha < (hoy - 1 día)
+            },
+          },
+        },
+        {
+          $project: {
+            userClientID: 1,
+            userNameClient: 1,
+            requerimentID: 1,
+            requerimentTitle: 1,
+            userProviderId: 1,
+            nameUserProvider: 1,
+          },
+        },
+      ];
+
+      const results = await PurchaseOrderModel.aggregate(pipeline);
+
+      return {
+        success: true,
+        code: 200,
+        data: results,
+        res: {
+          message: "Consulta exitosa",
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static sendNotifyCalificate = async () => {
+    try {
+      const usersData = await this.getUsersClients();
+      console.log(usersData);
+      /*
+      const notificationData: NotificationI = {
+        senderId: "1",
+        senderName: "System",
+        title: "Confirma la recepción del bien",
+        body: "Tienes una entrega pendiente de confirmar. Verifica si el proveedor ya entregó el bien.",
+      };
+
+      console.log(notificationData);*/
+      return {
+        success: true,
+        code: 200,
+        data: usersData,
       };
     } catch (error) {
       console.log(error);

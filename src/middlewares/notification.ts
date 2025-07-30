@@ -3,7 +3,7 @@ import axios from "axios";
 import { NotificationI } from "../interfaces/notification.interface";
 import { NotificationAction } from "../utils/Types";
 
-function sendNotification(notification: NotificationI | undefined) {
+export function sendNotification(notification: NotificationI | undefined) {
   if (notification?.targetId && notification?.receiverId)
     axios
       .post(`${process.env.API_USER}/v1/notification/send`, notification)

@@ -855,6 +855,41 @@ const searchProductsByUserController = async (req: Request, res: Response) => {
   }
 };
 
+const hasCustomerReceivedController = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const responseUser = await RequerimentService.hasCustomerReceived(userId);
+  try {
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en searchPurchaseOrdersByClientController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
+const getUsersClientsController = async (req: Request, res: Response) => {
+  try {
+    const responseUser = await RequerimentService.getUsersClients();
+    if (responseUser && responseUser.success) {
+      res.status(responseUser.code).send(responseUser);
+    } else {
+      res.status(responseUser.code).send(responseUser.error);
+    }
+  } catch (error) {
+    console.error("Error en getUsersCustomersController", error);
+    res.status(500).send({
+      success: false,
+      msg: "Error interno del Servidor",
+    });
+  }
+};
+
 export {
   createRequerimentController,
   getRequerimentsController,
@@ -870,4 +905,6 @@ export {
   canceledController,
   searchMainFiltersController,
   searchProductsByUserController,
+  hasCustomerReceivedController,
+  getUsersClientsController,
 };

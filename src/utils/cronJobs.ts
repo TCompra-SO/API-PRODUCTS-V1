@@ -9,7 +9,6 @@ cron.schedule("0 */12 * * *", async () => {
   try {
     console.log("Verificando y actualizando estados vencidos...");
     await RequerimentService.expired(); // Llama a la función para actualizar los estados
-    console.log("Estados vencidos actualizados correctamente.");
   } catch (error) {
     console.error("Error al actualizar los estados vencidos:", error);
   }
@@ -17,9 +16,7 @@ cron.schedule("0 */12 * * *", async () => {
 
 cron.schedule(`*/${timeNotificationNewRequirements} * * * *`, async () => {
   try {
-    console.log("Obteniendo cantidad de últimos requerimientos publicados...");
     await getNotificationForLastCreatedRequirements();
-    console.log("Cantidad de últimos requerimientos enviados correctamente.");
   } catch (error) {
     console.error(
       "Error al obtener cantidad de últimos requerimientos publicados:",
