@@ -1,5 +1,5 @@
 export interface NotificationI {
-  uid: string;
+  uid?: string;
   senderImage?: string;
   senderId: string;
   senderName: string;

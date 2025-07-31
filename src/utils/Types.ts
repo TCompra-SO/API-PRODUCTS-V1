@@ -66,3 +66,8 @@ export enum RequirementType {
   SERVICE = 2,
   SALE = 3,
 }
+
+export enum NotificationType {
+  DIRECT = 0,
+  BROADCAST = 1,
+}

@@ -9,21 +9,24 @@ import Fuse from "fuse.js";
 import { PipelineStage } from "mongoose";
 import {
   NameAPI,
+  NotificationAction,
   OfferState,
   OrderType,
   PurchaseOrderState,
   RequirementState,
+  RequirementType,
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
 import { number } from "joi";
 import mongoose from "mongoose";
-import { TypeUser, TypeEntity } from "../utils/Types";
-import { profile } from "node:console";
+import { TypeUser, TypeEntity, NotificationType } from "../utils/Types";
+import { profile, timeStamp } from "node:console";
 import { countries } from "../utils/Countries";
 import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface";
 import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 import { queueUpdate } from "../utils/CounterManager";
 import { NotificationI } from "../interfaces/notification.interface";
+import { sendNotification } from "../middlewares/notification";
 
 let API_USER = process.env.API_USER + "/v1/";
 export class RequerimentService {
@@ -2268,15 +2271,21 @@ export class RequerimentService {
     try {
       const usersData = await this.getUsersClients();
       console.log(usersData);
-      /*
-      const notificationData: NotificationI = {
+      //SE ESTAN AGREGANDO DOBLE
+      const notificationData = {
         senderId: "1",
         senderName: "System",
         title: "Confirma la recepción del bien",
         body: "Tienes una entrega pendiente de confirmar. Verifica si el proveedor ya entregó el bien.",
+        receiverId: usersData.data?.[0].userClientID,
+        targetId: usersData.data?.[0].requerimentID,
+        targetType: RequirementType.GOOD,
+        action: NotificationAction.CULMINATE,
+        type: NotificationType.DIRECT,
+        timestamp: new Date(),
       };
-
-      console.log(notificationData);*/
+      const resp = sendNotification(notificationData);
+      console.log(resp);
       return {
         success: true,
         code: 200,
