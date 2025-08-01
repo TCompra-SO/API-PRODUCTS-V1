@@ -3,6 +3,7 @@ import { RequerimentService } from "../services/requerimentService";
 import { timeNotificationNewRequirements } from "../globals";
 import { getNotificationForLastCreatedRequirements } from "../services/notificationService";
 import { sendBatchUpdate } from "./CounterManager";
+import { OfferService } from "../services/offerService";
 
 // Configura el cron job para ejecutar la función 'expired' cada hora (en el minuto 0 de cada hora)
 cron.schedule("0 */12 * * *", async () => {
@@ -27,3 +28,21 @@ cron.schedule(`*/${timeNotificationNewRequirements} * * * *`, async () => {
 
 // Enviar actualización de contadores de subsusuarios
 cron.schedule("*/5 * * * *", sendBatchUpdate);
+
+//enviar notificaciones de Requerimientos pendientes de entrega
+
+cron.schedule("* * * * *", async () => {
+  try {
+    await RequerimentService.sendNotifyCalificate();
+  } catch (error) {
+    console.error("Error al ejecutar sendNotifyCalifate Requeriment", error);
+  }
+});
+
+cron.schedule("* * * * *", async () => {
+  try {
+    await OfferService.sendNotifyCalificate();
+  } catch (error) {
+    console.error("Error al ejecutar sendNotifyCalifate Offer", error);
+  }
+});

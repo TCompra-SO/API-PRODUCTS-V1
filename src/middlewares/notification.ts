@@ -12,6 +12,25 @@ export function sendNotification(notification: NotificationI | undefined) {
       });
 }
 
+export async function sendNotificationScore(
+  notification: NotificationI | undefined
+): Promise<boolean> {
+  if (notification?.targetId && notification?.receiverId) {
+    try {
+      await axios.post(
+        `${process.env.API_USER}/v1/notification/send`,
+        notification
+      );
+      return true; // ✅ Enviado correctamente
+    } catch (error) {
+      console.error("Error al enviar notificación:", error);
+      return false; // ❌ Falló el envío
+    }
+  }
+  console.warn("Notificación incompleta, faltan targetId o receiverId");
+  return false;
+}
+
 export const saveNotificationMiddleware = (
   req: Request,
   res: Response,

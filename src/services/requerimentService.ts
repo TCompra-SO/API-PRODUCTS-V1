@@ -23,10 +23,16 @@ import { TypeUser, TypeEntity, NotificationType } from "../utils/Types";
 import { profile, timeStamp } from "node:console";
 import { countries } from "../utils/Countries";
 import { RequerimentFrontI } from "./../middlewares/requeriment.front.Interface";
-import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
+import {
+  TypeRequeriment,
+  PurchaseOrderI,
+} from "../interfaces/purchaseOrder.interface";
 import { queueUpdate } from "../utils/CounterManager";
 import { NotificationI } from "../interfaces/notification.interface";
-import { sendNotification } from "../middlewares/notification";
+import {
+  sendNotification,
+  sendNotificationScore,
+} from "../middlewares/notification";
 
 let API_USER = process.env.API_USER + "/v1/";
 export class RequerimentService {
@@ -2224,23 +2230,35 @@ export class RequerimentService {
         {
           $match: {
             stateID: PurchaseOrderState.PENDING,
-            $or: [
-              { "scoreState.deliveredClient": false },
-              { "scoreState.deliveredClient": { $exists: false } },
-            ],
             deliveryDate: {
-              $lt: new Date(today.getTime() - 24 * 60 * 60 * 1000), // fecha < (hoy - 1 día)
+              $lt: new Date(today.getTime() - 24 * 60 * 60 * 1000),
             },
+            $and: [
+              {
+                $or: [
+                  { "scoreState.notifyClient": false },
+                  { "scoreState.notifyClient": { $exists: false } },
+                ],
+              },
+              {
+                $or: [
+                  { "scoreState.deliveredClient": false },
+                  { "scoreState.deliveredClient": { $exists: false } },
+                ],
+              },
+            ],
           },
         },
         {
           $project: {
+            uid: 1,
             userClientID: 1,
             userNameClient: 1,
             requerimentID: 1,
             requerimentTitle: 1,
             userProviderId: 1,
             nameUserProvider: 1,
+            notifyClient: "$scoreState.notifyClient",
           },
         },
       ];
@@ -2270,22 +2288,46 @@ export class RequerimentService {
   static sendNotifyCalificate = async () => {
     try {
       const usersData = await this.getUsersClients();
-      console.log(usersData);
-      //SE ESTAN AGREGANDO DOBLE
-      const notificationData = {
-        senderId: "1",
-        senderName: "System",
-        title: "Confirma la recepción del bien",
-        body: "Tienes una entrega pendiente de confirmar. Verifica si el proveedor ya entregó el bien.",
-        receiverId: usersData.data?.[0].userClientID,
-        targetId: usersData.data?.[0].requerimentID,
-        targetType: RequirementType.GOOD,
-        action: NotificationAction.CULMINATE,
-        type: NotificationType.DIRECT,
-        timestamp: new Date(),
-      };
-      const resp = sendNotification(notificationData);
-      console.log(resp);
+      if (usersData.data) {
+        for (let i = 0; i < usersData.data?.length; i++) {
+          const notificationData = {
+            senderId: "1",
+            senderName: "System",
+            title:
+              "Confirma la recepción del bien" +
+              usersData.data[i].requerimentTitle,
+            body:
+              "El requerimiento '" +
+              usersData.data[i].requerimentTitle +
+              "', Tiene una entrega pendiente por confirmar. Verifica si el proveedor " +
+              usersData.data[i].nameUserProvider +
+              " ya entregó el bien.",
+            receiverId: usersData.data?.[i].userClientID,
+            targetId: usersData.data?.[i].requerimentID,
+            targetType: RequirementType.GOOD,
+            action: NotificationAction.FINISH_REQUIREMENT,
+            type: NotificationType.DIRECT,
+            timestamp: new Date(),
+          };
+          const send = await sendNotificationScore(notificationData);
+          if (send) {
+            await PurchaseOrderService.updateField(
+              usersData.data[i].uid,
+              "scoreState.notifyClient",
+              true
+            );
+          }
+        }
+      } else {
+        return {
+          success: false,
+          code: 500,
+          error: {
+            msg: "No se pudo enviar la notificacion",
+          },
+        };
+      }
+
       return {
         success: true,
         code: 200,

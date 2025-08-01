@@ -45,6 +45,8 @@ export interface ScoreStateI {
   scoreProvider: boolean;
   deliveredClient: boolean;
   deliveredProvider: boolean;
+  notifyClient?: boolean;
+  notifyProvider?: boolean;
 }
 export enum PurchaseOrderState {
   PENDING = 1,

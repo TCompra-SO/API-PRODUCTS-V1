@@ -166,6 +166,8 @@ export class PurchaseOrderService {
           scoreProvider: false,
           deliveredClient: false,
           deliveredProvider: false,
+          notifyClient: false,
+          notifyProvider: false,
         },
       };
 
@@ -868,6 +870,26 @@ export class PurchaseOrderService {
       };
     } catch (error) {
       console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static updateField = async (uid: string, field: string, value: any) => {
+    try {
+      const updatedOrder = await PurchaseOrderModel.findOneAndUpdate(
+        { uid },
+        { $set: { [field]: value } },
+        { new: true }
+      );
+
+      return updatedOrder;
+    } catch (error) {
       return {
         success: false,
         code: 500,

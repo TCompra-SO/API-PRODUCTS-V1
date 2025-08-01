@@ -7,10 +7,13 @@ import Fuse from "fuse.js";
 import { PipelineStage, SortOrder } from "mongoose";
 import {
   NameAPI,
+  NotificationAction,
+  NotificationType,
   OfferState,
   OrderType,
   PurchaseOrderState,
   RequirementState,
+  RequirementType,
   TypeEntity,
 } from "../utils/Types";
 import PurchaseOrderModel from "../models/purchaseOrder";
@@ -18,6 +21,8 @@ import { Console, error } from "node:console";
 import { TypeUser } from "../utils/Types";
 import { TypeRequeriment } from "../interfaces/purchaseOrder.interface";
 import { object } from "joi";
+import { PurchaseOrderService } from "./purchaseOrderService";
+import { sendNotificationScore } from "../middlewares/notification";
 let API_USER = process.env.API_USER + "/v1/";
 export class OfferService {
   static CreateOffer = async (data: OfferI) => {
@@ -1558,6 +1563,132 @@ export class OfferService {
           currentPage: page,
           pageSize: pageSize,
         },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static getUsersClients = async () => {
+    const now = new Date();
+
+    // Opcional: redondear `now` a las 00:00 para comparar solo días
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    try {
+      const pipeline = [
+        {
+          $match: {
+            stateID: PurchaseOrderState.PENDING,
+            deliveryDate: {
+              $lt: new Date(today.getTime() - 24 * 60 * 60 * 1000),
+            },
+            $and: [
+              {
+                $or: [
+                  { "scoreState.notifyProvider": false },
+                  { "scoreState.notifyProvider": { $exists: false } },
+                ],
+              },
+              {
+                $or: [
+                  { "scoreState.notifyProvider": false },
+                  { "scoreState.notifyProvider": { $exists: false } },
+                ],
+              },
+            ],
+          },
+        },
+        {
+          $project: {
+            uid: 1,
+            userClientID: 1,
+            userNameClient: 1,
+            offerID: 1,
+            offerTitle: 1,
+            userProviderID: 1,
+            nameUserProvider: 1,
+            notifyClient: "$scoreState.notifyProvider",
+          },
+        },
+      ];
+
+      const results = await PurchaseOrderModel.aggregate(pipeline);
+
+      return {
+        success: true,
+        code: 200,
+        data: results,
+        res: {
+          message: "Consulta exitosa",
+        },
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error interno en el Servidor",
+        },
+      };
+    }
+  };
+
+  static sendNotifyCalificate = async () => {
+    try {
+      const usersData = await this.getUsersClients();
+      if (usersData.data) {
+        for (let i = 0; i < usersData.data?.length; i++) {
+          const notificationData = {
+            senderId: "1",
+            senderName: "System",
+            title:
+              "Confirma la entrega de la Oferta " +
+              usersData.data[i].offerTitle,
+            body:
+              "La Oferta '" +
+              usersData.data[i].offerTitle +
+              "', Tiene una entrega pendiente por confirmar. Verifica si el cliente " +
+              usersData.data[i].userNameClient +
+              " ya recepciono el bien.",
+            receiverId: usersData.data?.[i].userProviderID,
+            targetId: usersData.data?.[i].offerID,
+            targetType: RequirementType.GOOD,
+            action: NotificationAction.FINISH_OFFER,
+            type: NotificationType.DIRECT,
+            timestamp: new Date(),
+          };
+
+          const send = await sendNotificationScore(notificationData);
+          if (send) {
+            await PurchaseOrderService.updateField(
+              usersData.data[i].uid,
+              "scoreState.notifyProvider",
+              true
+            );
+          }
+        }
+      } else {
+        return {
+          success: false,
+          code: 500,
+          error: {
+            msg: "No se pudo enviar la notificacion",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        code: 200,
+        data: usersData,
       };
     } catch (error) {
       console.log(error);
