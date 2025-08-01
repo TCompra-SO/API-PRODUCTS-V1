@@ -31,7 +31,7 @@ cron.schedule("*/5 * * * *", sendBatchUpdate);
 
 //enviar notificaciones de Requerimientos pendientes de entrega
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   try {
     await RequerimentService.sendNotifyCalificate();
   } catch (error) {
@@ -39,7 +39,7 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("0 0 * * *", async () => {
   try {
     await OfferService.sendNotifyCalificate();
   } catch (error) {
