@@ -1,6 +1,7 @@
 export interface PurchaseOrderI {
   uid: string;
   type: TypeRequeriment;
+  numOrder: number;
   userClientID: string;
   userNameClient: string;
   addressClient: string;

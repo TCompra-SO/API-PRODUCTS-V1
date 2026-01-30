@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import ShortUniqueId from "short-unique-id";
 import { PurchaseOrderI } from "../interfaces/purchaseOrder.interface";
+import { number } from "joi";
 
 const uid = new ShortUniqueId({ length: 20 });
 
@@ -10,6 +11,11 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
     required: true,
     unique: true,
     default: () => uid.rnd(),
+  },
+  numOrder: {
+    type: Number,
+    required: true,
+    unique: true,
   },
   type: {
     type: Number,
@@ -167,7 +173,7 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
 
 const PurchaseOrderModel = mongoose.model<PurchaseOrderI>(
   "PurchaseOrderProducts",
-  PurchaseOrderSchema
+  PurchaseOrderSchema,
 );
 
 export default PurchaseOrderModel;
