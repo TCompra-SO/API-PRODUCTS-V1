@@ -843,6 +843,7 @@ export class PurchaseOrderService {
     try {
       const data = await this.getPurchaseOrderID(uid);
       if (data && data.success && data.data) {
+        console.log(data);
         const html = await OrderPurchaseTemplate(data.data[0]);
 
         // Genera el PDF a partir de la plantilla HTML
@@ -881,7 +882,6 @@ export class PurchaseOrderService {
     try {
       const purchaseOrderData = await this.getPurchaseOrderID(purchaseOrderID);
       if (purchaseOrderData.data?.[0].stateID === PurchaseOrderState.PENDING) {
-        console.log(purchaseOrderData.data?.[0].stateID);
       }
       return {
         success: true,

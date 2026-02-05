@@ -14,7 +14,7 @@ export const OrderPurchaseTemplate = async (
   if (data.deliveryDate) {
     deliveryDate = convertDate(data.deliveryDate);
   }
-
+  console.log(data);
   const template = `
     <!DOCTYPE html>
     <html class="no-js" lang="es">
