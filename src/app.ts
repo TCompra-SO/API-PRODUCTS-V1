@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { RootRouter } from "./routes/RootRouter";
 import "./initConfig";
+import { Console } from "node:console";
 
 const allowedOrigins = [
   process.env.URL_FRONTEND,
@@ -24,7 +25,7 @@ export class App {
       App.instance.use(cookieParser());
       App.instance.use(bodyParser.urlencoded({ extended: false }));
       App.instance.use(bodyParser.json());
-
+      console.log(allowedOrigins);
       App.instance.use(
         cors({
           origin: (origin, callback) => {

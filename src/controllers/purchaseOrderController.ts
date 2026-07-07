@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PurchaseOrderService } from "../services/purchaseOrderService";
+import { pdfQueue } from "../queues/pdf.queue";
 const fs = require("fs");
 
 const CreatePurchaseOrderController = async (req: Request, res: Response) => {
@@ -18,7 +19,7 @@ const CreatePurchaseOrderController = async (req: Request, res: Response) => {
       price_Filter,
       deliveryTime_Filter,
       location_Filter,
-      warranty_Filter
+      warranty_Filter,
     );
 
     if (responseUser && responseUser.success) {
@@ -40,7 +41,7 @@ const getPurchaseOrdersController = async (req: Request, res: Response) => {
     const { page, pageSize } = req.params;
     const responseUser = await PurchaseOrderService.getPurchaseOrders(
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -58,14 +59,14 @@ const getPurchaseOrdersController = async (req: Request, res: Response) => {
 
 const getPurchaseOrdersProviderController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { userProviderID, page, pageSize } = req.params;
   try {
     const responseUser = await PurchaseOrderService.getPurchaseOrdersProvider(
       userProviderID,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -83,14 +84,14 @@ const getPurchaseOrdersProviderController = async (
 
 const getPurchaseOrdersClientController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const { userClientID, page, pageSize } = req.params;
   try {
     const responseUser = await PurchaseOrderService.getPurchaseOrdersClient(
       userClientID,
       Number(page),
-      Number(pageSize)
+      Number(pageSize),
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -132,7 +133,7 @@ const getPurchaseOrdersByProvider = async (req: Request, res: Response) => {
         uid,
         Number(typeUser),
         Number(page),
-        Number(pageSize)
+        Number(pageSize),
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -156,7 +157,7 @@ const getPurchaseOrdersByClient = async (req: Request, res: Response) => {
         uid,
         Number(typeUser),
         Number(page),
-        Number(pageSize)
+        Number(pageSize),
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -171,7 +172,7 @@ const getPurchaseOrdersByClient = async (req: Request, res: Response) => {
     });
   }
 };
-
+/* ANTIGUO
 const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
   const { uid } = req.params;
 
@@ -187,6 +188,42 @@ const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
     return res.status(500).send({
       success: false,
       msg: "Error interno del Servidor",
+    });
+  }
+};
+*/
+const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
+  const { uid } = req.params;
+
+  try {
+    const response = await pdfQueue(() =>
+      PurchaseOrderService.getPurchaseOrderPDF(uid),
+    );
+
+    if (!response || typeof response !== "object" || !("success" in response)) {
+      throw new Error("Respuesta inválida del servicio");
+    }
+
+    if (!response.success || !response.data) {
+      return res.status(400).json({
+        success: false,
+        msg: response.error?.msg ?? "No se pudo generar el PDF",
+      });
+    }
+
+    const pdfBuffer = response.data;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=OC-${uid}.pdf`);
+    res.setHeader("Content-Length", pdfBuffer.length);
+
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error en getPurchaseOrderPDFController", error);
+
+    return res.status(500).json({
+      success: false,
+      msg: "Error interno del servidor",
     });
   }
 };
@@ -211,7 +248,7 @@ const canceledController = async (req: Request, res: Response) => {
 
 const searchPurchaseOrdersByProviderController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const {
     keyWords,
@@ -235,7 +272,7 @@ const searchPurchaseOrdersByProviderController = async (
         fieldName,
         Number(orderType),
         filterColumn,
-        filterData
+        filterData,
       );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);
@@ -253,7 +290,7 @@ const searchPurchaseOrdersByProviderController = async (
 
 const searchPurchaseOrdersByClientController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   const {
     keyWords,
@@ -276,7 +313,7 @@ const searchPurchaseOrdersByClientController = async (
       fieldName,
       Number(orderType),
       filterColumn,
-      filterData
+      filterData,
     );
     if (responseUser && responseUser.success) {
       res.status(responseUser.code).send(responseUser);

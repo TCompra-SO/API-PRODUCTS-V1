@@ -3,7 +3,7 @@ PORT=3002
 DB_URI=mongodb+srv://tcompraperu:2YFaNqTymGcKH5ZF@clustertest.oiyhs.mongodb.net/BDTestTCompra?retryWrites=true&w=majority&appName=ClusterTest
 JWT_SECRET=X8d7!qLz1#P@k&2^R9nV4tG$W6oB+uM7J%Yv3xKz8F
  // API USER
- API_USER=https://apiusers.tcompra.com
+ API_USER=http://localhost:3001/v1/
 
  // CLOUDINARY
  CLOUDINARY_CLOUD_NAME=dlxlveta2
@@ -11,7 +11,7 @@ CLOUDINARY_API_KEY=498896384715854
 CLOUDINARY_API_SECRET=D5YQeZzI0s2PrxsY-XcayJ233ck
 
 URL_FRONTEND_WWW = https://www.tcompra.com
-URL_FRONTEND = https://tcompra.com
+URL_FRONTEND = https://localhost:3000
 API_PRODUCTS=https://apiproducts.tcompra.com
 API_SERVICES=https://apiservices.tcompra.com
 API_LIQUIDATIONS=https://apiliquidations.tcompra.com

@@ -1,4 +1,7 @@
 import axios from "axios";
+import { getBrowser } from "../utils/puppeteer";
+
+import { Readable as NodeReadable } from "node:stream";
 import {
   PurchaseOrderI,
   PurchaseOrderState,
@@ -805,38 +808,49 @@ export class PurchaseOrderService {
       };
     }
   };
-
+  /*OLD CREATE PDF
   static createPDF = async (htmlContent: string): Promise<Buffer> => {
-    // Iniciar el navegador de Puppeteer
-    //const browser = await puppeteer.launch();
+  
     const browser = await puppeteer.launch({
       args: ["--no-sandbox"], // Deshabilitar sandbox
     });
 
     const page = await browser.newPage();
     let pdfBuffer;
-    // Establecer el contenido HTML
+   
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-    // Generar el PDF como Buffer (con formato A4)
-    /*  pdfBuffer = (await page.pdf({
-      format: "A4",
-      printBackground: true,
-    })) as Buffer;
-*/
     pdfBuffer = Buffer.from(
       await page.pdf({
         format: "A4",
         printBackground: true,
       }),
     );
-    // Cerrar el navegador
+   
     await browser.close();
 
-    // Retornar el buffer del PDF
     return pdfBuffer;
   };
+  */
+  static createPDF = async (htmlContent: string): Promise<Buffer> => {
+    const browser = await getBrowser(); // reutiliza el mismo browser
+    const page = await browser.newPage();
 
+    try {
+      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        printBackground: true,
+      });
+
+      return Buffer.from(pdfBuffer);
+    } finally {
+      await page.close(); // 🔥 cerramos SOLO la página
+    }
+  };
+
+  /* antiguo
   static getPurchaseOrderPDF = async (uid: string) => {
     try {
       const data = await this.getPurchaseOrderID(uid);
@@ -866,6 +880,33 @@ export class PurchaseOrderService {
       }
     } catch (error) {
       console.log(error);
+      return {
+        success: false,
+        code: 500,
+        error: {
+          msg: "Error al generar el PDF",
+        },
+      };
+    }
+  };
+*/
+  static getPurchaseOrderPDF = async (uid: string) => {
+    try {
+      const data = await this.getPurchaseOrderID(uid);
+
+      if (!data?.success || !data.data) {
+        throw new Error("Orden no encontrada");
+      }
+
+      const html = await OrderPurchaseTemplate(data.data[0]);
+      const pdfBuffer = await this.createPDF(html);
+
+      return {
+        success: true,
+        code: 200,
+        data: pdfBuffer, // 🔥 devolvemos Buffer directo
+      };
+    } catch (error) {
       return {
         success: false,
         code: 500,

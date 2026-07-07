@@ -17,7 +17,8 @@ function checkTrust(req: RequestExt): boolean {
 const checkJwt = async (req: RequestExt, res: Response, next: NextFunction) => {
   try {
     const isTrusted = checkTrust(req);
-
+    console.log("HEADERS:", req.headers);
+    console.log("COOKIES:", req.cookies);
     if (!isTrusted) {
       // Double Submit Cookie
       const csrfCookieToken = req.cookies?.[csrfTokenName];
