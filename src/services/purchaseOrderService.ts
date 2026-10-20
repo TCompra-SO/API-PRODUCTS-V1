@@ -127,7 +127,7 @@ export class PurchaseOrderService {
         total = price;
       }
 
-      // --- INCREMENTO ATÓMICO SEGURO DEL NÚMERO DE ORDEN ---
+      // --- INCREMENTO ATÓMICO Y BLINDAJE SEGURO DEL NÚMERO DE ORDEN ---
       const ResourceCountersCollection =
         mongoose.connection.collection("resourcecounters");
 
@@ -145,8 +145,24 @@ export class PurchaseOrderService {
         );
 
       let numOrder = counterUpdateResult?.lastNumPurchaseOrder ?? 1;
-      console.log("Nuevo numOrder generado de forma atómica:", numOrder);
-      // -----------------------------------------------------
+
+      // Protección extra: Evita colisiones si resourcecounters estaba desincronizado
+      const highestOrder = await PurchaseOrderModel.findOne({ userProviderID })
+        .sort({ numOrder: -1 })
+        .select("numOrder");
+
+      const maxExistingNum = highestOrder?.numOrder ?? 0;
+
+      if (numOrder <= maxExistingNum) {
+        numOrder = maxExistingNum + 1;
+        await ResourceCountersCollection.updateOne(
+          { uid: userProviderID },
+          { $set: { lastNumPurchaseOrder: numOrder, updateDate: new Date() } },
+        );
+      }
+
+      console.log("Nuevo numOrder seguro generado:", numOrder);
+      // -------------------------------------------------------------
 
       const newPurchaseOrder: Omit<PurchaseOrderI, "uid"> = {
         type: TypeRequeriment.PRODUCTS,
