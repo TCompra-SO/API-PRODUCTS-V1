@@ -4,21 +4,35 @@ import { OrderPurchaseTemplate } from "./OrderPurchaseTemplate";
 import { PurchaseOrderService } from "../services/purchaseOrderService";
 export const sendEmailPurchaseOrder = async (
   data: Omit<PurchaseOrderI, "uid">,
-  emailUser: string
+  emailUser: string,
 ) => {
   const html = await OrderPurchaseTemplate(data);
   const pdfBuffer = await PurchaseOrderService.createPDF(html);
-
+  /*
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
       user: "tcompraperu@gmail.com",
       pass: "uzof pfmc lcwz kgko",
     },
+  });*/
+
+  const FROM_EMAIL = process.env.SMTP_USER || "contacto@tcompra.com";
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === "true", // false en 587
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 
   const mailOptions = {
-    from: '"TCOMPRA" <tcompraperu@gmail.com>', // Cambia al correo de la empresa si es necesario
+    from: `"TCOMPRA" <${FROM_EMAIL}>`, // Cambia al correo de la empresa si es necesario
     to: emailUser,
     subject: `Se aceptó tu oferta para el requerimiento: ${data.requerimentTitle}`,
     html: `${await OrderPurchaseTemplate(data)}`,
