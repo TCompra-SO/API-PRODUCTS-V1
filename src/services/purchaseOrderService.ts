@@ -126,9 +126,28 @@ export class PurchaseOrderService {
         totalIgv = parseFloat((price - subTotal).toFixed(2));
         total = price;
       }
-      console.log(basicProviderData.data.data.lastNumPurchaseOrder);
-      let numOrder = basicProviderData.data.data?.lastNumPurchaseOrder + 1;
-      console.log(numOrder);
+
+      // --- INCREMENTO ATÓMICO SEGURO DEL NÚMERO DE ORDEN ---
+      const ResourceCountersCollection =
+        mongoose.connection.collection("resourcecounters");
+
+      const counterUpdateResult =
+        await ResourceCountersCollection.findOneAndUpdate(
+          { uid: userProviderID },
+          {
+            $inc: { lastNumPurchaseOrder: 1 },
+            $set: {
+              updateDate: new Date(),
+              typeEntity: basicProviderData.data.data?.typeEntity,
+            },
+          },
+          { upsert: true, returnDocument: "after" },
+        );
+
+      let numOrder = counterUpdateResult?.lastNumPurchaseOrder ?? 1;
+      console.log("Nuevo numOrder generado de forma atómica:", numOrder);
+      // -----------------------------------------------------
+
       const newPurchaseOrder: Omit<PurchaseOrderI, "uid"> = {
         type: TypeRequeriment.PRODUCTS,
         numOrder: numOrder,
@@ -184,42 +203,16 @@ export class PurchaseOrderService {
         true,
       );
 
-      const responseManage = await RequerimentService.manageCount(
+      await RequerimentService.manageCount(
         userClientID,
         subUserClientID,
         "numPurchaseOrdersClient",
         true,
       );
 
-      //ACTUALIZAR NRO DE ORDEN
-
-      // 2. Si el contador se procesó bien, actualizamos el número de orden
-      if (responseManage && responseManage.success) {
-        const ResourceCountersCollection =
-          mongoose.connection.collection("resourcecounters");
-
-        await ResourceCountersCollection.updateOne(
-          { uid: userProviderID },
-          {
-            $set: {
-              lastNumPurchaseOrder: numOrder,
-              updateDate: new Date(),
-              typeEntity: basicProviderData.data.data?.typeEntity,
-            },
-          },
-          // SIN upsert: true aquí, para ir sobre seguro
-        );
-      }
-      // const sendMail = sendEmailPurchaseOrder(newPurchaseOrder);
       let responseEmail = "";
-      /*  if ((await sendMail).success) {
-        responseEmail = "Orden de Compra enviada al Email correctamente";
-      } else {
-        responseEmail = "No se ha podido enviar la Orden al Correo";
-      }*/
 
       // Inicia el envío del correo en segundo plano
-
       if (emailUser) {
         sendEmailPurchaseOrder(newPurchaseOrder, emailUser)
           .then((result) => {

@@ -200,7 +200,7 @@ const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
       PurchaseOrderService.getPurchaseOrderPDF(uid),
     );
 
-    if (!response || typeof response !== "object" || !("success" in response)) {
+   if (!response || typeof response !== "object" || !("success" in response)) {
       throw new Error("Respuesta inválida del servicio");
     }
 
@@ -217,15 +217,15 @@ const getPurchaseOrderPDFController = async (req: Request, res: Response) => {
     res.setHeader("Content-Disposition", `inline; filename=OC-${uid}.pdf`);
     res.setHeader("Content-Length", pdfBuffer.length);
 
-    return res.send(pdfBuffer);
+    return res.send(pdfBuffer); 
   } catch (error) {
-    console.error("Error en getPurchaseOrderPDFController", error);
+      console.error("Error en getPurchaseOrderPDFController", error);
 
-    return res.status(500).json({
-      success: false,
-      msg: "Error interno del servidor",
-    });
-  }
+      return res.status(500).json({
+        success: false,
+        msg: "Error interno del servidor",
+      });
+    }
 };
 
 const canceledController = async (req: Request, res: Response) => {
