@@ -15,7 +15,7 @@ const PurchaseOrderSchema = new Schema<PurchaseOrderI>({
   numOrder: {
     type: Number,
     required: true,
-    unique: true,
+    // unique: true,
   },
   type: {
     type: Number,
@@ -175,5 +175,7 @@ const PurchaseOrderModel = mongoose.model<PurchaseOrderI>(
   "PurchaseOrderProducts",
   PurchaseOrderSchema,
 );
+
+PurchaseOrderSchema.index({ userProviderID: 1, numOrder: 1 }, { unique: true });
 
 export default PurchaseOrderModel;
